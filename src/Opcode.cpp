@@ -63,3 +63,8 @@ unsigned int OpcodeTable::size(void) const
 {
     return this->op_list.size();
 }
+
+void OpcodeTable::init(void)
+{
+    this->op_list.clear();
+}

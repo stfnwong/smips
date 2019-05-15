@@ -12,6 +12,10 @@
 #include <string>
 #include <vector>
 
+/*
+ * Opcode 
+ * Represents a single Opcode from the MIPS aseembly language
+ */
 struct Opcode
 {
     uint32_t instr;
@@ -42,6 +46,7 @@ class OpcodeTable
         Opcode& getIdx(const int idx);
         unsigned int size(void) const;
 
+        void init(void);
 };
 
 
