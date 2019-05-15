@@ -44,12 +44,17 @@ $(TEST_OBJECTS): $(OBJ_DIR)/%.o : $(TEST_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@ 
 
 # ==== TEST TARGETS ==== #
-TESTS=
+TESTS=test_assembler test_lexer test_opcode
 $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 	$(CXX) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o $(TEST_BIN_DIR)/$@ $(LIBS) $(TEST_LIBS)
 
 ## ===== TOOL TARGETS ===== # 
+TOOLS=assem disassem
+TOOL_OBJECTS  := $(TOOL_SOURCES:$(TOOL_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+$(TOOLS): $(TOOL_OBJECTS) 
+	$(CXX) $(LDFLAGS) $(TOOL_OBJECTS) $(OBJ_DIR)/$@.o\
+		-o $(TOOL_DIR)/$@ $(LIBS) $(TEST_LIBS)
 
 # Main targets 
 all : test 
