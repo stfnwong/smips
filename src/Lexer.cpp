@@ -128,6 +128,8 @@ void Lexer::scanToken(void)
             break;
         if(this->cur_char == ';')       // comment
             break;
+        if(this->cur_char == '#')       // also comment
+            break;
         if(this->cur_char == ',')       // seperator
             break;
         this->token_buf[idx] = this->cur_char;

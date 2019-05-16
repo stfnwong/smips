@@ -9,14 +9,19 @@
 
 Opcode::Opcode()
 {
-    this->instr = 0;
-    this->mnemonic = "\0";
+    this->init();
 }
 
 Opcode::Opcode(const uint32_t c, const std::string& m)
 {
     this->instr = c;
     this->mnemonic = m;
+}
+
+void Opcode::init(void)
+{
+    this->instr = 0;
+    this->mnemonic = "\0";
 }
 
 

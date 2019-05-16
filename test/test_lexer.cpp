@@ -17,6 +17,9 @@ class TestLexer : public ::testing::Test
     virtual void SetUp() {}
     virtual void TearDown() {}
 
+    std::string test_file = "asm/example_prog.asm";
+    unsigned int expected_num_instrs = 9;       // update this as more instructions are implemented
+
 };
 
 TEST_F(TestLexer, test_init)

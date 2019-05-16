@@ -34,8 +34,6 @@ const Opcode lex_instr_codes[] = {
 };
 
 
-
-
 /*
  * Lexer
  * Lexes a source file and produces a sequence of Tokens
@@ -65,6 +63,9 @@ class Lexer
     private:
         std::string source_text;
         std::string filename;
+        SourceInfo  source_info;
+        LineInfo    line_info;
+        SymbolTable sym_table;
 
 
     // Motion through source file
