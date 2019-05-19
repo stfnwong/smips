@@ -24,7 +24,27 @@ Token::Token(const TokenType& t, const std::string& v)
 
 std::string Token::toString(void) const
 {
-    return "\0";        // TODO: formatting
+    switch(this->type)
+    {
+        case SYM_NONE:
+            return "NONE";
+        case SYM_EOF:
+            return "EOF";
+        case SYM_INSTR:
+            return "INSTR";
+        case SYM_LITERAL:
+            return "LITERAL";
+        case SYM_REG_TEMP:
+            return "R_TEMP";
+        case SYM_REG_SAVED:
+            return "R_SAVED";
+        case SYM_REG_ARG:
+            return "R_ARG";
+        case SYM_REG_RET:
+            return "R_RET";
+        default:
+            return "NULL";
+    }
 }
 
 
@@ -38,11 +58,14 @@ LineInfo::LineInfo()
 
 void LineInfo::init(void)
 {
-    this->label    = "\0";
-    this->symbol   = "\0";
-    this->line_num = 0;
-    this->addr     = 0;
-    this->error    = false;
+    this->label     = "\0";
+    this->symbol    = "\0";
+    this->errstr    = "\0";
+    this->line_num  = 0;
+    this->addr      = 0;
+    this->error     = false;
+    this->is_label  = false;
+    this->is_symbol = false;
     this->opcode.init();
 }
 

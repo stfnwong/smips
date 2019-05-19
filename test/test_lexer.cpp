@@ -10,6 +10,7 @@
 #include <string>
 #include <gtest/gtest.h>
 #include "Lexer.hpp"
+#include "Source.hpp"
 
 
 class TestLexer : public ::testing::Test
@@ -17,8 +18,8 @@ class TestLexer : public ::testing::Test
     virtual void SetUp() {}
     virtual void TearDown() {}
 
-    std::string test_file = "asm/example_prog.asm";
-    unsigned int expected_num_instrs = 9;       // update this as more instructions are implemented
+    public:
+        std::string test_file = "asm/mult_add.asm";
 
 };
 
@@ -26,6 +27,11 @@ TEST_F(TestLexer, test_init)
 {
     Lexer test_lexer;
 
+    test_lexer.setVerbose(true);
+    test_lexer.loadFile(this->test_file);
+    test_lexer.lex();
+
+    // get the source info
 }
 
 

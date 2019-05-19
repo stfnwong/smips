@@ -24,7 +24,7 @@ typedef enum TokenType
     SYM_REG_TEMP,
     SYM_REG_SAVED,
     SYM_REG_ARG,
-    SYM_REG_RET
+    SYM_REG_RET,
 } TokenType;
 
 
@@ -42,7 +42,12 @@ typedef enum TokenType
 //            return "LITERAL";
 //        case SYM_REG_TEMP:
 //            return "R_TEMP";
-//            // and so on...
+//        case SYM_REG_SAVED:
+//            return "R_SAVED";
+//        case SYM_REG_ARG:
+//            return "R_ARG";
+//        case SYM_REG_RET:
+//            return "R_RET";
 //        default:
 //            return "NULL";
 //    }
@@ -72,11 +77,14 @@ struct Token
  */
 struct LineInfo
 {
-    std::string label;
-    std::string symbol;
+    std::string  label;
+    std::string  symbol;
+    std::string  errstr;
     unsigned int line_num;
     unsigned int addr;
     bool         error;
+    bool         is_label;
+    bool         is_symbol;
     Opcode       opcode;
 
     public:
@@ -85,7 +93,6 @@ struct LineInfo
 
         std::string toString(void);
 };
-
 
 
 /*

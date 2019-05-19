@@ -5,6 +5,8 @@
  * Stefan Wong 2019
  */
 
+#include <iomanip>
+#include <sstream>
 #include "Opcode.hpp"
 
 Opcode::Opcode()
@@ -22,6 +24,15 @@ void Opcode::init(void)
 {
     this->instr = 0;
     this->mnemonic = "\0";
+}
+
+std::string Opcode::toString(void) const
+{
+    std::ostringstream oss;
+
+    oss << this->mnemonic << " x" << std::hex << this->instr;
+
+    return oss.str();
 }
 
 

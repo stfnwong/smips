@@ -18,6 +18,8 @@ typedef enum instr_code
     LEX_NULL,
     LEX_ADD, LEX_ADDU, LEX_ADDI, LEX_ADDIU, 
     LEX_AND, LEX_ANDI, LEX_DIV, LEX_DIVU,
+    LEX_MULT, LEX_MULTU, LEX_NOR, LEX_OR,
+    LEX_ORI, LEX_LW, LEX_SH, LEX_SW, 
 } instr_code;
 
 // MIPS Opcode list 
@@ -31,6 +33,10 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_ANDI,  "ANDI"),
     Opcode(LEX_DIV,   "DIV"),
     Opcode(LEX_DIVU,  "DIVU"),
+    Opcode(LEX_MULT,  "MULT"),
+    Opcode(LEX_MULTU, "MULTU"),
+    Opcode(LEX_NOR,   "NOR"),
+    Opcode(LEX_OR,    "OR"),
 };
 
 
@@ -51,7 +57,7 @@ class Lexer
         char* token_buf;
         bool  verbose;
     private:
-        void alloc_mem(void);
+        void  alloc_mem(void);
 
     // Position in source text 
     private:
@@ -61,11 +67,12 @@ class Lexer
 
     // Source 
     private:
-        std::string source_text;
-        std::string filename;
-        SourceInfo  source_info;
-        LineInfo    line_info;
-        SymbolTable sym_table;
+        std::string  source_text;
+        std::string  filename;
+        SourceInfo   source_info;
+        LineInfo     line_info;
+        SymbolTable  sym_table;
+        unsigned int cur_addr;
 
 
     // Motion through source file
@@ -98,6 +105,7 @@ class Lexer
 
         // getters 
         bool getVerbose(void) const;
+        const SourceInfo& getSourceInfo(void) const;
 
         // setters 
         void setVerbose(const bool v);

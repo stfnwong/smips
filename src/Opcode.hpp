@@ -18,13 +18,14 @@
  */
 struct Opcode
 {
-    uint32_t instr;
+    uint32_t    instr;
     std::string mnemonic;
 
     public:
         Opcode();
         Opcode(const uint32_t c, const std::string& m);
         void init(void);
+        std::string toString(void) const;
 };
 
 
@@ -41,13 +42,12 @@ class OpcodeTable
     public:
         OpcodeTable();
         ~OpcodeTable();
-        void add(const Opcode& op);
-        Opcode& get(const std::string& mnemonic);
-        Opcode& get(const uint32_t opcode);
-        Opcode& getIdx(const int idx);
+        void         add(const Opcode& op);
+        Opcode&      get(const std::string& mnemonic);
+        Opcode&      get(const uint32_t opcode);
+        Opcode&      getIdx(const int idx);
         unsigned int size(void) const;
-
-        void init(void);
+        void         init(void);
 };
 
 
