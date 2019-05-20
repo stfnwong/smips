@@ -22,28 +22,46 @@ Token::Token(const TokenType& t, const std::string& v)
     this->val = v;
 }
 
+bool Token::isReg(void) const
+{
+    switch(this->type)
+    {
+        case SYM_REG_TEMP:
+        case SYM_REG_SAVED:
+        case SYM_REG_ARG:
+        case SYM_REG_RET:
+            return true;
+        default:
+            return false;
+    }
+
+    // If we somehow get here, then this is clearly not 
+    // the value that we are looking for
+    return false;
+}
+
 std::string Token::toString(void) const
 {
     switch(this->type)
     {
         case SYM_NONE:
-            return "NONE";
+            return "NONE <" + this->val + ">";
         case SYM_EOF:
-            return "EOF";
+            return "EOF <" + this->val + ">";
         case SYM_INSTR:
-            return "INSTR";
+            return "INSTR <" + this->val + ">";
         case SYM_LITERAL:
-            return "LITERAL";
+            return "LITERAL <" + this->val + ">";
         case SYM_REG_TEMP:
-            return "R_TEMP";
+            return "R_TEMP <" + this->val + ">";
         case SYM_REG_SAVED:
-            return "R_SAVED";
+            return "R_SAVED <" + this->val + ">";
         case SYM_REG_ARG:
-            return "R_ARG";
+            return "R_ARG <" + this->val + ">";
         case SYM_REG_RET:
-            return "R_RET";
+            return "R_RET <" + this->val + ">";
         default:
-            return "NULL";
+            return "NULL <" + this->val + ">";
     }
 }
 
@@ -58,23 +76,122 @@ LineInfo::LineInfo()
 
 void LineInfo::init(void)
 {
-    this->label     = "\0";
-    this->symbol    = "\0";
-    this->errstr    = "\0";
-    this->line_num  = 0;
-    this->addr      = 0;
-    this->error     = false;
-    this->is_label  = false;
-    this->is_symbol = false;
+    this->label        = "\0";
+    this->symbol       = "\0";
+    this->errstr       = "\0";
+    this->line_num     = 0;
+    this->addr         = 0;
+    this->error        = false;
+    this->is_label     = false;
+    this->is_symbol    = false;
+    this->is_directive = false;
+    this->is_imm       = false;
     this->opcode.init();
+
+    for(int i = 0; i < 3; ++i)
+    {
+        this->args[i]  = 0;
+        this->types[i] = SYM_NONE;
+    }
 }
 
 std::string LineInfo::toString(void)
 {
-    return "\0";
+    std::ostringstream oss;
+
+    oss << "---------------------------------------------------------------------" << std::endl;
+    // TODO : make line for register and types
+    oss << "Line  Type   Addr  Mnemonic   Opcode   Registers  flags error" << std::endl;
+    //oss << "Line  Type   Addr  Mnemonic    Opcode  flags   arg1  arg2  arg3  imm  " << std::endl;
+
+    oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
+    oss << "[";
+    if(this->is_label)
+        oss << "l";
+    else
+        oss << ".";
+    if(this->is_directive)
+        oss << "d";
+    else
+        oss << ".";
+    if(this->is_imm)
+        oss << "i";
+    else
+        oss << ".";
+    oss << "] ";
+    oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
+    oss << std::left << std::setw(12) << std::setfill(' ') << this->opcode.mnemonic;
+    oss << "0x" << std::right << std::hex << std::setw(4) << std::setfill('0') << this->opcode.instr << "  ";
+    // Insert arg/register chars
+    for(auto i = 0; i < 3; ++i)
+    {
+        if(this->types[i] == SYM_REG_TEMP)
+            oss << "t" << i << " ";
+        else if(this->types[i] == SYM_REG_SAVED)
+            oss << "s" << i << " ";
+        else if(this->types[i] == SYM_REG_ARG)
+            oss << "a" << i << " ";
+        else if(this->types[i] == SYM_REG_RET)
+            oss << "r" << i << " ";
+        else
+            oss << "   ";
+    }
+    oss << "   "; 
+    // Insert flag chars
+    oss << "...";
+    // spacing chars
+    oss << " ";
+    // insert error (T/F only, full string may not fit)
+    if(this->error)
+        oss << " YES ";
+    else
+        oss << " NO  ";
+    // (Next line) Text 
+    oss << std::endl;
+    oss << "Label [" << std::left << std::setw(16) << std::setfill(' ') << this->label << "] ";
+    oss << "Symbol[" << std::left << std::setw(16) << std::setfill(' ') << this->symbol << "] ";
+
+    oss << std::endl;
+    
+    return oss.str();
 }
 
+bool LineInfo::operator==(const LineInfo& that) const
+{
+    if(this->label != that.label)
+        return false;
+    if(this->symbol != that.symbol)
+        return false;
+    if(this->errstr != that.errstr)
+        return false;
+    if(this->line_num != that.line_num)
+        return false;
+    if(this->addr != that.addr)
+        return false;
+    if(this->error != that.error)
+        return false;
+    if(this->is_label != that.is_label)
+        return false;
+    if(this->is_symbol != that.is_symbol)
+        return false;
+    if(this->is_imm != that.is_imm)
+        return false;
+    if(this->opcode != that.opcode)
+        return false;
 
+    for(int i = 0; i < 3; ++i)
+    {
+        if(this->args[i] != that.args[i])
+            return false;
+    }
+
+    return true;
+}
+
+bool LineInfo::operator!=(const LineInfo& that) const
+{
+    return !(*this == that);
+}
 
 
 /*
@@ -95,6 +212,24 @@ std::string Symbol::toString(void) const
     return oss.str();
 }
 
+bool Symbol::operator==(const Symbol& that) const
+{
+    if(this->addr != that.addr)
+        return false;
+    if(this->label != that.label)
+        return false;
+    return true;
+}
+
+bool Symbol::operator!=(const Symbol& that) const
+{
+    if(this->addr == that.addr)
+        return false;
+    if(this->label == that.label)
+        return false;
+    return true;
+}
+
 /*
  * SymbolTable
  */
@@ -105,7 +240,6 @@ void SymbolTable::add(const Symbol& s)
 {
     this->syms.push_back(s);
 }
-
 
 void SymbolTable::update(const unsigned int idx, const Symbol& s)
 {
@@ -143,7 +277,6 @@ void SymbolTable::init(void)
 }
 
 
-
 /*
  * SourceInfo
  */
@@ -167,7 +300,6 @@ LineInfo& SourceInfo::get(const unsigned int idx)
     
     return this->null_line;
 }
-
 
 unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 {

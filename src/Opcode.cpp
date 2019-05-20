@@ -30,9 +30,29 @@ std::string Opcode::toString(void) const
 {
     std::ostringstream oss;
 
-    oss << this->mnemonic << " x" << std::hex << this->instr;
+    oss << this->mnemonic << " 0x" << std::hex << this->instr;
 
     return oss.str();
+}
+
+bool Opcode::operator==(const Opcode& that) const
+{
+    if(this->instr != that.instr)
+        return false;
+    if(this->mnemonic != that.mnemonic)
+        return false;
+
+    return true;
+}
+
+bool Opcode::operator!=(const Opcode& that) const
+{
+    if(this->instr == that.instr)
+        return false;
+    if(this->mnemonic == that.mnemonic)
+        return false;
+
+    return true;
 }
 
 

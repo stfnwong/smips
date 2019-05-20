@@ -26,6 +26,9 @@ struct Opcode
         Opcode(const uint32_t c, const std::string& m);
         void init(void);
         std::string toString(void) const;
+        // operator overloads
+        bool operator==(const Opcode& that) const;
+        bool operator!=(const Opcode& that) const;
 };
 
 

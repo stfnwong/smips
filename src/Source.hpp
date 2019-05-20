@@ -20,39 +20,13 @@ typedef enum TokenType
     SYM_LABEL,
     SYM_INSTR,
     SYM_LITERAL,
+    SYM_DIRECTIVE,
     // register types
     SYM_REG_TEMP,
     SYM_REG_SAVED,
     SYM_REG_ARG,
     SYM_REG_RET,
 } TokenType;
-
-
-//std::string TokenTypeString(const TokenType& t)
-//{
-//    switch(t)
-//    {
-//        case SYM_NONE:
-//            return "NONE";
-//        case SYM_EOF:
-//            return "EOF";
-//        case SYM_INSTR:
-//            return "INSTR";
-//        case SYM_LITERAL:
-//            return "LITERAL";
-//        case SYM_REG_TEMP:
-//            return "R_TEMP";
-//        case SYM_REG_SAVED:
-//            return "R_SAVED";
-//        case SYM_REG_ARG:
-//            return "R_ARG";
-//        case SYM_REG_RET:
-//            return "R_RET";
-//        default:
-//            return "NULL";
-//    }
-//}
-
 
 
 /*
@@ -66,9 +40,9 @@ struct Token
     public:
         Token();
         Token(const TokenType& t, const std::string& v);
+        bool isReg(void) const;
         std::string toString(void) const;
 };
-
 
 
 /*
@@ -85,15 +59,21 @@ struct LineInfo
     bool         error;
     bool         is_label;
     bool         is_symbol;
+    bool         is_directive;
+    bool         is_imm;
+    int          args[3];
+    TokenType    types[3];      // record types for each register
     Opcode       opcode;
 
     public:
         LineInfo(); 
         void init(void);
-
         std::string toString(void);
-};
 
+        // operators
+        bool operator==(const LineInfo& that) const;
+        bool operator!=(const LineInfo& that) const;
+};
 
 /*
  * Symbol
@@ -106,6 +86,8 @@ struct Symbol
     public:
         Symbol();
         std::string toString(void) const;
+        bool operator==(const Symbol& that) const;
+        bool operator!=(const Symbol& that) const;
 };
 
 /*
@@ -119,14 +101,12 @@ class SymbolTable
 
     public:
         SymbolTable();
-
-        void add(const Symbol& s);
-        void update(const unsigned int idx, const Symbol& s);
-        Symbol& get(const unsigned int idx);
-        uint32_t getAddr(const std::string& label) const;
+        void         add(const Symbol& s);
+        void         update(const unsigned int idx, const Symbol& s);
+        Symbol&      get(const unsigned int idx);
+        uint32_t     getAddr(const std::string& label) const;
         unsigned int size(void) const;
-
-        void init(void);
+        void         init(void);
 };
 
 
@@ -141,11 +121,9 @@ class SourceInfo
 
     public:
         SourceInfo();
-
-        void add(const LineInfo& l);
-        void update(const unsigned int idx, const LineInfo& l);
-        LineInfo& get(const unsigned int idx);
-
+        void         add(const LineInfo& l);
+        void         update(const unsigned int idx, const LineInfo& l);
+        LineInfo&    get(const unsigned int idx);
         unsigned int getLineNum(const unsigned int idx) const;
         unsigned int getNumErr(void) const;
         unsigned int getNumLines(void) const;

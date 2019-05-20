@@ -169,6 +169,15 @@ void Lexer::nextToken(void)
     token_str = std::string(this->token_buf);
     op = this->instr_code_table.get(token_str);
 
+    // this is a directive token
+    if(token_str[0] == '.')
+    {
+        this->cur_token.type = SYM_DIRECTIVE;
+        this->cur_token.val  = token_str;
+
+        goto TOKEN_END;
+    }
+
     // This is a register token
     if(token_str[0] == '$')
     {
@@ -192,10 +201,10 @@ void Lexer::nextToken(void)
                     std::cout << "[" << __func__ << "] invalid register type " <<
                         token_str[1] << std::endl;
                 }
+                this->cur_token.type = SYM_NONE;
 
         }
         this->cur_token.val  = token_str.substr(2, token_str.length()-1);
-        //this->cur_token.val = "0";
 
         goto TOKEN_END;
     }
@@ -223,6 +232,149 @@ TOKEN_END:
     }
 }
 
+
+/*
+ * parseArith2()
+ */
+void Lexer::parseArith2(void)
+{
+    int argn = 0;
+    bool error = false;
+
+    // first token should be dest register
+    this->nextToken();
+    if(!this->cur_token.isReg())
+    {
+        error = true;
+        goto ARG_ERR;
+    }
+
+    this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+    this->line_info.types[argn] = this->cur_token.type;
+    argn += 1;
+
+    // next token should be first source register
+    this->nextToken();
+    argn++;
+    if(!this->cur_token.isReg())
+    {
+        error = true;
+        goto ARG_ERR;
+    }
+
+    this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+    this->line_info.types[argn] = this->cur_token.type;
+    argn += 1;
+
+
+ARG_ERR:
+    if(error)
+    {
+        this->line_info.error = true;
+        this->line_info.errstr = "Invalid argument " + std::to_string(argn+1) + 
+            " to instruction " + this->line_info.opcode.toString();
+        if(this->verbose)
+        {
+            std::cout << "[" << __func__ << "] (line " << 
+                this->cur_line << ") " << this->line_info.errstr << std::endl;
+        }
+    }
+
+    std::cout << "[" << __func__ << "] END" << std::endl;
+    std::cout << this->line_info.toString() << std::endl;
+}
+
+void Lexer::parseArith3(void)
+{
+    int argn = 0;
+    bool error = false;
+
+    //std::cout << "[" << __func__ << "] cur_token " << this->cur_token.toString() << std::endl;
+    // first token should be dest register
+    this->nextToken();
+
+    if(!this->cur_token.isReg())
+    {
+        error = true;
+        goto ARG_ERR;
+    }
+    this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+    this->line_info.types[argn] = this->cur_token.type;
+
+    this->nextToken();
+    argn++;
+    
+    if(!this->cur_token.isReg())
+    {
+        error = true;
+        goto ARG_ERR;
+    }
+
+    this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+    this->line_info.types[argn] = this->cur_token.type;
+
+    this->nextToken();
+    argn++;
+    if(!this->cur_token.isReg())
+    {
+        error = true;
+        goto ARG_ERR;
+    }
+
+    if(this->line_info.is_imm)
+        std::cout << "[" << __func__ << "] is_imm ; TOOD: handle " << std::endl;
+    else
+    {
+        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+        this->line_info.types[argn] = this->cur_token.type;
+    }
+
+ARG_ERR:
+    if(error)
+    {
+        this->line_info.error = true;
+        this->line_info.errstr = "Invalid argument " + std::to_string(argn+1) + 
+            " to instruction " + this->line_info.opcode.toString();
+        if(this->verbose)
+        {
+            std::cout << "[" << __func__ << "] (line " << 
+                this->cur_line << ") " << this->line_info.errstr << std::endl;
+        }
+    }
+
+    // TODO : debug - remove
+    std::cout << "[" << __func__ << "] END" << std::endl;
+    std::cout << this->line_info.toString() << std::endl;
+}
+
+/*
+ * parseLoad()
+ */
+void Lexer::parseLoad(void)
+{
+    std::cout << "[" << __func__ << "] TODO " << std::endl;
+}
+
+/*
+ * parseJump()
+ */
+void Lexer::parseJump(void)
+{
+    std::cout << "[" << __func__ << "] TODO " << std::endl;
+}
+
+/*
+ * parseStore()
+ */
+void Lexer::parseStore(void)
+{
+    std::cout << "[" << __func__ << "] TODO " << std::endl;
+}
+
+
+/*
+ * parseLine()
+ */
 void Lexer::parseLine(void)
 {
     Opcode op;
@@ -266,12 +418,22 @@ void Lexer::parseLine(void)
                 std::endl;
         }
 
+        this->line_info.opcode = op;
+
         switch(op.instr)
         {
             case LEX_ADD:
+            case LEX_ADDU:
+                this->parseArith3();
+                break;
+            case LEX_ADDI:
+            case LEX_ADDIU:
+                this->line_info.is_imm = true;
+                this->parseArith3();
                 break;
 
-            case LEX_ADDU:
+            case LEX_MULT:
+                this->parseArith2();
                 break;
 
             default:
