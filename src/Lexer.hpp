@@ -116,9 +116,7 @@ class Lexer
         void nextToken(void);
 
     private:
-        void parseReg(void);
-        void parse2Arg(void);
-        void parse3Arg(void);
+        void parseRegArgs(const int num);
         void parseLoad(void);
         void parseJump(void);
         void parseStore(void);

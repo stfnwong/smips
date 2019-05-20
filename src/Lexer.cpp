@@ -242,116 +242,37 @@ TOKEN_END:
 
 
 /*
- * parseReg()
- * Routine to handle details of a single register argument 
+ * parseRegArgs()
+ * Parse some number of register arguments, eg for arithmetic
+ * and logic instructions
  */
-void Lexer::parseReg(void)
-{
-
-}
-
-
-/*
- * parse2Arg()
- */
-void Lexer::parse2Arg(void)
-{
-    int  argn  = 0;
-    bool error = false;
-
-    // first token should be dest register
-    this->nextToken();
-    if(!this->cur_token.isReg())
-    {
-        error = true;
-        goto ARG_ERR;
-    }
-
-    if(this->cur_token.type != SYM_ZERO_REG)
-        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-    this->line_info.types[argn] = this->cur_token.type;
-    argn += 1;
-
-    // next token should be first source register
-    this->nextToken();
-    argn++;
-    if(!this->cur_token.isReg())
-    {
-        error = true;
-        goto ARG_ERR;
-    }
-
-    if(this->cur_token.type != SYM_ZERO_REG)
-        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-    this->line_info.types[argn] = this->cur_token.type;
-    argn += 1;
-
-
-ARG_ERR:
-    if(error)
-    {
-        this->line_info.error = true;
-        this->line_info.errstr = "Invalid argument " + std::to_string(argn+1) + 
-            " to instruction " + this->line_info.opcode.toString();
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] (line " << 
-                this->cur_line << ") " << this->line_info.errstr << std::endl;
-        }
-    }
-
-    std::cout << "[" << __func__ << "] END" << std::endl;
-    std::cout << this->line_info.toString() << std::endl;
-}
-
-void Lexer::parse3Arg(void)
+void Lexer::parseRegArgs(const int num_arg)
 {
     int argn = 0;
     bool error = false;
 
-    // first token should be dest register
-    this->nextToken();
-
-    if(!this->cur_token.isReg())
+    for(argn = 0; argn < num_arg; ++argn)
     {
-        error = true;
-        goto ARG_ERR;
-    }
-    if(this->cur_token.type != SYM_ZERO_REG)
-        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-    this->line_info.types[argn] = this->cur_token.type;
-
-    // next token should be first source register
-    this->nextToken();
-    argn++;
-    
-    if(!this->cur_token.isReg())
-    {
-        error = true;
-        goto ARG_ERR;
-    }
-
-    if(this->cur_token.type != SYM_ZERO_REG)
-        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-    this->line_info.types[argn] = this->cur_token.type;
-
-    // next token may be a register or immediate
-    this->nextToken();
-    argn++;
-
-    if(this->line_info.is_imm)
-        std::cout << "[" << __func__ << "] is_imm ; TOOD: handle " << std::endl;
-    else
-    {
+        this->nextToken();
         if(!this->cur_token.isReg())
         {
             error = true;
             goto ARG_ERR;
         }
-        if(this->cur_token.type != SYM_ZERO_REG)
-            this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-        this->line_info.types[argn] = this->cur_token.type;
+
+        if(this->line_info.is_imm && argn == 2)
+        {
+            std::cout << "[" << __func__ << "] is_imm ; TOOD: handle " << std::endl;
+
+        }
+        else
+        {
+            if(this->cur_token.type != SYM_ZERO_REG)
+                this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+            this->line_info.types[argn] = this->cur_token.type;
+        }
     }
+
 
 ARG_ERR:
     if(error)
@@ -448,25 +369,25 @@ void Lexer::parseLine(void)
         {
             case LEX_ADD:
             case LEX_ADDU:
-                this->parse3Arg();
+                this->parseRegArgs(3);
                 break;
             case LEX_ADDI:
             case LEX_ADDIU:
                 this->line_info.is_imm = true;
-                this->parse3Arg();
+                this->parseRegArgs(3);
                 break;
 
             case LEX_MULT:
-                this->parse2Arg();
+                this->parseRegArgs(2);
                 break;
 
             case LEX_OR:
-                this->parse2Arg();
+                this->parseRegArgs(2);
                 break;
 
             case LEX_ORI:
                 this->line_info.is_imm = true;
-                this->parse3Arg();
+                this->parseRegArgs(3);
                 break;
 
             default:
