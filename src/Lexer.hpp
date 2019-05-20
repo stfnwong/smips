@@ -99,7 +99,6 @@ class Lexer
         SymbolTable  sym_table;
         unsigned int cur_addr;
 
-
     // Motion through source file
     private:
         bool exhausted(void) const;
@@ -117,8 +116,9 @@ class Lexer
         void nextToken(void);
 
     private:
-        void parseArith2(void);
-        void parseArith3(void);
+        void parseReg(void);
+        void parse2Arg(void);
+        void parse3Arg(void);
         void parseLoad(void);
         void parseJump(void);
         void parseStore(void);

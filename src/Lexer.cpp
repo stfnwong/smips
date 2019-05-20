@@ -195,14 +195,22 @@ void Lexer::nextToken(void)
             case 'T':
                 this->cur_token.type = SYM_REG_TEMP;
                 break;
+            case 'Z':
+                this->cur_token.type = SYM_ZERO_REG;
+                break;
             default:
-                if(this->verbose)
+                // single numbers are also valid 
+                if(std::isdigit(token_str[1]))
+                    this->cur_token.type = SYM_REG_NUM;
+                else
                 {
-                    std::cout << "[" << __func__ << "] invalid register type " <<
-                        token_str[1] << std::endl;
+                    if(this->verbose)
+                    {
+                        std::cout << "[" << __func__ << "] invalid register type " <<
+                            token_str[1] << std::endl;
+                    }
+                    this->cur_token.type = SYM_NONE;
                 }
-                this->cur_token.type = SYM_NONE;
-
         }
         this->cur_token.val  = token_str.substr(2, token_str.length()-1);
 
@@ -234,11 +242,21 @@ TOKEN_END:
 
 
 /*
- * parseArith2()
+ * parseReg()
+ * Routine to handle details of a single register argument 
  */
-void Lexer::parseArith2(void)
+void Lexer::parseReg(void)
 {
-    int argn = 0;
+
+}
+
+
+/*
+ * parse2Arg()
+ */
+void Lexer::parse2Arg(void)
+{
+    int  argn  = 0;
     bool error = false;
 
     // first token should be dest register
@@ -249,7 +267,8 @@ void Lexer::parseArith2(void)
         goto ARG_ERR;
     }
 
-    this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+    if(this->cur_token.type != SYM_ZERO_REG)
+        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
     this->line_info.types[argn] = this->cur_token.type;
     argn += 1;
 
@@ -262,7 +281,8 @@ void Lexer::parseArith2(void)
         goto ARG_ERR;
     }
 
-    this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+    if(this->cur_token.type != SYM_ZERO_REG)
+        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
     this->line_info.types[argn] = this->cur_token.type;
     argn += 1;
 
@@ -284,12 +304,11 @@ ARG_ERR:
     std::cout << this->line_info.toString() << std::endl;
 }
 
-void Lexer::parseArith3(void)
+void Lexer::parse3Arg(void)
 {
     int argn = 0;
     bool error = false;
 
-    //std::cout << "[" << __func__ << "] cur_token " << this->cur_token.toString() << std::endl;
     // first token should be dest register
     this->nextToken();
 
@@ -298,9 +317,11 @@ void Lexer::parseArith3(void)
         error = true;
         goto ARG_ERR;
     }
-    this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+    if(this->cur_token.type != SYM_ZERO_REG)
+        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
     this->line_info.types[argn] = this->cur_token.type;
 
+    // next token should be first source register
     this->nextToken();
     argn++;
     
@@ -310,22 +331,25 @@ void Lexer::parseArith3(void)
         goto ARG_ERR;
     }
 
-    this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+    if(this->cur_token.type != SYM_ZERO_REG)
+        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
     this->line_info.types[argn] = this->cur_token.type;
 
+    // next token may be a register or immediate
     this->nextToken();
     argn++;
-    if(!this->cur_token.isReg())
-    {
-        error = true;
-        goto ARG_ERR;
-    }
 
     if(this->line_info.is_imm)
         std::cout << "[" << __func__ << "] is_imm ; TOOD: handle " << std::endl;
     else
     {
-        this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+        if(!this->cur_token.isReg())
+        {
+            error = true;
+            goto ARG_ERR;
+        }
+        if(this->cur_token.type != SYM_ZERO_REG)
+            this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
         this->line_info.types[argn] = this->cur_token.type;
     }
 
@@ -424,16 +448,25 @@ void Lexer::parseLine(void)
         {
             case LEX_ADD:
             case LEX_ADDU:
-                this->parseArith3();
+                this->parse3Arg();
                 break;
             case LEX_ADDI:
             case LEX_ADDIU:
                 this->line_info.is_imm = true;
-                this->parseArith3();
+                this->parse3Arg();
                 break;
 
             case LEX_MULT:
-                this->parseArith2();
+                this->parse2Arg();
+                break;
+
+            case LEX_OR:
+                this->parse2Arg();
+                break;
+
+            case LEX_ORI:
+                this->line_info.is_imm = true;
+                this->parse3Arg();
                 break;
 
             default:

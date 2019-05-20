@@ -30,6 +30,7 @@ bool Token::isReg(void) const
         case SYM_REG_SAVED:
         case SYM_REG_ARG:
         case SYM_REG_RET:
+        case SYM_ZERO_REG:
             return true;
         default:
             return false;
@@ -60,6 +61,10 @@ std::string Token::toString(void) const
             return "R_ARG <" + this->val + ">";
         case SYM_REG_RET:
             return "R_RET <" + this->val + ">";
+        case SYM_ZERO_REG:
+            return "R_ZERO <" + this->val + ">";
+        case SYM_REG_NUM:
+            return "R_NUM <" + this->val + ">";
         default:
             return "NULL <" + this->val + ">";
     }
@@ -100,7 +105,6 @@ std::string LineInfo::toString(void)
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    // TODO : make line for register and types
     oss << "Line  Type   Addr  Mnemonic   Opcode   Registers  flags error" << std::endl;
     //oss << "Line  Type   Addr  Mnemonic    Opcode  flags   arg1  arg2  arg3  imm  " << std::endl;
 
@@ -133,6 +137,10 @@ std::string LineInfo::toString(void)
             oss << "a" << i << " ";
         else if(this->types[i] == SYM_REG_RET)
             oss << "r" << i << " ";
+        else if(this->types[i] == SYM_ZERO_REG)
+            oss << "Z  ";
+        else if(this->types[i] == SYM_REG_NUM)
+            oss << "$" << i << " ";
         else
             oss << "   ";
     }

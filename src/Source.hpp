@@ -26,6 +26,8 @@ typedef enum TokenType
     SYM_REG_SAVED,
     SYM_REG_ARG,
     SYM_REG_RET,
+    SYM_ZERO_REG,
+    SYM_REG_NUM,        // register that has just a number
 } TokenType;
 
 
