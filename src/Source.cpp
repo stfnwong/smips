@@ -41,6 +41,14 @@ bool Token::isReg(void) const
     return false;
 }
 
+bool Token::isOffset(void) const
+{
+    if(this->type == SYM_REG_GLOBAL || this->type == SYM_REG_FUNC)
+        return true;
+
+    return false;
+}
+
 std::string Token::toString(void) const
 {
     switch(this->type)
@@ -100,13 +108,12 @@ void LineInfo::init(void)
     }
 }
 
-std::string LineInfo::toString(void)
+std::string LineInfo::toString(void) const
 {
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    oss << "Line  Type   Addr  Mnemonic   Opcode   Registers  flags error" << std::endl;
-    //oss << "Line  Type   Addr  Mnemonic    Opcode  flags   arg1  arg2  arg3  imm  " << std::endl;
+    oss << "Line  Type   Addr  Mnemonic   Opcode   Arguments  flags error" << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
@@ -126,6 +133,7 @@ std::string LineInfo::toString(void)
     oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
     oss << std::left << std::setw(12) << std::setfill(' ') << this->opcode.mnemonic;
     oss << "0x" << std::right << std::hex << std::setw(4) << std::setfill('0') << this->opcode.instr << "  ";
+
     // Insert arg/register chars
     for(auto i = 0; i < 3; ++i)
     {
@@ -141,6 +149,12 @@ std::string LineInfo::toString(void)
             oss << "Z  ";
         else if(this->types[i] == SYM_REG_NUM)
             oss << "$" << i << " ";
+        else if(this->types[i] == SYM_REG_GLOBAL)
+            oss << "$gp";       // TODO: add offset
+        else if(this->types[i] == SYM_REG_FUNC)
+            oss << "$fp";       // TODO: add offset
+        else if(this->types[i] == SYM_LITERAL)
+            oss << std::left << std::setfill(' ') << std::setw(3) << this->args[i];
         else
             oss << "   ";
     }
@@ -329,4 +343,14 @@ unsigned int SourceInfo::getNumErr(void) const
 unsigned int SourceInfo::getNumLines(void) const
 {
     return this->line_info.size();
+}
+
+std::string SourceInfo::toString(void) const
+{
+    std::ostringstream oss;
+
+    for(unsigned int l = 0; l < this->line_info.size(); ++l)
+        oss << this->line_info[l].toString();
+
+    return oss.str();
 }

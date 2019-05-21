@@ -25,6 +25,8 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.addr            = 0x200;      
     line.opcode.instr    = LEX_LW;
     line.opcode.mnemonic = "LW";
+    line.args[1]  = 4;
+    line.types[1] = SYM_REG_GLOBAL;
     info.add(line);
 
     // line 2
@@ -52,12 +54,16 @@ class TestLexer : public ::testing::Test
 TEST_F(TestLexer, test_init)
 {
     Lexer test_lexer;
+    SourceInfo src_out;
 
     test_lexer.setVerbose(true);
     test_lexer.loadFile(this->test_file);
     test_lexer.lex();
 
     // get the source info
+    src_out = test_lexer.getSourceInfo();
+
+    std::cout << src_out.toString() << std::endl;
 }
 
 TEST_F(TestLexer, test_lex_mult_add)

@@ -22,12 +22,14 @@ typedef enum TokenType
     SYM_LITERAL,
     SYM_DIRECTIVE,
     // register types
+    SYM_REG_FUNC,
     SYM_REG_TEMP,
     SYM_REG_SAVED,
     SYM_REG_ARG,
     SYM_REG_RET,
     SYM_ZERO_REG,
     SYM_REG_NUM,        // register that has just a number
+    SYM_REG_GLOBAL,     // for the $GP register
 } TokenType;
 
 
@@ -43,6 +45,7 @@ struct Token
         Token();
         Token(const TokenType& t, const std::string& v);
         bool isReg(void) const;
+        bool isOffset(void) const;
         std::string toString(void) const;
 };
 
@@ -70,9 +73,8 @@ struct LineInfo
     public:
         LineInfo(); 
         void init(void);
-        std::string toString(void);
+        std::string toString(void) const;
 
-        // operators
         bool operator==(const LineInfo& that) const;
         bool operator!=(const LineInfo& that) const;
 };
@@ -130,7 +132,7 @@ class SourceInfo
         unsigned int getNumErr(void) const;
         unsigned int getNumLines(void) const;
 
-
+        std::string  toString(void) const;
 };
 
 #endif /*__SOURCE_HPP*/
