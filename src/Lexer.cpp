@@ -11,6 +11,7 @@
 #include <fstream>
 #include <string>
 #include "Lexer.hpp"
+#include "Codes.hpp"
 
 
 Lexer::Lexer()
@@ -506,7 +507,6 @@ const SourceInfo& Lexer::getSourceInfo(void) const
 {
     return this->source_info;
 }
-
 
 
 // ==== SETTERS ===== //

@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 #include <gtest/gtest.h>
+
+#include "Codes.hpp"
 #include "Lexer.hpp"
 #include "Source.hpp"
 
