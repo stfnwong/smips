@@ -199,7 +199,7 @@ void Lexer::nextToken(void)
                 this->cur_token.type = SYM_REG_TEMP;
                 break;
             case 'Z':
-                this->cur_token.type = SYM_ZERO_REG;
+                this->cur_token.type = SYM_REG_ZERO;
                 break;
             default:
                 // single numbers are also valid 
@@ -228,29 +228,31 @@ void Lexer::nextToken(void)
             tok_ptr++;
 
         this->cur_token.val = token_str.substr(0, tok_ptr);
-        std::cout << "[" << __func__ << "] cur_token.val = " << this->cur_token.val << std::endl;
-        std::cout << "[" << __func__ << "] tok_ptr = " << tok_ptr << std::endl;
+        //std::cout << "[" << __func__ << "] cur_token.val = " << this->cur_token.val << std::endl;
+        //std::cout << "[" << __func__ << "] tok_ptr = " << tok_ptr << std::endl;
 
         // if there are more characters, check whether or not this is a 
         // register with offsets 
         if(token_str.size() > tok_ptr)
         {
-            if((token_str[tok_ptr] != '(') && (token_str[tok_ptr+1] != '$'))
+            //std::cout << "[" << __func__ << "] we think that token " << token_str << " is a offset register" << std::endl;
+            if((token_str[tok_ptr] == '(') && (token_str[tok_ptr+1] == '$'))
             {
-                this->line_info.error = true;
-                this->line_info.errstr = "Syntax error (" + token_str + ")";
-                goto TOKEN_END;
+                if(token_str[tok_ptr+2] == 'G')
+                    this->cur_token.type = SYM_REG_GLOBAL;
+                else if(token_str[tok_ptr+2] == 'F')
+                    this->cur_token.type = SYM_REG_FUNC;
+                else
+                {
+                    this->line_info.error = true;
+                    this->line_info.errstr = "Invalid offset syntax " + 
+                        this->cur_token.toString();
+                }
             }
-
-            if(token_str[tok_ptr+2] == 'G')
-                this->cur_token.type = SYM_REG_GLOBAL;
-            else if(token_str[tok_ptr+2] == 'F')
-                this->cur_token.type = SYM_REG_FUNC;
             else
             {
                 this->line_info.error = true;
-                this->line_info.errstr = "Invalid offset syntax " + 
-                    this->cur_token.toString();
+                this->line_info.errstr = "Syntax error (" + token_str + ")";
             }
         }
         else
@@ -312,59 +314,12 @@ void Lexer::parseRegArgs(const int num_args)
                 error = true;
                 goto ARG_ERR;
             }
-            if(this->cur_token.type == SYM_ZERO_REG)
+            if(this->cur_token.type == SYM_REG_ZERO)
                 this->line_info.args[argn] = 0;
             else
                 this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
             this->line_info.types[argn] = this->cur_token.type;
         }
-    }
-
-ARG_ERR:
-    if(error)
-    {
-        this->line_info.error = true;
-        this->line_info.errstr = "Invalid argument " + std::to_string(argn+1) + 
-            " to instruction " + this->line_info.opcode.toString();
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] (line " << 
-                this->cur_line << ") " << this->line_info.errstr << std::endl;
-        }
-    }
-}
-
-/*
- * parseLoad()
- */
-void Lexer::parseLoad(void)
-{
-    int argn;
-    bool error = false;
-    // Work out if one of the arguments is the global register pointer
-    // Store offset in args[argn]
-
-    // first argument is destination register
-    for(argn = 0; argn < 2; ++argn)
-    {
-        this->nextToken();
-        if((!this->cur_token.isReg()) ||                          // needs to be register 
-           (argn == 0 && this->cur_token.type == SYM_REG_GLOBAL)) // first arg can't be global
-        {
-            error = true;
-            goto ARG_ERR;
-        }
-        // Check if the argument is a global pointer 
-        if(this->cur_token.type == SYM_REG_GLOBAL)
-        {
-
-        }
-        if(this->cur_token.type == SYM_ZERO_REG)
-            this->line_info.args[argn] = 0;
-        else
-            this->line_info.args[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-        this->line_info.types[argn] = this->cur_token.type;
-
     }
 
 ARG_ERR:
@@ -388,38 +343,6 @@ void Lexer::parseJump(void)
 {
     std::cout << "[" << __func__ << "] TODO " << std::endl;
 }
-
-/*
- * parseStore()
- */
-void Lexer::parseStore(void)
-{
-    bool error = false;
-    int argn;
-    
-    for(argn = 0; argn < 2; ++argn)
-    {
-        if(!this->cur_token.isReg())
-        {
-            error = true;
-            goto ARG_ERR;
-        }
-    }
-
-ARG_ERR:
-    if(error)
-    {
-        this->line_info.error = true;
-        this->line_info.errstr = "Invalid argument " + std::to_string(argn+1) + 
-            " to instruction " + this->line_info.opcode.toString();
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] (line " << 
-                this->cur_line << ") " << this->line_info.errstr << std::endl;
-        }
-    }
-}
-
 
 /*
  * parseLine()
@@ -482,10 +405,11 @@ void Lexer::parseLine(void)
                 break;
 
             case LEX_MULT:
-                this->parseRegArgs(2);
+                this->parseRegArgs(3);
                 break;
 
             case LEX_LW:
+                this->parseRegArgs(2);
                 break;
 
             case LEX_OR:

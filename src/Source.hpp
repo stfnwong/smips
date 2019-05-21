@@ -27,7 +27,7 @@ typedef enum TokenType
     SYM_REG_SAVED,
     SYM_REG_ARG,
     SYM_REG_RET,
-    SYM_ZERO_REG,
+    SYM_REG_ZERO,
     SYM_REG_NUM,        // register that has just a number
     SYM_REG_GLOBAL,     // for the $GP register
 } TokenType;
@@ -77,6 +77,8 @@ struct LineInfo
 
         bool operator==(const LineInfo& that) const;
         bool operator!=(const LineInfo& that) const;
+
+        std::string diff(const LineInfo& that) const;
 };
 
 /*

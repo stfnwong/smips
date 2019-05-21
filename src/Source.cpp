@@ -30,7 +30,9 @@ bool Token::isReg(void) const
         case SYM_REG_SAVED:
         case SYM_REG_ARG:
         case SYM_REG_RET:
-        case SYM_ZERO_REG:
+        case SYM_REG_ZERO:
+        case SYM_REG_GLOBAL:
+        case SYM_REG_FUNC:
             return true;
         default:
             return false;
@@ -69,10 +71,12 @@ std::string Token::toString(void) const
             return "R_ARG <" + this->val + ">";
         case SYM_REG_RET:
             return "R_RET <" + this->val + ">";
-        case SYM_ZERO_REG:
+        case SYM_REG_ZERO:
             return "R_ZERO <" + this->val + ">";
         case SYM_REG_NUM:
             return "R_NUM <" + this->val + ">";
+        case SYM_REG_GLOBAL:
+            return "R_GLOBAL <" + this->val + ">";
         default:
             return "NULL <" + this->val + ">";
     }
@@ -145,14 +149,14 @@ std::string LineInfo::toString(void) const
             oss << "a" << i << " ";
         else if(this->types[i] == SYM_REG_RET)
             oss << "r" << i << " ";
-        else if(this->types[i] == SYM_ZERO_REG)
+        else if(this->types[i] == SYM_REG_ZERO)
             oss << "Z  ";
         else if(this->types[i] == SYM_REG_NUM)
             oss << "$" << i << " ";
         else if(this->types[i] == SYM_REG_GLOBAL)
-            oss << "$gp";       // TODO: add offset
+            oss << this->args[i] << "$G";       
         else if(this->types[i] == SYM_REG_FUNC)
-            oss << "$fp";       // TODO: add offset
+            oss << this->args[i] << "$F";       
         else if(this->types[i] == SYM_LITERAL)
             oss << std::left << std::setfill(' ') << std::setw(3) << this->args[i];
         else
@@ -213,6 +217,84 @@ bool LineInfo::operator==(const LineInfo& that) const
 bool LineInfo::operator!=(const LineInfo& that) const
 {
     return !(*this == that);
+}
+
+std::string LineInfo::diff(const LineInfo& that) const
+{
+    std::ostringstream oss;
+    int num_err = 0;
+
+    if(this->label != that.label)
+    {
+        oss << "label [" << this->label << "] does not match ["  <<
+            that.label << "]" << std::endl;
+        num_err += 1;
+    }
+    if(this->symbol != that.symbol)
+    {
+        oss << "symbol [" << this->symbol << "] does not match [" <<
+            that.label << "]" << std::endl;
+        num_err += 1;
+    }
+    if(this->errstr != that.errstr)
+    {
+        oss << "errstr does not match" << std::endl;
+        num_err += 1;
+    }
+    if(this->line_num != that.line_num)
+    {
+        oss << "line num [" << this->line_num << "] does not match [" <<
+            that.line_num << "]" << std::endl;
+        num_err += 1;
+    }
+    if(this->addr != that.addr)
+    {
+        oss << "addr [" << this->addr << "] does not match [" <<
+            that.addr << "]" << std::endl;
+        num_err += 1;
+    }
+    if(this->error != that.error)
+    {
+        oss << "error does not match" << std::endl;
+        num_err += 1;
+    }
+    if(this->is_label != that.is_label)
+    {
+        oss << "is_label does not match" << std::endl;
+        num_err += 1;
+    }
+    if(this->is_symbol != that.is_symbol)
+    {
+        oss << "is_symbol does not match" << std::endl;
+        num_err += 1;
+    }
+    if(this->is_imm != that.is_imm)
+    {
+        oss << "is_imm does not match" << std::endl;
+        num_err += 1;
+    }
+    if(this->opcode != that.opcode)
+    {
+        oss << "opcode [" << this->opcode.toString() << 
+            "] does not match [" << that.opcode.toString() << 
+            "]" << std::endl;
+        num_err += 1;
+    }
+
+    // create one error for each mismatched argument
+    for(int i = 0; i < 3; ++i)
+    {
+        if(this->args[i] != that.args[i])
+        {
+            oss << "arg " << i << " [" << this->args[i] << 
+                "] does not match [" << that.args[i] << 
+                "]" << std::endl;
+            num_err += 1;
+        }
+    }
+    oss << num_err << " differences total" << std::endl;
+
+    return oss.str();
 }
 
 
