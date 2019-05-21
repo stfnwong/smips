@@ -147,13 +147,6 @@ void Lexer::scanToken(void)
     // If we are on a seperator now, advance the source pointer 
     if(this->cur_char == ',')
         this->advance();
-
-    //if(this->verbose)
-    //{
-    //    std::cout << "[" << __func__ << "] (line " << std::dec << 
-    //        this->cur_line << ") : token_buf contains <" << 
-    //        std::string(this->token_buf) << "> " << std::endl;
-    //}
 }
 
 /*
@@ -207,12 +200,10 @@ void Lexer::nextToken(void)
                     this->cur_token.type = SYM_REG_NUM;
                 else
                 {
-                    if(this->verbose)
-                    {
-                        std::cout << "[" << __func__ << "] invalid register type " <<
-                            token_str[1] << std::endl;
-                    }
+                    this->line_info.error = true;
+                    this->line_info.errstr = "Invalid register type " + token_str[1];
                     this->cur_token.type = SYM_NONE;
+                    goto TOKEN_END;
                 }
         }
         this->cur_token.val  = token_str.substr(2, token_str.length()-1);
@@ -228,14 +219,10 @@ void Lexer::nextToken(void)
             tok_ptr++;
 
         this->cur_token.val = token_str.substr(0, tok_ptr);
-        //std::cout << "[" << __func__ << "] cur_token.val = " << this->cur_token.val << std::endl;
-        //std::cout << "[" << __func__ << "] tok_ptr = " << tok_ptr << std::endl;
-
         // if there are more characters, check whether or not this is a 
         // register with offsets 
         if(token_str.size() > tok_ptr)
         {
-            //std::cout << "[" << __func__ << "] we think that token " << token_str << " is a offset register" << std::endl;
             if((token_str[tok_ptr] == '(') && (token_str[tok_ptr+1] == '$'))
             {
                 if(token_str[tok_ptr+2] == 'G')

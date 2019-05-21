@@ -154,9 +154,9 @@ std::string LineInfo::toString(void) const
         else if(this->types[i] == SYM_REG_NUM)
             oss << "$" << i << " ";
         else if(this->types[i] == SYM_REG_GLOBAL)
-            oss << this->args[i] << "$G";       
+            oss << "G+" << this->args[i];
         else if(this->types[i] == SYM_REG_FUNC)
-            oss << this->args[i] << "$F";       
+            oss << "F+" << this->args[i];
         else if(this->types[i] == SYM_LITERAL)
             oss << std::left << std::setfill(' ') << std::setw(3) << this->args[i];
         else
