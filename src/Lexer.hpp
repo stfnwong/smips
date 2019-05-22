@@ -13,8 +13,6 @@
 #include "Source.hpp"
 
 
-
-
 /*
  * Lexer
  * Lexes a source file and produces a sequence of Tokens

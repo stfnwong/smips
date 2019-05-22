@@ -29,6 +29,7 @@ typedef enum instr_code
     LEX_J, LEX_JAL, LEX_JALR, LEX_JR,
 } instr_code;
 
+
 // MIPS Opcode list 
 const Opcode lex_instr_codes[] = {
     Opcode(LEX_NULL,  "\0"),
@@ -62,5 +63,10 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_JALR,  "JALR"),
     Opcode(LEX_JR,    "JR"),
 };
+
+
+// TODO : convert a lexer code to an instruction code
+
+
 
 #endif /*__CODES_HPP*/

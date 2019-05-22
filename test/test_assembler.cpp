@@ -24,8 +24,9 @@ Program get_mult_add_expected_program(void)
     // TODO: when starting address is sorted, update this
 
     // LW $t0, 4($gp)
-    instr.ins = 0x23 << 26;
-    instr.adr =  0x200;
+    instr.ins = 0x23;
+    //instr.ins = instr.ins | (
+    instr.adr = 0x200;
 
 
     return prog;

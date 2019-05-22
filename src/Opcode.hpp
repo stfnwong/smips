@@ -14,7 +14,8 @@
 
 /*
  * Opcode 
- * Represents a single Opcode from the MIPS aseembly language
+ * Represents a single Opcode from the MIPS aseembly language.
+ * FOr use with Lexer object.
  */
 struct Opcode
 {
@@ -52,6 +53,13 @@ class OpcodeTable
         unsigned int size(void) const;
         void         init(void);
 };
+
+
+/*
+ * InstrCode
+ * Instruction code used by Assembler
+ */
+
 
 
 #endif /*__OPCODE_HPP*/
