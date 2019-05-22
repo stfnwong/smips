@@ -45,7 +45,6 @@ class Program
         std::vector <Instr> instructions;
         Instr null_instr;
 
-
     public:
         Program();
 
@@ -53,9 +52,12 @@ class Program
         void add(const Instr& i);
         Instr& get(const unsigned int idx);
         void writeMem(const uint32_t addr, const uint32_t val);
-
         unsigned int size(void) const;
         std::string toString(void) const;
+
+        // disk operations
+        int save(const std::string& filename);
+        int load(const std::string& filename);
 };
 
 

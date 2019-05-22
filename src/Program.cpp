@@ -6,7 +6,9 @@
  */
 
 #include "Program.hpp"
+#include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 
 
@@ -104,4 +106,81 @@ std::string Program::toString(void) const
     }
 
     return oss.str();
+}
+
+
+// disk operations
+int Program::save(const std::string& filename) 
+{
+    uint32_t N;
+    std::ofstream outfile;
+
+    try{
+        outfile.open(filename, std::ios::binary);
+    }
+    catch(std::ios_base::failure& e) {
+        std::cerr << "[" << __func__ << "] " << e.what() << std::endl;
+        return -1;
+    }
+
+    N = (uint32_t) this->instructions.size();
+    outfile.write(reinterpret_cast<char*>(&N), sizeof(uint32_t));
+
+    outfile.write(
+            reinterpret_cast<char*>(&this->instructions[0].adr),
+            sizeof(uint32_t)
+    );
+    for(unsigned int idx = 0; idx < this->instructions.size(); ++idx)
+    {
+        outfile.write(
+                reinterpret_cast<char*>(&this->instructions[idx].ins),
+                sizeof(uint32_t)
+        );
+    }
+    outfile.close();
+
+    return 0;
+}
+
+int Program::load(const std::string& filename) 
+{
+    std::ifstream infile;
+    uint32_t num_records;
+    uint32_t addr;
+    uint8_t b0, b1, b2, b3;
+
+    this->instructions.clear();
+
+    try {
+        infile.open(filename, std::ios::binary);
+    }
+    catch(std::ios_base::failure& e) {
+        std::cerr << "[" << __func__ << "] " << e.what() << std::endl;
+    }
+
+    // find how many records are in the file
+    infile.read(reinterpret_cast<char*>(&num_records), sizeof(uint32_t));
+    if(num_records == 0)
+    {
+        std::cerr << "[" << __func__ << "] no records in file " << 
+            filename << std::endl;
+    }
+
+    // load the first address pointer 
+    infile.read(reinterpret_cast<char*>(&addr), sizeof(uint32_t));
+
+    Instr instr;
+    for(unsigned int idx = 0; idx < num_records; ++idx)
+    {
+        infile.read(
+                reinterpret_cast<char*>(&instr.ins), 
+                sizeof(uint32_t)
+        );
+        instr.adr = addr;
+        addr++;
+        this->instructions.push_back(instr);
+    }
+    infile.close();
+
+    return 0;
 }
