@@ -13,8 +13,14 @@
 #include "Codes.hpp"
 
 
+// ======== Assembler ======= //
+Assembler::Assembler() 
+{
+    this->verbose = false;
+    this->num_err = 0;
+}
 
-int reg2Offset(const TokenType& type, const int val)
+int Assembler::arg2Offset(const TokenType& type, const int val) const
 {
     int offset;
 
@@ -28,12 +34,12 @@ int reg2Offset(const TokenType& type, const int val)
 
         case SYM_REG_RET:
             if((2 + val) > 3)
-                return REG_INVALID_OFFSET;
+                return this->ARG_INVALID_OFFSET;
             return 2 + val;
 
         case SYM_REG_ARG:
             if(4 + val > 7)
-                return REG_INVALID_OFFSET;
+                return this->ARG_INVALID_OFFSET;
             return 4 + val;
 
         case SYM_REG_TEMP:
@@ -42,17 +48,12 @@ int reg2Offset(const TokenType& type, const int val)
                 return offset;
             if(offset > 23 && offset < 26)
                 return offset;
-            return REG_INVALID_OFFSET;
+            return this->ARG_INVALID_OFFSET;
 
         case SYM_REG_SAVED:
             if(16 + val > 23)
-                return REG_INVALID_OFFSET;
+                return this->ARG_INVALID_OFFSET;
             return 16 + val;
-
-        //case SYM_REG_TEMP:
-        //    if(24 + val > 26)
-        //        return REG_INVALID_OFFSET;
-        //    return 24 + val;
 
         case SYM_REG_GLOBAL:
             return 28;
@@ -68,21 +69,12 @@ int reg2Offset(const TokenType& type, const int val)
 
         default:
             std::cout << "[" << __func__  << "] not a register type" << std::endl;
-            return REG_INVALID_OFFSET;
+            return this->ARG_INVALID_OFFSET;
     }
 
     // getting here is an error 
-    return REG_INVALID_OFFSET;
+    return this->ARG_INVALID_OFFSET;
 }
-
-
-// ======== Assembler ======= //
-Assembler::Assembler() 
-{
-    this->verbose = false;
-    this->num_err = 0;
-}
-
 
 uint32_t Assembler::asm_r_instr(const LineInfo& l, const int n) const
 {
@@ -91,13 +83,7 @@ uint32_t Assembler::asm_r_instr(const LineInfo& l, const int n) const
 
     for(int i = 0; i < n; ++i)
     {
-        reg   = reg2Offset(l.types[i], l.args[i]);
-        //if(reg == -1)
-        //{
-        //    std::cerr << "[" << __func__ << "] invalid register" <<
-        //        l.types[i] <<  " " << l.args[i] << std::endl;
-        //    this->num_err += 1;
-        //}
+        reg   = this->arg2Offset(l.types[i], l.args[i]);
         instr = instr | (reg << this->r_instr_offsets[i]);
     }
 
@@ -111,7 +97,7 @@ uint32_t Assembler::asm_i_instr(const LineInfo& l, const int n) const
 
     for(int i = 0; i < n; ++i)
     {
-        reg = reg2Offset(l.types[i], l.args[i]);
+        reg = this->arg2Offset(l.types[i], l.args[i]);
         instr = instr | (reg << this->i_instr_offsets[i]);
     }
 
@@ -135,10 +121,8 @@ void Assembler::asm_addi(const LineInfo& l)
 {
     Instr instr;
 
-    instr.ins = 0x08 << 26;
-    instr.ins = instr.ins | (l.args[0] << 21);
-    instr.ins = instr.ins | (l.args[1] << 16);
-    instr.ins = instr.ins | (l.args[2]);
+    instr.ins = instr.ins | this->asm_i_instr(l, 3);
+    instr.ins = instr.ins | (0x08 << 26);
     instr.adr = l.addr;
     this->program.add(instr);
 }
@@ -147,22 +131,19 @@ void Assembler::asm_addu(const LineInfo& l)
 {
     Instr instr;
 
-    instr.ins = 0x21 << 26;
-    instr.ins = instr.ins | (l.args[0] << 21);
-    instr.ins = instr.ins | (l.args[1] << 16);
-    instr.ins = instr.ins | (l.args[2] << 11);
+    instr.ins = instr.ins | this->asm_r_instr(l, 3);
+    instr.ins = instr.ins | 0x21;
     instr.adr = l.addr;
     this->program.add(instr);
 }
 
 void Assembler::asm_lw(const LineInfo& l)
 {
-    // R format
+    // I format
     Instr instr;
 
-    instr.ins = 0x23 << 26;
-    instr.ins = instr.ins | (l.args[0] << 21);
-    instr.ins = instr.ins | (l.args[1] << 16);
+    instr.ins = instr.ins | this->asm_i_instr(l, 2);
+    instr.ins = instr.ins | (0x23 << 26);
     instr.adr = l.addr;
     this->program.add(instr);
 }
@@ -200,12 +181,22 @@ void Assembler::asm_ori(const LineInfo& l)
 
 void Assembler::asm_sub(const LineInfo& l)
 {
+    Instr instr;
 
+    instr.ins = instr.ins | this->asm_r_instr(l, 3);
+    instr.ins = instr.ins | 0x22;
+    instr.adr = l.addr;
+    this->program.add(instr);
 }
 
 void Assembler::asm_subu(const LineInfo& l)
 {
+    Instr instr;
 
+    instr.ins = instr.ins | this->asm_r_instr(l, 3);
+    instr.ins = instr.ins | 0x23;
+    instr.adr = l.addr;
+    this->program.add(instr);
 }
 
 void Assembler::asm_sw(const LineInfo& l)

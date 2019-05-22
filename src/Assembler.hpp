@@ -12,11 +12,6 @@
 #include "Program.hpp"
 #include "Source.hpp"
 
-constexpr int REG_INVALID_OFFSET  = -1;
-
-// Convert a register type and  value to an offset in memory
-int reg2Offset(const TokenType& type, const int val);
-
 
 /*
  * Assembler
@@ -28,18 +23,16 @@ class Assembler
         bool verbose;
         int  num_err;
         const uint8_t r_instr_offsets[3] = {
-            11,         // rd offset
-            21,         // rs offset 
-            16          // rt offset
+            11,     // rd offset
+            21,     // rs offset 
+            16      // rt offset
         };
         const uint8_t i_instr_offsets[3] = {
             16,     // rt   (dest))
             21,     // rs   (base)
             0       // imm
         };
-        //const uint8_t r_instr_rs_offset = 21;
-        //const uint8_t r_instr_rt_offset = 16;
-        //const uint8_t r_instr_rd_offset = 11;
+        const int ARG_INVALID_OFFSET  = -1;
 
 
     // lexer output
@@ -52,6 +45,7 @@ class Assembler
 
     // assemble by instruction type
     private:
+        int      arg2Offset(const TokenType& type, const int val) const;
         uint32_t asm_r_instr(const LineInfo& l, const int n) const;
         uint32_t asm_i_instr(const LineInfo& l, const int n) const;
         uint32_t asm_j_instr(const LineInfo& l) const;
@@ -71,7 +65,6 @@ class Assembler
 
     public:
         Assembler();
-        //int  readFile(const std::string& filename);
 
         void assemble(void);
 

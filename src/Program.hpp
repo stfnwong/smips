@@ -14,6 +14,11 @@
 #include <vector>
 
 
+/*
+ * Instr
+ * Represents a single assembly instruction 
+ * (machine word + address)
+ */
 struct Instr
 {
     uint32_t adr;
@@ -30,7 +35,10 @@ struct Instr
 };
 
 
-
+/*
+ * Program
+ * Represents a series of Instr objects
+ */
 class Program
 {
     private:

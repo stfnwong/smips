@@ -98,7 +98,10 @@ std::string Program::toString(void) const
     std::ostringstream oss;
 
     for(unsigned int i = 0; i < this->instructions.size(); ++i)
-        oss << this->instructions[i].toString() << std::endl;
+    {
+        oss << "Instr " << std::setw(4) << std::dec << i << 
+            " : " << this->instructions[i].toString() << std::endl;
+    }
 
     return oss.str();
 }
