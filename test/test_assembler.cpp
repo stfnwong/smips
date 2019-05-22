@@ -16,17 +16,18 @@
 #include "Program.hpp"
 
 
+// TODO: when starting address is sorted, update this
 Program get_mult_add_expected_program(void)
 {
     Program prog;
     Instr instr;
 
-    // TODO: when starting address is sorted, update this
-
     // LW $t0, 4($gp)
-    instr.ins = 0x23;
-    //instr.ins = instr.ins | (
     instr.adr = 0x200;
+    instr.ins = 35 << 26;
+    // TODO: the point of having a register lookup was to convert the 
+    // various register "types" into memory-space offsets
+    //instr.ins = instr.ins;
 
 
     return prog;

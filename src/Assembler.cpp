@@ -13,97 +13,66 @@
 #include "Codes.hpp"
 
 
-// Instruction Code stuff
-InstrCode::InstrCode()
-{
-    this->code = 0;
-    this->type = InstrType::INSTR_NULL;
-}
 
-InstrCode::InstrCode(const uint8_t c, const InstrType& t)
+int reg2Offset(const TokenType& type, const int val)
 {
-    this->code = c;
-    this->type = t;
-}
+    int offset;
 
-bool InstrCode::operator==(const InstrCode& that) const
-{
-    if(this->code != that.code)
-        return false;
-    if(this->type != that.type)
-        return false;
-    return true;
-}
-
-bool InstrCode::operator!=(const InstrCode& that) const
-{
-    if(this->code == that.code)
-        return false;
-    if(this->type == that.type)
-        return false;
-    return true;
-}
-
-std::string InstrCode::toString(void) const
-{
-    std::ostringstream oss;
-
-    oss << std::hex << std::setw(2) << std::setfill('0') <<
-        "0x" << this->code << " ";
-    oss << "[";
-    switch(this->type)
+    switch(type)
     {
-        case InstrType::INSTR_R:
-            oss << "R";
-            break;
-        case InstrType::INSTR_I:
-            oss << "I";
-            break;
-        case InstrType::INSTR_J:
-            oss << "J";
-            break;
+        case SYM_REG_ZERO:
+            return 0;
+
+        case SYM_REG_AT:
+            return 1;
+
+        case SYM_REG_RET:
+            if((2 + val) > 3)
+                return REG_INVALID_OFFSET;
+            return 2 + val;
+
+        case SYM_REG_ARG:
+            if(4 + val > 7)
+                return REG_INVALID_OFFSET;
+            return 4 + val;
+
+        case SYM_REG_TEMP:
+            offset = 8 + val;
+            if(offset > 7 && offset < 16)
+                return offset;
+            if(offset > 23 && offset < 26)
+                return offset;
+            return REG_INVALID_OFFSET;
+
+        case SYM_REG_SAVED:
+            if(16 + val > 23)
+                return REG_INVALID_OFFSET;
+            return 16 + val;
+
+        //case SYM_REG_TEMP:
+        //    if(24 + val > 26)
+        //        return REG_INVALID_OFFSET;
+        //    return 24 + val;
+
+        case SYM_REG_GLOBAL:
+            return 28;
+
+        case SYM_REG_STACK:
+            return 29;
+
+        case SYM_REG_FRAME:
+            return 30;
+
+        case SYM_LITERAL:
+            return val;
+
         default:
-            oss << "NULL";
-            break;
+            std::cout << "[" << __func__  << "] not a register type" << std::endl;
+            return REG_INVALID_OFFSET;
     }
-    oss << " type]";
 
-    return oss.str();
-}
-
-// Code table
-InstrTable::InstrTable()
-{
-    // register instruction table
-    this->r_instrs[0]  = InstrCode(32, InstrType::INSTR_R);  // ADD
-    this->r_instrs[1]  = InstrCode(33, InstrType::INSTR_R);  // ADDU
-    this->r_instrs[2]  = InstrCode(34, InstrType::INSTR_R);  // SUB
-    this->r_instrs[3]  = InstrCode(35, InstrType::INSTR_R);  // SUBU
-    this->r_instrs[4]  = InstrCode(36, InstrType::INSTR_R);  // AND
-    this->r_instrs[5]  = InstrCode(37, InstrType::INSTR_R);  // OR
-    this->r_instrs[6]  = InstrCode(39, InstrType::INSTR_R);  // NOR
-    this->r_instrs[7]  = InstrCode(42, InstrType::INSTR_R);  // SLT
-    this->r_instrs[8]  = InstrCode(43, InstrType::INSTR_R);  // SLTU
-    this->r_instrs[9]  = InstrCode(0 , InstrType::INSTR_R);  // SLL
-    this->r_instrs[10] = InstrCode(2 , InstrType::INSTR_R);  // SRL
-    this->r_instrs[11] = InstrCode(8 , InstrType::INSTR_R);  // JR
-
-    // immediate instruction table
-    this->i_instrs[0]  = InstrCode(4,  InstrType::INSTR_I);  // BEQ
-    this->i_instrs[1]  = InstrCode(5 , InstrType::INSTR_I);  // BNE
-    this->i_instrs[2]  = InstrCode(8 , InstrType::INSTR_I);  // ADDI
-    this->i_instrs[3]  = InstrCode(9 , InstrType::INSTR_I);  // ADDIU
-    this->i_instrs[4]  = InstrCode(12, InstrType::INSTR_I);  // ANDI
-    this->i_instrs[5]  = InstrCode(13, InstrType::INSTR_I);  // ORI
-    this->i_instrs[6]  = InstrCode(10, InstrType::INSTR_I);  // SLTI
-    this->i_instrs[7]  = InstrCode(11, InstrType::INSTR_I);  // SLTIU
-    this->i_instrs[8]  = InstrCode(15, InstrType::INSTR_I);  // LUI
-    this->i_instrs[9]  = instrcode(35, instrtype::instr_i);  // lw
-    this->i_instrs[10] = instrcode(43, instrtype::instr_i);  // sw
-
-    // jump instructions
-    this->j_instrs[0]  = InstrCode(2, InstrType::INSTR_J);  // J
-    this->j_instrs[1]  = InstrCode(3, InstrType::INSTR_J);  // JAL
+    // getting here is an error 
+    return REG_INVALID_OFFSET;
 }
 
 
@@ -115,24 +84,38 @@ Assembler::Assembler()
 }
 
 
-int Assembler::reg_lookup(const TokenType& type, const int val) const
+uint32_t Assembler::asm_r_instr(const LineInfo& l, const int n) const
 {
-    switch(type)
-    {
-        case SYM_REG_GLOBAL:
-            break;
+    uint32_t instr = 0;
+    int reg;
 
-        default:
-            if(this->verbose)
-            {
-                std::cout << "[" << __func__ << "] " << type << 
-                    " not a valid register token type" << std::endl;
-            }
-            return -1;
+    for(int i = 0; i < n; ++i)
+    {
+        reg   = reg2Offset(l.types[i], l.args[i]);
+        //if(reg == -1)
+        //{
+        //    std::cerr << "[" << __func__ << "] invalid register" <<
+        //        l.types[i] <<  " " << l.args[i] << std::endl;
+        //    this->num_err += 1;
+        //}
+        instr = instr | (reg << this->r_instr_offsets[i]);
     }
 
-    // if we somehow get here its obviously a problem
-    return -1;
+    return instr;
+}
+
+uint32_t Assembler::asm_i_instr(const LineInfo& l, const int n) const
+{
+    uint32_t instr = 0;
+    int reg;
+
+    for(int i = 0; i < n; ++i)
+    {
+        reg = reg2Offset(l.types[i], l.args[i]);
+        instr = instr | (reg << this->i_instr_offsets[i]);
+    }
+
+    return instr;
 }
 
 
@@ -142,10 +125,8 @@ void Assembler::asm_add(const LineInfo& l)
 {
     Instr instr;
 
-    instr.ins = 0x20;
-    instr.ins = instr.ins | (l.args[0] << 21);
-    instr.ins = instr.ins | (l.args[1] << 16);
-    instr.ins = instr.ins | (l.args[2] << 11);
+    instr.ins = instr.ins | this->asm_r_instr(l, 3);
+    instr.ins = instr.ins | 0x20;
     instr.adr = l.addr;
     this->program.add(instr);
 }
@@ -190,9 +171,8 @@ void Assembler::asm_mult(const LineInfo& l)
 {
     Instr instr;
 
-    instr.ins = 0x18;
-    instr.ins = instr.ins | (l.args[0] << 21);
-    instr.ins = instr.ins | (l.args[1] << 16);
+    instr.ins = instr.ins | this->asm_r_instr(l, 2);
+    instr.ins = instr.ins | 0x18;
     instr.adr = l.addr;
     this->program.add(instr);
 
@@ -202,10 +182,8 @@ void Assembler::asm_or(const LineInfo& l)
 {
     Instr instr;
 
-    instr.ins = 0x25;
-    instr.ins = instr.ins | (l.args[0] << 21);
-    instr.ins = instr.ins | (l.args[1] << 16);
-    instr.ins = instr.ins | (l.args[2] << 11);
+    instr.ins = instr.ins | this->asm_r_instr(l, 3);
+    instr.ins = instr.ins | 0x25;
     instr.adr = l.addr;
     this->program.add(instr);
 }
@@ -214,10 +192,8 @@ void Assembler::asm_ori(const LineInfo& l)
 {
     Instr instr;
 
-    instr.ins = 0x0C << 26;
-    instr.ins = instr.ins | (l.args[0] << 21);
-    instr.ins = instr.ins | (l.args[1] << 16);
-    instr.ins = instr.ins | (l.args[2]);
+    instr.ins = instr.ins | this->asm_i_instr(l, 3);
+    instr.ins = instr.ins | (0x0C << 26);
     instr.adr = l.addr;
     this->program.add(instr);
 }

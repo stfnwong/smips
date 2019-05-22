@@ -181,7 +181,7 @@ void Lexer::nextToken(void)
                 this->cur_token.type = SYM_REG_ARG;
                 break;
             case 'F':
-                this->cur_token.type = SYM_REG_FUNC;
+                this->cur_token.type = SYM_REG_FRAME;
                 break;
             case 'R':
                 this->cur_token.type = SYM_REG_RET;
@@ -229,7 +229,7 @@ void Lexer::nextToken(void)
                 if(token_str[tok_ptr+2] == 'G')
                     this->cur_token.type = SYM_REG_GLOBAL;
                 else if(token_str[tok_ptr+2] == 'F')
-                    this->cur_token.type = SYM_REG_FUNC;
+                    this->cur_token.type = SYM_REG_FRAME;
                 else
                 {
                     this->line_info.error = true;

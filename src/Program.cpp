@@ -53,8 +53,7 @@ std::string Instr::toString(void) const
     std::ostringstream oss;
 
     oss << "0x" << std::hex << std::setfill('0') << std::setw(8) << this->adr;
-    oss << " [" << this->ins << "] ";
-    //oss << std::bin << std::setfill('0') << std::setw(32) << this->ins;
+    oss << " [" << std::setw(8) << std::setfill('0') << this->ins << "] ";
 
     return oss.str();
 }

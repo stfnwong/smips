@@ -30,9 +30,10 @@ bool Token::isReg(void) const
         case SYM_REG_SAVED:
         case SYM_REG_ARG:
         case SYM_REG_RET:
+        case SYM_REG_RET_ADR:
         case SYM_REG_ZERO:
         case SYM_REG_GLOBAL:
-        case SYM_REG_FUNC:
+        case SYM_REG_FRAME:
             return true;
         default:
             return false;
@@ -45,7 +46,7 @@ bool Token::isReg(void) const
 
 bool Token::isOffset(void) const
 {
-    if(this->type == SYM_REG_GLOBAL || this->type == SYM_REG_FUNC)
+    if(this->type == SYM_REG_GLOBAL || this->type == SYM_REG_FRAME)
         return true;
 
     return false;
@@ -71,6 +72,8 @@ std::string Token::toString(void) const
             return "R_ARG <" + this->val + ">";
         case SYM_REG_RET:
             return "R_RET <" + this->val + ">";
+        case SYM_REG_RET_ADR:
+            return "R_RET_ADR <" + this->val + ">";
         case SYM_REG_ZERO:
             return "R_ZERO <" + this->val + ">";
         case SYM_REG_NUM:
@@ -149,13 +152,15 @@ std::string LineInfo::toString(void) const
             oss << "a" << i << " ";
         else if(this->types[i] == SYM_REG_RET)
             oss << "r" << i << " ";
+        else if(this->types[i] == SYM_REG_RET_ADR)
+            oss << "RA ";
         else if(this->types[i] == SYM_REG_ZERO)
             oss << "Z  ";
         else if(this->types[i] == SYM_REG_NUM)
             oss << "$" << i << " ";
         else if(this->types[i] == SYM_REG_GLOBAL)
             oss << "G+" << this->args[i];
-        else if(this->types[i] == SYM_REG_FUNC)
+        else if(this->types[i] == SYM_REG_FRAME)
             oss << "F+" << this->args[i];
         else if(this->types[i] == SYM_LITERAL)
             oss << std::left << std::setfill(' ') << std::setw(3) << this->args[i];

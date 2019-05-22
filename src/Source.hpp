@@ -22,11 +22,14 @@ typedef enum TokenType
     SYM_LITERAL,
     SYM_DIRECTIVE,
     // register types
-    SYM_REG_FUNC,
+    SYM_REG_AT,
+    SYM_REG_STACK,
+    SYM_REG_FRAME,
     SYM_REG_TEMP,
     SYM_REG_SAVED,
     SYM_REG_ARG,
     SYM_REG_RET,
+    SYM_REG_RET_ADR,
     SYM_REG_ZERO,
     SYM_REG_NUM,        // register that has just a number
     SYM_REG_GLOBAL,     // for the $GP register

@@ -8,55 +8,14 @@
 #ifndef __ASSEMBLER_HPP
 #define __ASSEMBLER_HPP
 
-#include <array>
 #include <string>
 #include "Program.hpp"
 #include "Source.hpp"
 
-// Could have a lookup table here for machine codes..
-enum class InstrType : uint8_t
-{
-    INSTR_NULL,     // NULL instruction
-    INSTR_R,        // register instruction
-    INSTR_I,        // immediate instruction
-    INSTR_J,        // jump instruction
-};
+constexpr int REG_INVALID_OFFSET  = -1;
 
-
-/*
- * InstrCode
- * Holds a single instruction code used by the assembler
- */
-struct InstrCode
-{
-    uint8_t   code;
-    InstrType type;
-
-    public:
-        InstrCode();
-        InstrCode(const uint8_t c, const InstrType& t);
-        bool operator==(const InstrCode& that) const;
-        bool operator!=(const InstrCode& that) const;
-        std::string toString(void) const;
-
-
-};
-
-/*
- * InstrTable
- * Table holding actual opcode for all instructions
- */
-class InstrTable
-{
-    private:
-        std::array<InstrCode, 12> r_instrs;
-        std::array<InstrCode, 11> i_instrs;
-        std::array<InstrCode, 2>  j_instrs;
-        InstrCode null_instr;
-
-    public:
-        InstrTable();
-};
+// Convert a register type and  value to an offset in memory
+int reg2Offset(const TokenType& type, const int val);
 
 
 /*
@@ -68,6 +27,21 @@ class Assembler
     private:
         bool verbose;
         int  num_err;
+        const uint8_t r_instr_offsets[3] = {
+            11,         // rd offset
+            21,         // rs offset 
+            16          // rt offset
+        };
+        const uint8_t i_instr_offsets[3] = {
+            16,     // rt   (dest))
+            21,     // rs   (base)
+            0       // imm
+        };
+        //const uint8_t r_instr_rs_offset = 21;
+        //const uint8_t r_instr_rt_offset = 16;
+        //const uint8_t r_instr_rd_offset = 11;
+
+
     // lexer output
     private:
         SourceInfo source;
@@ -76,12 +50,11 @@ class Assembler
     private:
         Program program;
 
-
-    // argument conversion
+    // assemble by instruction type
     private:
-        uint8_t get_rfunct(void);
-        uint8_t get_iopcode(void);
-        int  reg_lookup(const TokenType& type, const int val) const;
+        uint32_t asm_r_instr(const LineInfo& l, const int n) const;
+        uint32_t asm_i_instr(const LineInfo& l, const int n) const;
+        uint32_t asm_j_instr(const LineInfo& l) const;
 
     // instruction assembly
     private:

@@ -9,6 +9,8 @@
 #ifndef __CODES_HPP
 #define __CODES_HPP
 
+#include <array>
+#include <string>
 #include "Opcode.hpp"
 
 // Opcodes used by Lexer
@@ -65,8 +67,66 @@ const Opcode lex_instr_codes[] = {
 };
 
 
-// TODO : convert a lexer code to an instruction code
+// Assembler side instruction codes
+enum class InstrType : uint8_t
+{
+    INSTR_NULL,     // NULL instruction
+    INSTR_R,        // register instruction
+    INSTR_I,        // immediate instruction
+    INSTR_J,        // jump instruction
+};
 
+
+// R-instruction table index
+typedef enum asm_r_instr_map {
+    ASM_ADD, ASM_ADDU, ASM_SUBU, ASM_AND, 
+    ASM_OR, ASM_NOR, ASM_SLT, ASM_SLTU, 
+    ASM_SLL, ASM_SRL, ASM_JR
+} asm_r_instr_map; 
+
+typedef enum asm_i_instr_map {
+    ASM_BEQ, ASM_BNE, ASM_ADDI, ASM_ADDIU,
+    ASM_ANDI, ASM_ORI, ASM_SLTI, ASM_SLTIU,
+    ASM_LUI, ASM_LW, ASM_SW
+} asm_i_instr_map; 
+
+typedef enum asm_j_instr_map {
+    ASM_J, ASM_JAL
+} asm_j_instr_map; 
+
+
+/*
+ * InstrCode
+ * Holds a single instruction code used by the assembler
+ */
+struct InstrCode
+{
+    uint8_t   code;
+    InstrType type;
+
+    public:
+        InstrCode();
+        InstrCode(const uint8_t c, const InstrType& t);
+        bool operator==(const InstrCode& that) const;
+        bool operator!=(const InstrCode& that) const;
+        std::string toString(void) const;
+};
+
+/*
+ * InstrTable
+ * Table holding actual opcode for all instructions
+ */
+class InstrTable
+{
+    private:
+        std::array<InstrCode, 12> r_instrs;
+        std::array<InstrCode, 11> i_instrs;
+        std::array<InstrCode, 2>  j_instrs;
+        InstrCode null_instr;
+
+    public:
+        InstrTable();
+};
 
 
 #endif /*__CODES_HPP*/
