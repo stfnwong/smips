@@ -22,6 +22,7 @@ class Assembler
     private:
         bool verbose;
         int  num_err;
+        const uint8_t i_instr_op_offset = 26;
         const uint8_t r_instr_offsets[3] = {
             11,     // rd offset
             21,     // rs offset 
@@ -52,21 +53,22 @@ class Assembler
 
     // instruction assembly
     private:
-        void asm_add(const LineInfo& l);
-        void asm_addi(const LineInfo& l);
-        void asm_addu(const LineInfo& l);
-        void asm_lw(const LineInfo& l);
-        void asm_mult(const LineInfo& l);
-        void asm_or(const LineInfo& l);
-        void asm_ori(const LineInfo& l);
-        void asm_sub(const LineInfo& l);
-        void asm_subu(const LineInfo& l);
-        void asm_sw(const LineInfo& l);
+        Instr asm_add(const LineInfo& l) const;
+        Instr asm_addi(const LineInfo& l) const;
+        Instr asm_addu(const LineInfo& l) const;
+        Instr asm_lw(const LineInfo& l) const;
+        Instr asm_mult(const LineInfo& l) const;
+        Instr asm_or(const LineInfo& l) const;
+        Instr asm_ori(const LineInfo& l) const;
+        Instr asm_sub(const LineInfo& l) const;
+        Instr asm_subu(const LineInfo& l) const;
+        Instr asm_sw(const LineInfo& l) const;
 
     public:
         Assembler();
 
         void assemble(void);
+        Instr assembleLine(const LineInfo& line);
 
         void setVerbose(const bool v);
         bool getVerbose(void) const;

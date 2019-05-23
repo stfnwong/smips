@@ -85,6 +85,14 @@ uint32_t Assembler::asm_r_instr(const LineInfo& l, const int n) const
     {
         reg   = this->arg2Offset(l.types[i], l.args[i]);
         instr = instr | (reg << this->r_instr_offsets[i]);
+
+        // TODO : debug, remove 
+        std::cout << "[" << __func__ << "] cur reg : " << 
+            std::dec << std::setw(2) << std::setfill('0') << 
+            reg << std::endl;
+        std::cout << "[" << __func__ << "] instr : " << 
+            std::hex << std::setw(8) << std::setfill('0') <<
+            instr << std::endl;
     }
 
     return instr;
@@ -99,6 +107,14 @@ uint32_t Assembler::asm_i_instr(const LineInfo& l, const int n) const
     {
         reg = this->arg2Offset(l.types[i], l.args[i]);
         instr = instr | (reg << this->i_instr_offsets[i]);
+
+        // TODO : debug, remove 
+        std::cout << "[" << __func__ << "] cur reg : " << 
+            std::dec << std::setw(2) << std::setfill('0') << 
+            reg << std::endl;
+        std::cout << "[" << __func__ << "] instr : " << 
+            std::hex << std::setw(8) << std::setfill('0') <<
+            instr << std::endl;
     }
 
     return instr;
@@ -107,113 +123,176 @@ uint32_t Assembler::asm_i_instr(const LineInfo& l, const int n) const
 
 // ==== Instruction Assembly ==== //
 
-void Assembler::asm_add(const LineInfo& l)
+Instr Assembler::asm_add(const LineInfo& l) const
 {
     Instr instr;
 
     instr.ins = instr.ins | this->asm_r_instr(l, 3);
     instr.ins = instr.ins | 0x20;
     instr.adr = l.addr;
-    this->program.add(instr);
+    return instr;
 }
 
-void Assembler::asm_addi(const LineInfo& l)
+Instr Assembler::asm_addi(const LineInfo& l) const
 {
     Instr instr;
 
     instr.ins = instr.ins | this->asm_i_instr(l, 3);
     instr.ins = instr.ins | (0x08 << 26);
     instr.adr = l.addr;
-    this->program.add(instr);
+    return instr;
 }
 
-void Assembler::asm_addu(const LineInfo& l)
+Instr Assembler::asm_addu(const LineInfo& l) const
 {
     Instr instr;
 
     instr.ins = instr.ins | this->asm_r_instr(l, 3);
     instr.ins = instr.ins | 0x21;
     instr.adr = l.addr;
-    this->program.add(instr);
+    return instr;
 }
 
-void Assembler::asm_lw(const LineInfo& l)
+Instr Assembler::asm_lw(const LineInfo& l) const
 {
     // I format
     Instr instr;
 
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (0x23 << 26);
+    instr.ins = instr.ins | (l.args[1]);        // insert immediate
+    instr.ins = instr.ins | (0x23 << this->i_instr_op_offset);
     instr.adr = l.addr;
-    this->program.add(instr);
+    return instr;
 }
 
-void Assembler::asm_mult(const LineInfo& l)
+Instr Assembler::asm_mult(const LineInfo& l) const
 {
     Instr instr;
 
-    instr.ins = instr.ins | this->asm_r_instr(l, 2);
+    instr.ins = instr.ins | this->asm_r_instr(l, 3);
     instr.ins = instr.ins | 0x18;
     instr.adr = l.addr;
-    this->program.add(instr);
+    return instr;
 
 }
 
-void Assembler::asm_or(const LineInfo& l)
+Instr Assembler::asm_or(const LineInfo& l) const
 {
     Instr instr;
 
     instr.ins = instr.ins | this->asm_r_instr(l, 3);
     instr.ins = instr.ins | 0x25;
     instr.adr = l.addr;
-    this->program.add(instr);
+    return instr;
 }
 
-void Assembler::asm_ori(const LineInfo& l)
+Instr Assembler::asm_ori(const LineInfo& l) const
 {
     Instr instr;
 
-    instr.ins = instr.ins | this->asm_i_instr(l, 3);
-    instr.ins = instr.ins | (0x0C << 26);
+    instr.ins = instr.ins | this->asm_i_instr(l, 2);
+    instr.ins = instr.ins | (l.args[2]);
+    instr.ins = instr.ins | (0x0C << this->i_instr_op_offset);
     instr.adr = l.addr;
-    this->program.add(instr);
+    return instr;
 }
 
-void Assembler::asm_sub(const LineInfo& l)
+Instr Assembler::asm_sub(const LineInfo& l) const
 {
     Instr instr;
 
     instr.ins = instr.ins | this->asm_r_instr(l, 3);
     instr.ins = instr.ins | 0x22;
     instr.adr = l.addr;
-    this->program.add(instr);
+    return instr;
 }
 
-void Assembler::asm_subu(const LineInfo& l)
+Instr Assembler::asm_subu(const LineInfo& l) const
 {
     Instr instr;
 
     instr.ins = instr.ins | this->asm_r_instr(l, 3);
     instr.ins = instr.ins | 0x23;
     instr.adr = l.addr;
-    this->program.add(instr);
+    return instr;
 }
 
-void Assembler::asm_sw(const LineInfo& l)
+Instr Assembler::asm_sw(const LineInfo& l) const
 {
     // I format
     Instr instr;
 
-    instr.ins = 0x2B << 26;
-    instr.ins = instr.ins | (l.args[0] << 21);
+    instr.ins = 0x2B << this->i_instr_op_offset;
+    instr.ins = instr.ins | this->asm_i_instr(l, 2);
+    instr.ins = instr.ins | (l.args[1]);
     instr.adr = l.addr;
-    this->program.add(instr);
+
+    return instr;
 }
 
 
+/*
+ * AssembleLine()
+ * Transform a LineInfo object into an Instr object
+ */
+Instr Assembler::assembleLine(const LineInfo& line)
+{
+    // TODO : debug, remove
+    std::cout << std::endl;
+    std::cout << "[" << __func__ << "] assembling line " << std::endl;
+    std::cout << line.toString() << std::endl;
+
+    switch(line.opcode.instr)
+    {
+        case LEX_ADD:
+            return this->asm_add(line);
+            break;
+
+        case LEX_ADDI:
+            return this->asm_addi(line);
+            break;
+
+        case LEX_ADDU:
+            return this->asm_addu(line);
+            break;
+
+        case LEX_LW:
+            return this->asm_lw(line);
+            break;
+
+        case LEX_MULT:
+            return this->asm_mult(line);
+            break;
+
+        case LEX_OR:
+            return this->asm_or(line);
+            break;
+
+        case LEX_ORI:
+            return this->asm_ori(line);
+            break;
+
+        case LEX_SW:
+            return this->asm_sw(line);
+            break;
+
+        default:
+            if(this->verbose)
+            {
+                std::cout << "[" << __func__ << "] (line " << 
+                    std::dec << line.line_num << 
+                    ") unknown opcode " << line.opcode.toString() << std::endl;
+            }
+            return Instr(0, 0); // emit a null instruction
+    }
+
+}
+
+// TODO : make an AssembleLine() and call in a loop?
 void Assembler::assemble(void)
 {
     LineInfo cur_line;
+    Instr    cur_instr;
 
     if(this->source.getNumLines() == 0)
     {
@@ -227,52 +306,8 @@ void Assembler::assemble(void)
     for(unsigned int i = 0; i < this->source.getNumLines(); ++i)
     {
         cur_line = this->source.get(i);
-
-        switch(cur_line.opcode.instr)
-        {
-            case LEX_ADD:
-                this->asm_add(cur_line);
-                break;
-
-            case LEX_ADDI:
-                this->asm_addi(cur_line);
-                break;
-
-            case LEX_ADDU:
-                this->asm_addu(cur_line);
-                break;
-
-            case LEX_LW:
-                this->asm_lw(cur_line);
-                break;
-
-            case LEX_MULT:
-                this->asm_mult(cur_line);
-                break;
-
-            case LEX_OR:
-                this->asm_or(cur_line);
-                break;
-
-            case LEX_ORI:
-                this->asm_ori(cur_line);
-                break;
-
-            case LEX_SW:
-                this->asm_sw(cur_line);
-                break;
-
-            default:
-                if(this->verbose)
-                {
-                    std::cout << "[" << __func__ << "] (line " << 
-                        std::dec << cur_line.line_num << 
-                        ") unknown opcode " << cur_line.opcode.toString() << std::endl;
-                }
-                this->num_err += 1;
-
-                break;
-        }
+        cur_instr = this->assembleLine(cur_line);
+        this->program.add(cur_instr);
     }
 
 }

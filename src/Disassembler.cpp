@@ -22,7 +22,7 @@ Disassembler::Disassembler()
 void Disassembler::disassemble(void)
 {
     unsigned int i;
-    uint32_t instr_mask;
+    //uint32_t instr_mask;
     Instr instr;
 
 

@@ -147,7 +147,6 @@ int Program::load(const std::string& filename)
     std::ifstream infile;
     uint32_t num_records;
     uint32_t addr;
-    uint8_t b0, b1, b2, b3;
 
     this->instructions.clear();
 

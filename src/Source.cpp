@@ -145,19 +145,19 @@ std::string LineInfo::toString(void) const
     for(auto i = 0; i < 3; ++i)
     {
         if(this->types[i] == SYM_REG_TEMP)
-            oss << "t" << i << " ";
+            oss << "t" << this->args[i] << " ";
         else if(this->types[i] == SYM_REG_SAVED)
-            oss << "s" << i << " ";
+            oss << "s" << this->args[i] << " ";
         else if(this->types[i] == SYM_REG_ARG)
-            oss << "a" << i << " ";
+            oss << "a" << this->args[i] << " ";
         else if(this->types[i] == SYM_REG_RET)
-            oss << "r" << i << " ";
+            oss << "r" << this->args[i] << " ";
         else if(this->types[i] == SYM_REG_RET_ADR)
             oss << "RA ";
         else if(this->types[i] == SYM_REG_ZERO)
             oss << "Z  ";
         else if(this->types[i] == SYM_REG_NUM)
-            oss << "$" << i << " ";
+            oss << "$" << this->args[i] << " ";
         else if(this->types[i] == SYM_REG_GLOBAL)
             oss << "G+" << this->args[i];
         else if(this->types[i] == SYM_REG_FRAME)
