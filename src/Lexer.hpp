@@ -64,9 +64,12 @@ class Lexer
         void nextToken(void);
 
     private:
+        void parseBranch(void);
+        void parseBranchZero(void);
         void parseRegArgs(const int num);
         void parseJump(void);
         void parseLine(void);
+        TokenType getRegType(const char& reg_char) const;
         void scanToken(void);
 
     public:

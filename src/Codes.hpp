@@ -22,13 +22,18 @@ typedef enum instr_code
     LEX_AND, LEX_ANDI, LEX_DIV, LEX_DIVU,
     LEX_MULT, LEX_MULTU, LEX_NOR, LEX_OR,
     LEX_ORI, 
+    LEX_SLL, LEX_SLLV, LEX_SRL, LEX_SRV,        // shifts
+    // comparison instructions 
+    LEX_SLT, LEX_SLTU, LEX_SLTI, LEX_SLTIU,
     // load
     LEX_LB, LEX_LBU, LEX_LH, LEX_LHU, 
     LEX_LW, LEX_LI,
     // store
-    LEX_SB, LEX_SH, LEX_SW,
+    LEX_SB, LEX_SH, LEX_SW, 
     // jumps
     LEX_J, LEX_JAL, LEX_JALR, LEX_JR,
+    // branches
+    LEX_BEQ, LEX_BGTZ, LEX_BLEZ, LEX_BNE
 } instr_code;
 
 
@@ -49,6 +54,15 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_NOR,   "NOR"),
     Opcode(LEX_OR,    "OR"),
     Opcode(LEX_ORI,   "ORI"),
+    Opcode(LEX_SLL,   "SLL"),
+    Opcode(LEX_SLLV,  "SLLV"),
+    Opcode(LEX_SRL,   "SRL"),
+    Opcode(LEX_SRV,   "SRV"),
+    // comparison
+    Opcode(LEX_SLT,   "SLT"),
+    Opcode(LEX_SLTU,  "SLTU"),
+    Opcode(LEX_SLTI,  "SLTI"),
+    Opcode(LEX_SLTIU, "SLTIU"),
     // loads 
     Opcode(LEX_LB,    "LB"),
     Opcode(LEX_LBU,   "LBU"),
@@ -64,6 +78,11 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_JAL,   "JAL"),
     Opcode(LEX_JALR,  "JALR"),
     Opcode(LEX_JR,    "JR"),
+    // branch
+    Opcode(LEX_BEQ,   "BEQ"),
+    Opcode(LEX_BGTZ,  "BGTZ"),
+    Opcode(LEX_BLEZ,  "BLEZ"),
+    Opcode(LEX_BNE,   "BNE"),
 };
 
 

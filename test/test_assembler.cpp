@@ -25,6 +25,10 @@ const int r_instr_rt_offset = 16;
 const int r_instr_rd_offset = 11;
 
 // TODO: when starting address is sorted, update this
+
+/*
+ * Expected assembly output for mult_add.asm
+ */
 Program get_mult_add_expected_program(void)
 {
     Program prog;
@@ -91,6 +95,31 @@ Program get_mult_add_expected_program(void)
     instr.ins = instr.ins | (28 << i_instr_rs_offset);
     instr.ins = instr.ins | 0;  // has no effect, but mirrors the instruction
     prog.add(instr);
+
+    return prog;
+}
+
+/*
+ * Expected assembly output for for_loop.asm
+ */
+Program get_for_loop_expected_program(void)
+{
+    Program prog;
+    Instr   instr;
+
+    // ADD $t0, $gp, $zero
+    instr.adr = 0x200;
+    instr.ins = 0x20;
+    instr.ins = instr.ins | (8 << r_instr_rd_offset);
+    instr.ins = instr.ins | (28 << r_instr_rs_offset);
+    instr.ins = instr.ins | (0 << r_instr_rt_offset);
+    prog.add(instr);
+
+    instr.init();
+    // LW $t1, 4($gp)
+    instr.adr = 0x201;
+    instr.ins = 35 << i_instr_op_offset;
+
 
     return prog;
 }

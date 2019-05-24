@@ -30,6 +30,7 @@ typedef enum TokenType
     SYM_REG_ARG,
     SYM_REG_RET,
     SYM_REG_RET_ADR,
+    SYM_REG_KERN,
     SYM_REG_ZERO,
     SYM_REG_NUM,        // register that has just a number
     SYM_REG_GLOBAL,     // for the $GP register
@@ -41,8 +42,9 @@ typedef enum TokenType
  */
 struct Token
 {
-    TokenType type;
+    TokenType   type;
     std::string val;
+    std::string offset;
 
     public:
         Token();
@@ -50,6 +52,10 @@ struct Token
         bool isReg(void) const;
         bool isOffset(void) const;
         std::string toString(void) const;
+
+        // comparisons 
+        bool operator==(const Token& that) const;
+        bool operator!=(const Token& that) const;
 };
 
 
@@ -69,8 +75,9 @@ struct LineInfo
     bool         is_symbol;
     bool         is_directive;
     bool         is_imm;
-    int          args[3];
-    TokenType    types[3];      // record types for each register
+    int          offset[3];
+    int          val[3];
+    TokenType    type[3];      // record types for each register
     Opcode       opcode;
 
     public:

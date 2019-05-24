@@ -12,8 +12,9 @@
 
 Token::Token()
 {
-    this->type = SYM_NONE;
-    this->val = "\0";
+    this->type   = SYM_NONE;
+    this->val    = "\0";
+    this->offset = "\0";
 }
 
 Token::Token(const TokenType& t, const std::string& v)
@@ -86,6 +87,32 @@ std::string Token::toString(void) const
 }
 
 
+bool Token::operator==(const Token& that) const
+{
+    if(this->type != that.type)
+        return false;
+    if(this->val != that.val)
+        return false;
+    if(this->offset != that.offset)
+        return false;
+
+    return true;
+}
+
+bool Token::operator!=(const Token& that) const
+{
+    if(this->type == that.type)
+        return false;
+    if(this->val == that.val)
+        return false;
+    if(this->offset != that.offset)
+        return false;
+
+    return true;
+}
+
+
+
 /*
  * LineInfo
  */
@@ -110,8 +137,9 @@ void LineInfo::init(void)
 
     for(int i = 0; i < 3; ++i)
     {
-        this->args[i]  = 0;
-        this->types[i] = SYM_NONE;
+        this->offset[i] = 0;
+        this->val[i]    = 0;
+        this->type[i]   = SYM_NONE;
     }
 }
 
@@ -144,26 +172,26 @@ std::string LineInfo::toString(void) const
     // Insert arg/register chars
     for(auto i = 0; i < 3; ++i)
     {
-        if(this->types[i] == SYM_REG_TEMP)
-            oss << "t" << this->args[i] << " ";
-        else if(this->types[i] == SYM_REG_SAVED)
-            oss << "s" << this->args[i] << " ";
-        else if(this->types[i] == SYM_REG_ARG)
-            oss << "a" << this->args[i] << " ";
-        else if(this->types[i] == SYM_REG_RET)
-            oss << "r" << this->args[i] << " ";
-        else if(this->types[i] == SYM_REG_RET_ADR)
+        if(this->type[i] == SYM_REG_TEMP)
+            oss << "t" << this->val[i] << " ";
+        else if(this->type[i] == SYM_REG_SAVED)
+            oss << "s" << this->val[i] << " ";
+        else if(this->type[i] == SYM_REG_ARG)
+            oss << "a" << this->val[i] << " ";
+        else if(this->type[i] == SYM_REG_RET)
+            oss << "r" << this->val[i] << " ";
+        else if(this->type[i] == SYM_REG_RET_ADR)
             oss << "RA ";
-        else if(this->types[i] == SYM_REG_ZERO)
+        else if(this->type[i] == SYM_REG_ZERO)
             oss << "Z  ";
-        else if(this->types[i] == SYM_REG_NUM)
-            oss << "$" << this->args[i] << " ";
-        else if(this->types[i] == SYM_REG_GLOBAL)
-            oss << "G+" << this->args[i];
-        else if(this->types[i] == SYM_REG_FRAME)
-            oss << "F+" << this->args[i];
-        else if(this->types[i] == SYM_LITERAL)
-            oss << std::left << std::setfill(' ') << std::setw(3) << this->args[i];
+        else if(this->type[i] == SYM_REG_NUM)
+            oss << "$" << this->val[i] << " ";
+        else if(this->type[i] == SYM_REG_GLOBAL)
+            oss << "G+" << this->val[i];
+        else if(this->type[i] == SYM_REG_FRAME)
+            oss << "F+" << this->val[i];
+        else if(this->type[i] == SYM_LITERAL)
+            oss << std::left << std::setfill(' ') << std::setw(3) << this->val[i];
         else
             oss << "   ";
     }
@@ -212,7 +240,7 @@ bool LineInfo::operator==(const LineInfo& that) const
 
     for(int i = 0; i < 3; ++i)
     {
-        if(this->args[i] != that.args[i])
+        if(this->val[i] != that.val[i])
             return false;
     }
 
@@ -289,10 +317,10 @@ std::string LineInfo::diff(const LineInfo& that) const
     // create one error for each mismatched argument
     for(int i = 0; i < 3; ++i)
     {
-        if(this->args[i] != that.args[i])
+        if(this->val[i] != that.val[i])
         {
-            oss << "arg " << i << " [" << this->args[i] << 
-                "] does not match [" << that.args[i] << 
+            oss << "arg " << i << " [" << this->val[i] << 
+                "] does not match [" << that.val[i] << 
                 "]" << std::endl;
             num_err += 1;
         }

@@ -20,7 +20,11 @@ Assembler::Assembler()
     this->num_err = 0;
 }
 
-int Assembler::arg2Offset(const TokenType& type, const int val) const
+/*
+ * val2Offset()
+ * Convert register value to a memory offset
+ */
+int Assembler::val2Offset(const TokenType& type, const int val) const
 {
     int offset;
 
@@ -76,6 +80,10 @@ int Assembler::arg2Offset(const TokenType& type, const int val) const
     return this->ARG_INVALID_OFFSET;
 }
 
+/*
+ * asm_r_instr()
+ * Assemble the arguments for an R-format instruction
+ */
 uint32_t Assembler::asm_r_instr(const LineInfo& l, const int n) const
 {
     uint32_t instr = 0;
@@ -83,21 +91,17 @@ uint32_t Assembler::asm_r_instr(const LineInfo& l, const int n) const
 
     for(int i = 0; i < n; ++i)
     {
-        reg   = this->arg2Offset(l.types[i], l.args[i]);
+        reg   = this->val2Offset(l.type[i], l.val[i]);
         instr = instr | (reg << this->r_instr_offsets[i]);
-
-        // TODO : debug, remove 
-        std::cout << "[" << __func__ << "] cur reg : " << 
-            std::dec << std::setw(2) << std::setfill('0') << 
-            reg << std::endl;
-        std::cout << "[" << __func__ << "] instr : " << 
-            std::hex << std::setw(8) << std::setfill('0') <<
-            instr << std::endl;
     }
 
     return instr;
 }
 
+/*
+ * asm_i_instr()
+ * Assemble the arguments for an I-format instruction
+ */
 uint32_t Assembler::asm_i_instr(const LineInfo& l, const int n) const
 {
     uint32_t instr = 0;
@@ -105,24 +109,19 @@ uint32_t Assembler::asm_i_instr(const LineInfo& l, const int n) const
 
     for(int i = 0; i < n; ++i)
     {
-        reg = this->arg2Offset(l.types[i], l.args[i]);
+        reg = this->val2Offset(l.type[i], l.val[i]);
         instr = instr | (reg << this->i_instr_offsets[i]);
-
-        // TODO : debug, remove 
-        std::cout << "[" << __func__ << "] cur reg : " << 
-            std::dec << std::setw(2) << std::setfill('0') << 
-            reg << std::endl;
-        std::cout << "[" << __func__ << "] instr : " << 
-            std::hex << std::setw(8) << std::setfill('0') <<
-            instr << std::endl;
     }
 
     return instr;
 }
 
-
 // ==== Instruction Assembly ==== //
 
+/*
+ * asm_add()
+ * R-format
+ */
 Instr Assembler::asm_add(const LineInfo& l) const
 {
     Instr instr;
@@ -133,6 +132,10 @@ Instr Assembler::asm_add(const LineInfo& l) const
     return instr;
 }
 
+/*
+ * asm_addi()
+ * I-format
+ */
 Instr Assembler::asm_addi(const LineInfo& l) const
 {
     Instr instr;
@@ -143,6 +146,10 @@ Instr Assembler::asm_addi(const LineInfo& l) const
     return instr;
 }
 
+/*
+ * asm_addu()
+ * R-format
+ */
 Instr Assembler::asm_addu(const LineInfo& l) const
 {
     Instr instr;
@@ -153,18 +160,26 @@ Instr Assembler::asm_addu(const LineInfo& l) const
     return instr;
 }
 
+/*
+ * asm_lw()
+ * I-format
+ */
 Instr Assembler::asm_lw(const LineInfo& l) const
 {
     // I format
     Instr instr;
 
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.args[1]);        // insert immediate
+    instr.ins = instr.ins | (l.val[1]);        // insert immediate
     instr.ins = instr.ins | (0x23 << this->i_instr_op_offset);
     instr.adr = l.addr;
     return instr;
 }
 
+/*
+ * asm_mult()
+ * R-format
+ */
 Instr Assembler::asm_mult(const LineInfo& l) const
 {
     Instr instr;
@@ -176,6 +191,10 @@ Instr Assembler::asm_mult(const LineInfo& l) const
 
 }
 
+/*
+ * asm_or()
+ * R-format
+ */
 Instr Assembler::asm_or(const LineInfo& l) const
 {
     Instr instr;
@@ -186,17 +205,25 @@ Instr Assembler::asm_or(const LineInfo& l) const
     return instr;
 }
 
+/*
+ * asm_ori()
+ * I-format
+ */
 Instr Assembler::asm_ori(const LineInfo& l) const
 {
     Instr instr;
 
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.args[2]);
+    instr.ins = instr.ins | (l.val[2]);
     instr.ins = instr.ins | (0x0C << this->i_instr_op_offset);
     instr.adr = l.addr;
     return instr;
 }
 
+/*
+ * asm_sub()
+ * R-format
+ */
 Instr Assembler::asm_sub(const LineInfo& l) const
 {
     Instr instr;
@@ -207,6 +234,10 @@ Instr Assembler::asm_sub(const LineInfo& l) const
     return instr;
 }
 
+/*
+ * asm_subu()
+ * R-format
+ */
 Instr Assembler::asm_subu(const LineInfo& l) const
 {
     Instr instr;
@@ -217,14 +248,17 @@ Instr Assembler::asm_subu(const LineInfo& l) const
     return instr;
 }
 
+/*
+ * asm_sw()
+ * I-format
+ */
 Instr Assembler::asm_sw(const LineInfo& l) const
 {
-    // I format
     Instr instr;
 
     instr.ins = 0x2B << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.args[1]);
+    instr.ins = instr.ins | (l.val[1]);
     instr.adr = l.addr;
 
     return instr;

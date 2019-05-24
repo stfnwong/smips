@@ -22,6 +22,7 @@ class Assembler
     private:
         bool verbose;
         int  num_err;
+        // instruction arg offsets
         const uint8_t i_instr_op_offset = 26;
         const uint8_t r_instr_offsets[3] = {
             11,     // rd offset
@@ -46,7 +47,7 @@ class Assembler
 
     // assemble by instruction type
     private:
-        int      arg2Offset(const TokenType& type, const int val) const;
+        int      val2Offset(const TokenType& type, const int val) const;
         uint32_t asm_r_instr(const LineInfo& l, const int n) const;
         uint32_t asm_i_instr(const LineInfo& l, const int n) const;
         uint32_t asm_j_instr(const LineInfo& l) const;
