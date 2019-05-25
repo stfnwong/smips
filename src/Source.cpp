@@ -137,7 +137,6 @@ void LineInfo::init(void)
 
     for(int i = 0; i < 3; ++i)
     {
-        this->offset[i] = 0;
         this->val[i]    = 0;
         this->type[i]   = SYM_NONE;
     }

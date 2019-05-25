@@ -75,7 +75,6 @@ struct LineInfo
     bool         is_directive;
     bool         is_imm;
     bool         is_symbol;
-    int          offset[3];
     int          val[3];
     TokenType    type[3];      // record types for each register
     Opcode       opcode;

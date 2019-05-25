@@ -144,7 +144,7 @@ Instr Assembler::asm_addi(const LineInfo& l) const
 
     instr.ins = instr.ins | this->asm_i_instr(l, 3);
     instr.ins = instr.ins | (0x08 << 26);
-    instr.ins = instr.ins | (l.offset[1]);
+    instr.ins = instr.ins | (l.val[2]);
     instr.adr = l.addr;
     return instr;
 }
@@ -175,7 +175,7 @@ Instr Assembler::asm_lw(const LineInfo& l) const
     Instr instr;
 
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.offset[1]);        // insert immediate
+    instr.ins = instr.ins | (l.val[1]);        // insert immediate
     instr.ins = instr.ins | (0x23 << this->i_instr_op_offset);
     instr.adr = l.addr;
     return instr;

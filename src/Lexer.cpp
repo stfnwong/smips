@@ -309,7 +309,10 @@ void Lexer::parseBranchZero(void)
     this->line_info.type[0]   = this->cur_token.type;
     // if we have an offset, convert it here 
     if(this->cur_token.offset != "\0")
-        this->line_info.offset[0] = std::stoi(this->cur_token.offset, nullptr, 10);
+    {
+        this->line_info.val[1] = std::stoi(this->cur_token.offset, nullptr, 10);
+        this->line_info.type[1] = SYM_LITERAL;
+    }
 
     switch(this->cur_token.type)
     {
@@ -368,8 +371,8 @@ void Lexer::parseBranch(void)
             goto BRANCH_END;
         }
         // if we have an offset, convert it here 
-        if(this->cur_token.offset != "\0")
-            this->line_info.offset[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
+        //if(this->cur_token.offset != "\-1")
+        //    this->line_info.offset[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
         this->line_info.type[argn] = this->cur_token.type;
 
         switch(this->cur_token.type)
@@ -413,7 +416,6 @@ BRANCH_END:
 }
 
 
-
 /*
  * parseRegArgs()
  * Parse some number of register arguments, eg for arithmetic
@@ -428,9 +430,19 @@ void Lexer::parseRegArgs(const int num_args)
     {
         this->nextToken();
 
+        // Offsets can only occur in certain instructions which have immediates.
+        // The rule needs to be that 
+        // 1) if the instruction is an immediate instruction
+        // 2) AND there is an offset string in the current Token 
+        // 3) THEN we convert that offset string to an int and store it in 
+        // this->line_info.val[2] as a SYM_LITERAL
         if(this->line_info.is_imm && argn == num_args-1)
         {
-            this->line_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+            // Check if there is an offset 
+            if(this->cur_token.offset != "\0")
+                this->line_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
+            else
+                this->line_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
             this->line_info.type[argn] = SYM_LITERAL;
         }
         else
@@ -440,24 +452,25 @@ void Lexer::parseRegArgs(const int num_args)
                 error = true;
                 goto ARG_ERR;
             }
-            this->line_info.type[argn]   = this->cur_token.type;
+        }
+        this->line_info.type[argn]   = this->cur_token.type;
+        //this->line_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+        std::cout << "[" << __func__ << "] cur_token " << this->cur_token.toString() << std::endl;
 
-            // if we have an offset, convert it here 
-            if(this->cur_token.offset != "\0")
-                this->line_info.offset[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
-
-            switch(this->cur_token.type)
-            {
-                case SYM_REG_ZERO:
-                case SYM_REG_GLOBAL:
-                case SYM_REG_FRAME:
+        switch(this->cur_token.type)
+        {
+            case SYM_REG_ZERO:
+            case SYM_REG_GLOBAL:
+            case SYM_REG_FRAME:
+                if(this->cur_token.offset != "\0")
+                    this->line_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
+                else
                     this->line_info.val[argn] = 0;
-                    break;
+                break;
 
-                default:
-                    this->line_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-                    break;
-            }
+            default:
+                this->line_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+                break;
         }
     }
 
@@ -673,22 +686,22 @@ void Lexer::resolveLabels(void)
                 {
                     case LEX_BEQ:
                     case LEX_BNE:
-                        line.type[2]   = SYM_LITERAL;
-                        line.offset[0] = label_addr;
+                        line.type[2] = SYM_LITERAL;
+                        line.val[0]  = label_addr;
                         break;
 
                     case LEX_BGTZ:
                     case LEX_BLEZ:
-                        line.type[1]   = SYM_LITERAL;
-                        line.offset[1] = label_addr;
+                        line.type[1] = SYM_LITERAL;
+                        line.val[1]  = label_addr;
                         break;
 
                     case LEX_J:
                     case LEX_JAL:
                     case LEX_JALR:
                     case LEX_JR:
-                        line.type[0]   = SYM_LITERAL;
-                        line.offset[0] = label_addr;
+                        line.type[0] = SYM_LITERAL;
+                        line.val[0]  = label_addr;
                         break;
 
                     default:
