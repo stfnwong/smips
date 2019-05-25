@@ -67,6 +67,7 @@ class Lexer
         void resolveLabels(void);
         void parseBranch(void);
         void parseBranchZero(void);
+        void parseMemArgs(void);
         void parseRegArgs(const int num);
         void parseJump(void);
         void parseLine(void);

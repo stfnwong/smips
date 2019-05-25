@@ -32,12 +32,19 @@ Lexer::~Lexer()
     delete[] this->token_buf;
 }
 
+/*
+ * init_instr_table()
+ */
 void Lexer::init_instr_table(void)
 {
     for(const Opcode& code : lex_instr_codes)
         this->instr_code_table.add(code);
 }
 
+/*
+ * alloc_mem()
+ * Allocate token buffer memory
+ */
 void Lexer::alloc_mem(void)
 {
     this->token_buf = new char[this->token_buf_size];
@@ -73,6 +80,9 @@ bool Lexer::exhausted(void) const
             this->cur_pos >= this->source_text.size()) ? true : false;
 }
 
+/*
+ * skipWhitespace()
+ */
 void Lexer::skipWhitespace(void) 
 {
     while(!this->exhausted())
@@ -86,12 +96,18 @@ void Lexer::skipWhitespace(void)
     }
 }
 
+/*
+ * skipComment()
+ */
 void Lexer::skipComment(void)
 {
     while(this->cur_char != '\n')
         this->advance();
 }
 
+/*
+ * skipSeperators()
+ */
 void Lexer::skipSeperators(void)
 {
     while(!this->exhausted())
@@ -106,6 +122,9 @@ void Lexer::skipSeperators(void)
 }
 
 // ======== CHARACTER TYPE ======== //
+/*
+ * isSpace()
+ */
 bool Lexer::isSpace(void) const
 {
     return (this->cur_char == ' '  || 
@@ -172,6 +191,8 @@ void Lexer::scanToken(void)
         if(this->cur_char == '#')       // also comment
             break;
         if(this->cur_char == ',')       // seperator
+            break;
+        if(this->cur_char == ':')       // end of label
             break;
         this->token_buf[idx] = toupper(this->cur_char);
         this->advance();
@@ -306,6 +327,7 @@ void Lexer::parseBranchZero(void)
         error = true;
         goto BRANCH_END;
     }
+
     this->line_info.type[0]   = this->cur_token.type;
     // if we have an offset, convert it here 
     if(this->cur_token.offset != "\0")
@@ -370,9 +392,6 @@ void Lexer::parseBranch(void)
             error = true;
             goto BRANCH_END;
         }
-        // if we have an offset, convert it here 
-        //if(this->cur_token.offset != "\-1")
-        //    this->line_info.offset[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
         this->line_info.type[argn] = this->cur_token.type;
 
         switch(this->cur_token.type)
@@ -417,6 +436,75 @@ BRANCH_END:
 
 
 /*
+ * parseMemArgs()
+ */
+void Lexer::parseMemArgs(void)
+{
+    bool error = false;
+
+    this->nextToken();
+    if(!this->cur_token.isReg())
+    {
+        error = true;
+        goto ARG_END;
+    }
+    this->line_info.type[0] = this->cur_token.type;
+    std::cout << "[" << __func__ << "] about to convert cur_token.val to line_info.val[0] " << std::endl;
+    this->line_info.val[0]  = std::stoi(this->cur_token.val, nullptr, 10);
+
+    // this should be a register that may or may not
+    // have an offset 
+    this->nextToken();
+    this->line_info.type[1] = this->cur_token.type;
+    std::cout << "[" << __func__ << "] about to convert cur_token.val to line_info.val[1] " << std::endl;
+    std::cout << "[" << __func__ << "] cur_token.val = " << this->cur_token.val << std::endl;
+
+    //if(this->cur_token.offset != "\0")
+    //{
+    //    this->line_info.type[2] = SYM_LITERAL;
+    //    std::cout << "[" << __func__ << "] about to convert offset <" << this->cur_token.offset << ">" << std::endl;
+    //    this->line_info.val[2]  = std::stoi(
+    //            this->cur_token.offset, nullptr, 10
+    //    );
+    //}
+    
+    switch(this->cur_token.type)
+    {
+        case SYM_REG_ZERO:
+        case SYM_REG_GLOBAL:
+        case SYM_REG_FRAME:
+            this->cur_token.val[1] = 0;
+            break;
+
+        default:
+            this->cur_token.val[1] = std::stoi(this->cur_token.val, nullptr, 10);
+            break;
+    }
+
+    if(this->cur_token.offset != "\0")
+    {
+        this->line_info.val[2]  = std::stoi(this->cur_token.offset, nullptr, 10);
+        this->line_info.type[2] = SYM_LITERAL;
+    }
+
+
+ARG_END:
+    if(error)
+    {
+        this->line_info.error = true;
+        this->line_info.errstr = "Invalid argument " + 
+            this->cur_token.toString();
+
+        if(this->verbose)
+        {
+            std::cout << "[" << __func__ << "] " << 
+                this->line_info.errstr << std::endl;
+        }
+    }
+}
+
+
+/*
  * parseRegArgs()
  * Parse some number of register arguments, eg for arithmetic
  * and logic instructions
@@ -429,7 +517,6 @@ void Lexer::parseRegArgs(const int num_args)
     for(argn = 0; argn < num_args; ++argn)
     {
         this->nextToken();
-
         // Offsets can only occur in certain instructions which have immediates.
         // The rule needs to be that 
         // 1) if the instruction is an immediate instruction
@@ -453,9 +540,7 @@ void Lexer::parseRegArgs(const int num_args)
                 goto ARG_ERR;
             }
         }
-        this->line_info.type[argn]   = this->cur_token.type;
-        //this->line_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-        std::cout << "[" << __func__ << "] cur_token " << this->cur_token.toString() << std::endl;
+        this->line_info.type[argn] = this->cur_token.type;
 
         switch(this->cur_token.type)
         {
@@ -520,7 +605,6 @@ JUMP_END:
         }
     }
 }
-
 
 
 /*
@@ -604,7 +688,7 @@ void Lexer::parseLine(void)
                 break;
 
             case LEX_LW:
-                this->parseRegArgs(2);
+                this->parseMemArgs();
                 break;
 
             case LEX_MULT:
@@ -622,6 +706,7 @@ void Lexer::parseLine(void)
 
             case LEX_SLL:
             case LEX_SRL:
+                this->line_info.is_imm = true;
                 this->parseRegArgs(3);
                 break;
 
@@ -630,7 +715,7 @@ void Lexer::parseLine(void)
                 break;
 
             case LEX_SW:
-                this->parseRegArgs(2);
+                this->parseMemArgs();
                 break;
 
             default:

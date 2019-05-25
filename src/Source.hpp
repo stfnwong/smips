@@ -122,7 +122,6 @@ class SymbolTable
         uint32_t     getAddr(const std::string& label) const;
         unsigned int size(void) const;
         void         init(void);
-
 };
 
 

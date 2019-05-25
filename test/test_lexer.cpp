@@ -28,8 +28,10 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.addr            = 0x200;      
     line.opcode.instr    = LEX_LW;
     line.opcode.mnemonic = "LW";
-    line.val[1]          = 4;
+    line.val[1]          = 0;
     line.type[1]         = SYM_REG_GLOBAL;
+    line.val[2]          = 4;
+    line.type[2]         = SYM_LITERAL;
     info.add(line);
 
     // line 2
@@ -54,10 +56,12 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.addr            = 0x202;      
     line.opcode.instr    = LEX_LW;
     line.opcode.mnemonic = "LW";
-    line.val[0]         = 1;
-    line.type[0]        = SYM_REG_TEMP;
-    line.val[1]         = 4;
-    line.type[1]        = SYM_REG_GLOBAL;
+    line.val[0]          = 1;
+    line.type[0]         = SYM_REG_TEMP;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_GLOBAL;
+    line.val[2]          = 4;
+    line.type[2]         = SYM_LITERAL;
     info.add(line);
 
     // line 4
@@ -166,6 +170,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.type[1]         = SYM_REG_TEMP;
     line.val[2]          = 2;
     line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.add(line);
 
     // line 7
@@ -196,6 +201,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.type[1]         = SYM_REG_ZERO;
     line.val[2]          = 256;
     line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.add(line);
 
     // label gets attached to first following non-empty line
@@ -299,7 +305,7 @@ TEST_F(TestLexer, test_lex_mult_add)
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(false);
     test_lexer.loadFile(this->test_mult_add_file);
     test_lexer.lex();
 
@@ -319,7 +325,16 @@ TEST_F(TestLexer, test_lex_mult_add)
     {
         expected_line = expected_src_out.get(line);
         output_line = src_out.get(line);
+        std::cout << "Checking line " << std::dec << line+1 << "/" << 
+            std::dec << expected_src_out.getNumLines();
+
+        if(expected_line != output_line)
+        {
+            std::cout << std::endl << "    diff : " << std::endl;
+            std::cout << expected_line.diff(output_line) << std::endl;
+        }
         ASSERT_EQ(expected_line, output_line);
+        std::cout << "    [OK]" << std::endl;
     }
 }
 
@@ -362,6 +377,14 @@ TEST_F(TestLexer, test_for_loop)
     {
         expected_line = expected_src_out.get(line);
         output_line = src_out.get(line);
+        std::cout << "Checking line " << std::dec << line+1 << "/" << 
+            std::dec << expected_src_out.getNumLines() << std::endl;
+
+        if(expected_line != output_line)
+        {
+            std::cout << "    diff : " << std::endl;
+            std::cout << expected_line.diff(output_line) << std::endl;
+        }
         ASSERT_EQ(expected_line, output_line);
     }
 }
