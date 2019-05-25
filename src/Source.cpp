@@ -343,7 +343,8 @@ Symbol::Symbol()
 std::string Symbol::toString(void) const
 {
     std::ostringstream oss;
-    oss << "[0x" << std::setw(4) << std::hex << this->addr << "] ";
+    oss << "[0x" << std::setw(8) << std::setfill('0') << 
+        std::hex << this->addr << "] ";
     oss << this->label;
 
     return oss.str();

@@ -178,9 +178,9 @@ TEST_F(TestAssembler, test_asm_mult_add)
         std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
         
         ASSERT_EQ(instr_exp, instr_out);
+        std::cout << "[OK]" << std::endl;
     }
     std::cout << prog_out.toString() << std::endl;
-
 }
 
 

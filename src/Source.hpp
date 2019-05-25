@@ -72,9 +72,9 @@ struct LineInfo
     unsigned int addr;
     bool         error;
     bool         is_label;
-    bool         is_symbol;
     bool         is_directive;
     bool         is_imm;
+    bool         is_symbol;
     int          offset[3];
     int          val[3];
     TokenType    type[3];      // record types for each register
@@ -101,9 +101,9 @@ struct Symbol
 
     public:
         Symbol();
-        std::string toString(void) const;
         bool operator==(const Symbol& that) const;
         bool operator!=(const Symbol& that) const;
+        std::string toString(void) const;
 };
 
 /*
@@ -123,6 +123,7 @@ class SymbolTable
         uint32_t     getAddr(const std::string& label) const;
         unsigned int size(void) const;
         void         init(void);
+
 };
 
 

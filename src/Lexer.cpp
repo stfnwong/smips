@@ -249,8 +249,6 @@ void Lexer::nextToken(void)
 
                 this->cur_token.val    = token_str.substr(tok_ptr+3, token_str.length()-2);
                 this->cur_token.offset = token_str.substr(0, tok_ptr);
-                //std::cout << "[" << __func__ << "] converting string <" << 
-                //    token_str.substr(0, tok_ptr) << "> between index 0 and " << tok_ptr << std::endl;
             }
             else
             {
@@ -430,11 +428,6 @@ void Lexer::parseRegArgs(const int num_args)
     {
         this->nextToken();
 
-        std::cout << "[" << __func__ << "] converting argument " << argn << "/" << num_args << std::endl;
-        std::cout << "[" << __func__ << "] cur_token.val    :" << this->cur_token.val << std::endl;
-        std::cout << "[" << __func__ << "] cur_token.offset :" << this->cur_token.offset << std::endl;
-        std::cout << "[" << __func__ << "] cur_token        :" << this->cur_token.toString() << std::endl;
-
         if(this->line_info.is_imm && argn == num_args-1)
         {
             this->line_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
@@ -448,12 +441,10 @@ void Lexer::parseRegArgs(const int num_args)
                 goto ARG_ERR;
             }
             this->line_info.type[argn]   = this->cur_token.type;
+
             // if we have an offset, convert it here 
             if(this->cur_token.offset != "\0")
-            {
-                std::cout << "[" << __func__ << "] about to convert offset [" << this->cur_token.offset << "]" << std::endl;
                 this->line_info.offset[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
-            }
 
             switch(this->cur_token.type)
             {
@@ -467,10 +458,6 @@ void Lexer::parseRegArgs(const int num_args)
                     this->line_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
                     break;
             }
-            //if(this->cur_token.type == SYM_REG_ZERO)
-            //    this->line_info.val[argn] = 0;
-            //else
-            //    this->line_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
         }
     }
 
@@ -490,11 +477,38 @@ ARG_ERR:
 
 /*
  * parseJump()
+ * Jump instructions only have labels
  */
 void Lexer::parseJump(void)
 {
-    std::cout << "[" << __func__ << "] TODO " << std::endl;
+    bool error = false;
+
+    this->nextToken();
+    if(this->cur_token.type != SYM_LABEL)
+    {
+        error = true;
+        goto JUMP_END;
+    }
+
+    this->line_info.is_symbol = true;
+    this->line_info.symbol    = this->cur_token.val;
+
+JUMP_END:
+    if(error)
+    {
+        this->line_info.error = true;
+        this->line_info.errstr = "Invalid argument " + 
+            this->cur_token.toString();
+
+        if(this->verbose)
+        {
+            std::cout << "[" << __func__ << "] " << 
+                this->line_info.errstr << std::endl;
+        }
+    }
 }
+
+
 
 /*
  * parseLine()
@@ -560,15 +574,28 @@ void Lexer::parseLine(void)
                 break;
 
             case LEX_BEQ:
+            case LEX_BNE:
                 this->parseBranch();
                 break;
 
-            case LEX_MULT:
-                this->parseRegArgs(3);
+            case LEX_BGTZ:
+            case LEX_BLEZ:
+                this->parseBranchZero();
+                break;
+
+            case LEX_J:
+            case LEX_JAL:
+            case LEX_JALR:
+            case LEX_JR:
+                this->parseJump();
                 break;
 
             case LEX_LW:
                 this->parseRegArgs(2);
+                break;
+
+            case LEX_MULT:
+                this->parseRegArgs(3);
                 break;
 
             case LEX_OR:
@@ -580,7 +607,6 @@ void Lexer::parseLine(void)
                 this->parseRegArgs(3);
                 break;
 
-            // shift left or right
             case LEX_SLL:
             case LEX_SRL:
                 this->parseRegArgs(3);
@@ -604,7 +630,6 @@ void Lexer::parseLine(void)
                         this->line_info.errstr << std::endl;
                 }
                 goto LINE_END;
-
         }
     }
 
@@ -614,10 +639,74 @@ LINE_END:
     this->cur_addr++;
 }
 
-//void Lexer::resolveLabels(void)
-//{
-//
-//}
+/*
+ * resolveLabels()
+ */
+void Lexer::resolveLabels(void)
+{
+    unsigned int idx;
+    uint32_t label_addr;
+    LineInfo line;
+
+    // In verbose mode, dump entire symbol table
+    if(this->verbose)
+    {
+        std::cout << "[" << __func__ << "] " << this->sym_table.size() 
+            << " symbols in table" << std::endl;
+        for(unsigned int s = 0; s < this->sym_table.size(); ++s)
+        {
+            Symbol sym = this->sym_table.get(s);
+            std::cout << "    " << std::setw(4) << s+1 << 
+                " :" << sym.toString() << std::endl;
+        }
+    }
+
+    for(idx = 0; idx < this->sym_table.size(); ++idx)
+    {
+        line = this->source_info.get(idx);
+        if(line.is_symbol)
+        {
+            label_addr = this->sym_table.getAddr(line.symbol);
+            if(label_addr > 0)
+            {
+                switch(line.opcode.instr)
+                {
+                    case LEX_BEQ:
+                    case LEX_BNE:
+                        line.type[2]   = SYM_LITERAL;
+                        line.offset[0] = label_addr;
+                        break;
+
+                    case LEX_BGTZ:
+                    case LEX_BLEZ:
+                        line.type[1]   = SYM_LITERAL;
+                        line.offset[1] = label_addr;
+                        break;
+
+                    case LEX_J:
+                    case LEX_JAL:
+                    case LEX_JALR:
+                    case LEX_JR:
+                        line.type[0]   = SYM_LITERAL;
+                        line.offset[0] = label_addr;
+                        break;
+
+                    default:
+                        break;
+                }
+                this->source_info.update(idx, line);
+
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] updated symbol " <<
+                        line.symbol << " on line " << line.line_num << 
+                        " with address 0x" << std::hex << std::setw(8) << 
+                        line.addr << std::endl;
+                }
+            }
+        }
+    }
+}
 
 /*
  * lex()
@@ -648,7 +737,7 @@ void Lexer::lex(void)
         this->source_info.add(this->line_info);
     }
     // Resolve symbols
-    //this->resolveLabels();
+    this->resolveLabels();
 }
 
 /*
@@ -695,6 +784,10 @@ const SourceInfo& Lexer::getSourceInfo(void) const
     return this->source_info;
 }
 
+const SymbolTable& Lexer::getSymTable(void) const
+{
+    return this->sym_table;
+}
 
 // ==== SETTERS ===== //
 void Lexer::setVerbose(const bool v)

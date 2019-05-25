@@ -121,6 +121,7 @@ uint32_t Assembler::asm_i_instr(const LineInfo& l, const int n) const
 /*
  * asm_add()
  * R-format
+ * add $d, $s, $t
  */
 Instr Assembler::asm_add(const LineInfo& l) const
 {
@@ -135,6 +136,7 @@ Instr Assembler::asm_add(const LineInfo& l) const
 /*
  * asm_addi()
  * I-format
+ * addi $t, $s, imm
  */
 Instr Assembler::asm_addi(const LineInfo& l) const
 {
@@ -142,6 +144,7 @@ Instr Assembler::asm_addi(const LineInfo& l) const
 
     instr.ins = instr.ins | this->asm_i_instr(l, 3);
     instr.ins = instr.ins | (0x08 << 26);
+    instr.ins = instr.ins | (l.offset[1]);
     instr.adr = l.addr;
     return instr;
 }
@@ -149,6 +152,7 @@ Instr Assembler::asm_addi(const LineInfo& l) const
 /*
  * asm_addu()
  * R-format
+ * addu $t, $s, imm
  */
 Instr Assembler::asm_addu(const LineInfo& l) const
 {
@@ -163,6 +167,7 @@ Instr Assembler::asm_addu(const LineInfo& l) const
 /*
  * asm_lw()
  * I-format
+ * lw $t, OFFSET($s)
  */
 Instr Assembler::asm_lw(const LineInfo& l) const
 {
@@ -170,7 +175,7 @@ Instr Assembler::asm_lw(const LineInfo& l) const
     Instr instr;
 
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[1]);        // insert immediate
+    instr.ins = instr.ins | (l.offset[1]);        // insert immediate
     instr.ins = instr.ins | (0x23 << this->i_instr_op_offset);
     instr.adr = l.addr;
     return instr;
@@ -179,6 +184,7 @@ Instr Assembler::asm_lw(const LineInfo& l) const
 /*
  * asm_mult()
  * R-format
+ * mult $s, $t
  */
 Instr Assembler::asm_mult(const LineInfo& l) const
 {
@@ -194,6 +200,7 @@ Instr Assembler::asm_mult(const LineInfo& l) const
 /*
  * asm_or()
  * R-format
+ * or $s, $s, $t
  */
 Instr Assembler::asm_or(const LineInfo& l) const
 {
@@ -208,6 +215,7 @@ Instr Assembler::asm_or(const LineInfo& l) const
 /*
  * asm_ori()
  * I-format
+ * ori $t, $s, imm
  */
 Instr Assembler::asm_ori(const LineInfo& l) const
 {
@@ -223,6 +231,7 @@ Instr Assembler::asm_ori(const LineInfo& l) const
 /*
  * asm_sub()
  * R-format
+ * sub $d, $s, $t
  */
 Instr Assembler::asm_sub(const LineInfo& l) const
 {
@@ -237,6 +246,7 @@ Instr Assembler::asm_sub(const LineInfo& l) const
 /*
  * asm_subu()
  * R-format
+ * subb $d, $s, $t
  */
 Instr Assembler::asm_subu(const LineInfo& l) const
 {

@@ -64,6 +64,7 @@ class Lexer
         void nextToken(void);
 
     private:
+        void resolveLabels(void);
         void parseBranch(void);
         void parseBranchZero(void);
         void parseRegArgs(const int num);
@@ -81,6 +82,7 @@ class Lexer
         // getters 
         bool  getVerbose(void) const;
         const SourceInfo& getSourceInfo(void) const;
+        const SymbolTable& getSymTable(void) const;
         // setters 
         void  setVerbose(const bool v);
 
