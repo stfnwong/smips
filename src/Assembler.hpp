@@ -23,6 +23,7 @@ class Assembler
         bool verbose;
         int  num_err;
         // instruction arg offsets
+        const uint8_t j_instr_op_offset = 26;
         const uint8_t i_instr_op_offset = 26;
         const uint8_t r_instr_offsets[3] = {
             11,     // rd offset
@@ -35,7 +36,6 @@ class Assembler
             0       // imm
         };
         const int ARG_INVALID_OFFSET  = -1;
-
 
     // lexer output
     private:
@@ -57,10 +57,15 @@ class Assembler
         Instr asm_add(const LineInfo& l) const;
         Instr asm_addi(const LineInfo& l) const;
         Instr asm_addu(const LineInfo& l) const;
+        Instr asm_beq(const LineInfo& l) const;
+        Instr asm_bne(const LineInfo& l) const;
+        Instr asm_j(const LineInfo& l) const;
         Instr asm_lw(const LineInfo& l) const;
         Instr asm_mult(const LineInfo& l) const;
         Instr asm_or(const LineInfo& l) const;
         Instr asm_ori(const LineInfo& l) const;
+        Instr asm_sll(const LineInfo& l) const;
+        Instr asm_sltu(const LineInfo& l) const;
         Instr asm_sub(const LineInfo& l) const;
         Instr asm_subu(const LineInfo& l) const;
         Instr asm_sw(const LineInfo& l) const;

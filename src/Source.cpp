@@ -146,7 +146,7 @@ std::string LineInfo::toString(void) const
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    oss << "Line  Type   Addr  Mnemonic   Opcode   Arguments  flags error" << std::endl;
+    oss << "Line  Type   Addr  Mnemonic   Opcode   Arguments   literal   error" << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
@@ -190,13 +190,17 @@ std::string LineInfo::toString(void) const
         else if(this->type[i] == SYM_REG_FRAME)
             oss << "F+" << this->val[i];
         else if(this->type[i] == SYM_LITERAL)
-            oss << std::left << std::setfill(' ') << std::setw(3) << this->val[i];
+            oss << "L  ";
+            //oss << std::left << std::setfill(' ') << std::setw(3) << this->val[i];
         else
             oss << "   ";
     }
-    oss << "   "; 
-    // Insert flag chars
-    oss << "...";
+    oss << "  "; 
+    // literal (if applicable)
+    if(this->is_symbol)
+        oss << "0x" << std::hex << std::setw(8) << this->val[2];
+    else
+        oss << "         ";
     // spacing chars
     oss << " ";
     // insert error (T/F only, full string may not fit)

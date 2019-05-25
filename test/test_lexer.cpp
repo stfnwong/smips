@@ -235,6 +235,9 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
     line.type[1]         = SYM_REG_ZERO;
+    // 3rd arg is actually converted literal
+    line.type[2]         = SYM_LITERAL;
+    line.val[2]          = 0x20A;
     line.is_symbol       = true;
     line.symbol          = "DONE";
     info.add(line);
@@ -279,6 +282,9 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.opcode.mnemonic = "J";
     line.is_symbol       = true;
     line.symbol          = "TOP";
+    // 3 arg is also converted literal in this case
+    line.type[2]         = SYM_LITERAL;
+    line.val[2]          = 0x205;
     info.add(line);
 
     // DONE
@@ -304,6 +310,9 @@ class TestLexer : public ::testing::Test
 };
 
 
+/*
+ * Test mult_add example
+ */
 TEST_F(TestLexer, test_lex_mult_add)
 {
     Lexer test_lexer;
@@ -344,6 +353,9 @@ TEST_F(TestLexer, test_lex_mult_add)
 }
 
 
+/*
+ * Test for_loop example
+ */
 TEST_F(TestLexer, test_for_loop)
 {
 

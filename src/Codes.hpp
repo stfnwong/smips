@@ -21,7 +21,7 @@ typedef enum instr_code
     LEX_ADD, LEX_ADDU, LEX_ADDI, LEX_ADDIU, 
     LEX_AND, LEX_ANDI, LEX_DIV, LEX_DIVU,
     LEX_MULT, LEX_MULTU, LEX_NOR, LEX_OR,
-    LEX_ORI, 
+    LEX_ORI, LEX_SUB, LEX_SUBU,
     LEX_SLL, LEX_SLLV, LEX_SRL, LEX_SRV,        // shifts
     // comparison instructions 
     LEX_SLT, LEX_SLTU, LEX_SLTI, LEX_SLTIU,

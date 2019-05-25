@@ -165,6 +165,53 @@ Instr Assembler::asm_addu(const LineInfo& l) const
 }
 
 /*
+ * asm_beq()
+ * I-format
+ * beq $s, $t, label
+ */
+Instr Assembler::asm_beq(const LineInfo& l) const
+{
+    Instr instr;
+    
+    instr.ins = 0x04 << this->i_instr_op_offset;
+    instr.ins = instr.ins | this->asm_i_instr(l, 2);
+    instr.ins = instr.ins | (l.val[2]);
+    instr.adr = l.addr;
+    return instr;
+}
+
+/*
+ * asm_bne()
+ * I-format
+ * bne $s, $t, label
+ */
+Instr Assembler::asm_bne(const LineInfo& l) const
+{
+    Instr instr;
+
+    instr.ins = 0x05 << this->i_instr_op_offset;
+    instr.ins = instr.ins | this->asm_i_instr(l, 2);
+    instr.ins = instr.ins | (l.val[2]);
+    instr.adr = l.addr;
+    return instr;
+}
+
+/*
+ * asm_j()
+ * J-format
+ * j offset
+ */
+Instr Assembler::asm_j(const LineInfo& l) const
+{
+    Instr instr;
+
+    instr.ins = 0x02 << this->j_instr_op_offset;
+    instr.ins = instr.ins | l.val[2];
+    instr.adr = l.addr;
+    return instr;
+}
+
+/*
  * asm_lw()
  * I-format
  * lw $t, OFFSET($s)
@@ -173,9 +220,9 @@ Instr Assembler::asm_lw(const LineInfo& l) const
 {
     Instr instr;
 
+    instr.ins = 0x23 << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
     instr.ins = instr.ins | (l.val[2]);        // insert immediate
-    instr.ins = instr.ins | (0x23 << this->i_instr_op_offset);
     instr.adr = l.addr;
     return instr;
 }
@@ -193,7 +240,6 @@ Instr Assembler::asm_mult(const LineInfo& l) const
     instr.ins = instr.ins | 0x18;
     instr.adr = l.addr;
     return instr;
-
 }
 
 /*
@@ -228,6 +274,36 @@ Instr Assembler::asm_ori(const LineInfo& l) const
 }
 
 /*
+ * asm_sll()
+ * R-format
+ * sll $d, $t, imm
+ */
+Instr Assembler::asm_sll(const LineInfo& l) const
+{
+    Instr instr;
+
+    instr.ins = 0x0;
+    instr.ins = instr.ins | this->asm_r_instr(l, 3);
+    instr.adr = l.addr;
+    return instr;
+}
+
+/*
+ * asm_sltu()
+ * R-format
+ * sltu $d, $s, $t
+ */
+Instr Assembler::asm_sltu(const LineInfo& l) const
+{
+    Instr instr;
+
+    instr.ins = 0x2B;
+    instr.ins = instr.ins | this->asm_r_instr(l, 3);
+    instr.adr = l.addr;
+    return instr;
+}
+
+/*
  * asm_sub()
  * R-format
  * sub $d, $s, $t
@@ -245,7 +321,7 @@ Instr Assembler::asm_sub(const LineInfo& l) const
 /*
  * asm_subu()
  * R-format
- * subb $d, $s, $t
+ * subu $d, $s, $t
  */
 Instr Assembler::asm_subu(const LineInfo& l) const
 {
@@ -267,7 +343,7 @@ Instr Assembler::asm_sw(const LineInfo& l) const
 
     instr.ins = 0x2B << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[1]);
+    instr.ins = instr.ins | l.val[2];       // was l.val[1]
     instr.adr = l.addr;
 
     return instr;
@@ -299,6 +375,14 @@ Instr Assembler::assembleLine(const LineInfo& line)
             return this->asm_addu(line);
             break;
 
+        case LEX_BEQ:
+            return this->asm_beq(line);
+            break;
+
+        case LEX_J:
+            return this->asm_j(line);
+            break;
+
         case LEX_LW:
             return this->asm_lw(line);
             break;
@@ -315,6 +399,22 @@ Instr Assembler::assembleLine(const LineInfo& line)
             return this->asm_ori(line);
             break;
 
+        case LEX_SLL:
+            return this->asm_sll(line);
+            break;
+
+        case LEX_SLTU:
+            return this->asm_sltu(line);
+            break;
+
+        case LEX_SUB:
+            return this->asm_sub(line);
+            break;
+
+        case LEX_SUBU:
+            return this->asm_subu(line);
+            break;
+
         case LEX_SW:
             return this->asm_sw(line);
             break;
@@ -326,12 +426,17 @@ Instr Assembler::assembleLine(const LineInfo& line)
                     std::dec << line.line_num << 
                     ") unknown opcode " << line.opcode.toString() << std::endl;
             }
-            return Instr(0, 0); // emit a null instruction
+            // TODO : I will emit NO-OPS here, which may 
+            // prove later to be a bad idea
+            return Instr(line.addr, 0); // emit a null instruction
     }
 
 }
 
-// TODO : make an AssembleLine() and call in a loop?
+/*
+ * assemble()
+ * Peform assembly on each line in turn
+ */
 void Assembler::assemble(void)
 {
     LineInfo cur_line;

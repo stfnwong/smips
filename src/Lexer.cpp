@@ -564,6 +564,9 @@ ARG_ERR:
 /*
  * parseJump()
  * Jump instructions only have labels
+ * TODO: update to allow for an immediate to be used 
+ * as well as a symbol?  This is presumably legal, but 
+ * probably mostly useless except in very small programs
  */
 void Lexer::parseJump(void)
 {
@@ -671,8 +674,11 @@ void Lexer::parseLine(void)
             case LEX_J:
             case LEX_JAL:
             case LEX_JALR:
-            case LEX_JR:
                 this->parseJump();
+                break;
+
+            case LEX_JR:
+                this->parseRegArgs(1);
                 break;
 
             case LEX_LW:
@@ -699,6 +705,11 @@ void Lexer::parseLine(void)
                 break;
 
             case LEX_SLTU:
+                this->parseRegArgs(3);
+                break;
+
+            case LEX_SUB:
+            case LEX_SUBU:
                 this->parseRegArgs(3);
                 break;
 
@@ -747,39 +758,21 @@ void Lexer::resolveLabels(void)
         }
     }
 
-    for(idx = 0; idx < this->sym_table.size(); ++idx)
+    for(idx = 0; idx < this->source_info.getNumLines(); ++idx)
     {
         line = this->source_info.get(idx);
         if(line.is_symbol)
         {
+            if(this->verbose)
+            {
+                std::cout << "[" << __func__ << "] checking address for symbol <" <<
+                    line.symbol << ">" << std::endl;
+            }
             label_addr = this->sym_table.getAddr(line.symbol);
             if(label_addr > 0)
             {
-                switch(line.opcode.instr)
-                {
-                    case LEX_BEQ:
-                    case LEX_BNE:
-                        line.type[2] = SYM_LITERAL;
-                        line.val[0]  = label_addr;
-                        break;
-
-                    case LEX_BGTZ:
-                    case LEX_BLEZ:
-                        line.type[1] = SYM_LITERAL;
-                        line.val[1]  = label_addr;
-                        break;
-
-                    case LEX_J:
-                    case LEX_JAL:
-                    case LEX_JALR:
-                    case LEX_JR:
-                        line.type[0] = SYM_LITERAL;
-                        line.val[0]  = label_addr;
-                        break;
-
-                    default:
-                        break;
-                }
+                line.type[2] = SYM_LITERAL;
+                line.val[2] = label_addr;
                 this->source_info.update(idx, line);
 
                 if(this->verbose)
