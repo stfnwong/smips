@@ -142,6 +142,7 @@ class SourceInfo
         unsigned int getLineNum(const unsigned int idx) const;
         unsigned int getNumErr(void) const;
         unsigned int getNumLines(void) const;
+        bool         hasError(void) const;
 
         std::string  toString(void) const;
 };

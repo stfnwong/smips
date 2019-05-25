@@ -356,11 +356,6 @@ Instr Assembler::asm_sw(const LineInfo& l) const
  */
 Instr Assembler::assembleLine(const LineInfo& line)
 {
-    // TODO : debug, remove
-    std::cout << std::endl;
-    std::cout << "[" << __func__ << "] assembling line " << std::endl;
-    std::cout << line.toString() << std::endl;
-
     switch(line.opcode.instr)
     {
         case LEX_ADD:

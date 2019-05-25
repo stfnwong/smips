@@ -464,6 +464,17 @@ unsigned int SourceInfo::getNumLines(void) const
     return this->line_info.size();
 }
 
+bool SourceInfo::hasError(void) const
+{
+    for(unsigned int idx = 0; idx < this->line_info.size(); ++idx)
+    {
+        if(this->line_info[idx].error)
+            return true;
+    }
+
+    return false;
+}
+
 std::string SourceInfo::toString(void) const
 {
     std::ostringstream oss;
