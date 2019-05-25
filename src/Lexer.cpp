@@ -302,10 +302,10 @@ void Lexer::nextToken(void)
 TOKEN_END:
     if(this->verbose)
     {
-        std::cout << "[" << __func__ << "] (line " << this->cur_line << 
-            ") got " << this->cur_token.toString() << " token <" << 
-            token_str << "> with value <" << this->cur_token.val <<
-            ">" << std::endl;
+        std::cout << "[" << __func__ << "] (line " << std::dec << 
+            this->cur_line << ") got " << this->cur_token.toString() << 
+            " token <" << token_str << "> with value <" << 
+            this->cur_token.val << ">" << std::endl;
 
         if(this->line_info.error)
             std::cout << "[" << __func__ << "] " << this->line_info.errstr << std::endl;
@@ -449,25 +449,13 @@ void Lexer::parseMemArgs(void)
         goto ARG_END;
     }
     this->line_info.type[0] = this->cur_token.type;
-    std::cout << "[" << __func__ << "] about to convert cur_token.val to line_info.val[0] " << std::endl;
     this->line_info.val[0]  = std::stoi(this->cur_token.val, nullptr, 10);
 
     // this should be a register that may or may not
     // have an offset 
     this->nextToken();
     this->line_info.type[1] = this->cur_token.type;
-    std::cout << "[" << __func__ << "] about to convert cur_token.val to line_info.val[1] " << std::endl;
-    std::cout << "[" << __func__ << "] cur_token.val = " << this->cur_token.val << std::endl;
 
-    //if(this->cur_token.offset != "\0")
-    //{
-    //    this->line_info.type[2] = SYM_LITERAL;
-    //    std::cout << "[" << __func__ << "] about to convert offset <" << this->cur_token.offset << ">" << std::endl;
-    //    this->line_info.val[2]  = std::stoi(
-    //            this->cur_token.offset, nullptr, 10
-    //    );
-    //}
-    
     switch(this->cur_token.type)
     {
         case SYM_REG_ZERO:

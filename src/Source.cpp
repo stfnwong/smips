@@ -185,7 +185,8 @@ std::string LineInfo::toString(void) const
         else if(this->type[i] == SYM_REG_NUM)
             oss << "$" << this->val[i] << " ";
         else if(this->type[i] == SYM_REG_GLOBAL)
-            oss << "G+" << this->val[i] << " ";
+            //oss << "G+" << this->val[i] << " ";
+            oss << "G  ";
         else if(this->type[i] == SYM_REG_FRAME)
             oss << "F+" << this->val[i];
         else if(this->type[i] == SYM_LITERAL)

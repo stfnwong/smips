@@ -109,7 +109,9 @@ std::string Program::toString(void) const
 }
 
 
-// disk operations
+/*
+ * save()
+ */
 int Program::save(const std::string& filename) 
 {
     uint32_t N;
@@ -142,6 +144,9 @@ int Program::save(const std::string& filename)
     return 0;
 }
 
+/*
+ * load()
+ */
 int Program::load(const std::string& filename) 
 {
     std::ifstream infile;

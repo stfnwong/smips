@@ -171,11 +171,10 @@ Instr Assembler::asm_addu(const LineInfo& l) const
  */
 Instr Assembler::asm_lw(const LineInfo& l) const
 {
-    // I format
     Instr instr;
 
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[1]);        // insert immediate
+    instr.ins = instr.ins | (l.val[2]);        // insert immediate
     instr.ins = instr.ins | (0x23 << this->i_instr_op_offset);
     instr.adr = l.addr;
     return instr;

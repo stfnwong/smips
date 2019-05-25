@@ -153,8 +153,10 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.opcode.mnemonic = "LW";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
-    line.val[1]          = 4;
+    line.val[1]          = 0;
     line.type[1]         = SYM_REG_GLOBAL;
+    line.val[2]          = 4;
+    line.type[2]         = SYM_LITERAL;
     info.add(line);
 
     // line 6
@@ -247,8 +249,9 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.val[0]          = 2;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
-    line.type[1]         = SYM_REG_ZERO;
-    line.val[1]          = 28;
+    line.type[1]         = SYM_REG_TEMP;
+    line.val[2]          = 28;
+    line.type[2]         = SYM_LITERAL;
     info.add(line);
 
     // line 13
@@ -261,8 +264,10 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
-    line.type[1]         = SYM_REG_ZERO;
-    line.val[1]          = 28;
+    line.type[1]         = SYM_REG_TEMP;
+    line.val[2]          = 4;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.add(line);
 
     // line 14
@@ -276,10 +281,9 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.symbol          = "TOP";
     info.add(line);
 
-    // line 15 (this is just a standalone symbol)
     // DONE
     line.init();
-    line.line_num        = 15;
+    line.line_num        = 16;      
     line.addr            = 0x20A;
     line.is_label        = true;
     line.label           = "DONE";
@@ -287,6 +291,7 @@ SourceInfo get_for_loop_expected_source_info(void)
 
     return info;
 }
+
 
 class TestLexer : public ::testing::Test
 {
