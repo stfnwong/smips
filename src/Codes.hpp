@@ -36,6 +36,24 @@ typedef enum instr_code
     LEX_BEQ, LEX_BGTZ, LEX_BLEZ, LEX_BNE
 } instr_code;
 
+// Directive codes used by Lexer
+typedef enum directive_code
+{
+    LEX_ALIGN,     
+    LEX_ASCIIZ,    
+    LEX_BYTE,      
+    LEX_DATA,      
+    LEX_DOUBLE,    
+    LEX_END_MACRO, 
+    LEX_FLOAT,     
+    LEX_GLOBAL,    
+    LEX_HALF,      
+    LEX_INCLUDE,   
+    LEX_MACRO,     
+    LEX_SPACE,     
+    LEX_TEXT,      
+    LEX_WORD,      
+} directive_code;
 
 // MIPS Opcode list 
 const Opcode lex_instr_codes[] = {
@@ -83,6 +101,25 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_BGTZ,  "BGTZ"),
     Opcode(LEX_BLEZ,  "BLEZ"),
     Opcode(LEX_BNE,   "BNE"),
+};
+
+
+// Assembly directives
+const Opcode lex_directive_codes[] = {
+    Opcode(LEX_ALIGN,     ".ALIGN"),
+    Opcode(LEX_ASCIIZ,    ".ASCIIZ"),
+    Opcode(LEX_BYTE,      ".BYTE"),
+    Opcode(LEX_DATA,      ".DATA"),
+    Opcode(LEX_DOUBLE,    ".DOUBLE"),
+    Opcode(LEX_END_MACRO, ".END_MACRO"),
+    Opcode(LEX_FLOAT,     ".FLOAT"),
+    Opcode(LEX_GLOBAL,    ".GLOBAL"),
+    Opcode(LEX_HALF,      ".HALF"),
+    Opcode(LEX_INCLUDE,   ".INCLUDE"),
+    Opcode(LEX_MACRO,     ".MACRO"),
+    Opcode(LEX_SPACE,     ".SPACE"),
+    Opcode(LEX_TEXT,      ".TEXT"),
+    Opcode(LEX_WORD,      ".WORD")
 };
 
 

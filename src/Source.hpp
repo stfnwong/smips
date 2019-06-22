@@ -83,12 +83,20 @@ struct LineInfo
         LineInfo(); 
         void init(void);
         std::string toString(void) const;
+        // TODO: fomats the LineInfo like an instruction
+        //std::string toInstrString(void) const;
 
         bool operator==(const LineInfo& that) const;
         bool operator!=(const LineInfo& that) const;
 
         std::string diff(const LineInfo& that) const;
 };
+
+/*
+ * MemLineInfo
+ * Information for a directive in the assembly source which contains memory 
+ * information (eg: .text, .word, and so on)
+ */
 
 /*
  * Symbol

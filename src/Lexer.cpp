@@ -12,6 +12,7 @@
 #include <string>
 #include "Lexer.hpp"
 #include "Codes.hpp"
+#include "Data.hpp"     // MemLine is here at the moment...
 
 
 Lexer::Lexer()
@@ -25,6 +26,7 @@ Lexer::Lexer()
     // create token buffer
     this->alloc_mem();
     this->init_instr_table();
+    this->init_directive_code_table();
 }
 
 Lexer::~Lexer()
@@ -39,6 +41,15 @@ void Lexer::init_instr_table(void)
 {
     for(const Opcode& code : lex_instr_codes)
         this->instr_code_table.add(code);
+}
+
+/*
+ * init_directive_code_table()
+ */
+void Lexer::init_directive_code_table(void)
+{
+    for(const Opcode& code : lex_directive_codes)
+        this->directive_code_table.add(code);
 }
 
 /*
@@ -311,6 +322,43 @@ TOKEN_END:
             std::cout << "[" << __func__ << "] " << this->line_info.errstr << std::endl;
     }
 }
+
+// DIRECTIVES 
+void Lexer::parseASCIIZ(void)
+{
+
+}
+
+
+void Lexer::parseByte(void)
+{
+
+}
+
+
+void Lexer::parseWord(void)
+{
+    unsigned int word_line = this->cur_line;
+
+    while(this->cur_line < word_line+1)
+    {
+        this->nextToken();
+        if(this->cur_token.type == SYM_LITERAL)
+            std::cout << "Need to add to array of literals.." << std::endl;
+
+    }
+
+}
+
+void Lexer::parseSpace(void)
+{
+
+}
+
+
+
+
+// INSTRUCTIONS 
 
 /*
  * parseBranchZero()
@@ -604,6 +652,7 @@ JUMP_END:
 void Lexer::parseLine(void)
 {
     Opcode op;
+    Opcode directive;
     Symbol sym;
     unsigned int line_num = 0;
 
@@ -629,6 +678,55 @@ void Lexer::parseLine(void)
         // scan in the next token
         this->nextToken(); 
         line_num = this->cur_line;
+    }
+
+    if(this->cur_token.type == SYM_DIRECTIVE)
+    {
+        // Look up directive string in directive table
+        directive = this->directive_code_table.get(this->cur_token.val);
+        if(this->verbose)
+        {
+            std::cout << "[" << __func__ << "] (line " << 
+                std::dec << this->cur_line << "0 got directive " <<
+                directive.toString() << std::endl;
+        }
+
+        switch(directive.instr)
+        {
+            case LEX_ALIGN:
+                break;
+
+            // Global variable segment 
+            case LEX_DATA:
+                break;
+
+            // Text segment
+            case LEX_TEXT:
+                break;
+
+            // data types 
+            case LEX_WORD:
+                break;
+
+            case LEX_HALF:
+                break;
+
+            case LEX_BYTE:
+                break;
+
+            default:
+                this->line_info.error = true;
+                this->line_info.errstr = "Unknown assembly directive " +
+                    this->cur_token.val;
+
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] (line " << 
+                        this->cur_line << ") " << 
+                        this->line_info.errstr << std::endl;
+                }
+                break;
+        }
     }
 
     // parse instructions 

@@ -23,6 +23,9 @@ class Lexer
     private:
         OpcodeTable instr_code_table;
         void init_instr_table(void);
+    private:
+        OpcodeTable directive_code_table;
+        void init_directive_code_table(void);
 
     // Token memory
     private:
@@ -62,6 +65,20 @@ class Lexer
     private:
         Token cur_token;
         void nextToken(void);
+
+    // handling directives
+    private:
+        // TODO : no support for floats in the first version
+        void parseASCIIZ(void);
+        void parseAlign(void);
+        void parseByte(void);
+        void parseDouble(void);
+        void parseHalf(void);
+        void parseMacro(void);
+        void parseEndMacro(void);
+        void parseWord(void);
+        void parseSpace(void);
+        void parseText(void);
 
     private:
         void resolveLabels(void);

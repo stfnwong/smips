@@ -32,6 +32,8 @@ struct Opcode
         bool operator!=(const Opcode& that) const;
 };
 
+const Opcode NULL_OPCODE;
+
 
 /*
  * OpcodeTable
