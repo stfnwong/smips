@@ -36,6 +36,7 @@ typedef enum instr_code
     LEX_BEQ, LEX_BGTZ, LEX_BLEZ, LEX_BNE
 } instr_code;
 
+
 // Directive codes used by Lexer
 typedef enum directive_code
 {
