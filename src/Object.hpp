@@ -16,14 +16,36 @@
 
 struct ELFFileHeader
 {
-    uint8_t header[0x32];
+    uint8_t header[0x34];       
 
     public:
         ELFFileHeader();
-        void setProgStart(const uint32_t val);
-        void setProgTableStart(const uint32_t val);
-        void setSectionStart(const uint32_t val);
-        void setNumSectionHeaders(const uint16_t val);
+        // getters
+        uint8_t  get_e_type(void) const;
+        uint32_t get_e_version(void) const;
+        uint32_t get_e_entry(void) const;
+        uint32_t get_e_phoff(void) const;
+        uint32_t get_e_shoff(void) const;
+        uint32_t get_e_flags(void) const;
+
+        uint16_t get_e_ehsize(void) const;
+        uint16_t get_e_phentsize(void) const;
+        uint16_t get_e_phnum(void) const; 
+        uint16_t get_e_shentsize(void) const;
+        uint16_t get_e_shnum(void) const;
+        uint16_t get_e_shstrndx(void) const;
+
+        // setters 
+        void set_e_entry(const uint32_t val);
+        void set_e_phoff(const uint32_t val);
+        void set_e_shoff(const uint32_t val);
+        void set_e_flags(const uint32_t val);
+        void set_e_ehsize(const uint16_t val);
+        void set_e_phentsize(const uint16_t val);
+        void set_e_phnum(const uint16_t val);
+        void set_e_shentsize(const uint16_t val);
+        void set_e_shnum(const uint16_t val);
+        void set_e_shstrndx(const uint16_t val);
 };
 
 

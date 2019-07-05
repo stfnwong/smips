@@ -13,7 +13,7 @@
 ELFFileHeader::ELFFileHeader()
 {
     // zero out all bytes
-    for(int i = 0; i < 0x32; ++i)
+    for(int i = 0; i < 0x34; ++i)
         this->header[i] = 0;
     // add magic numbers 
     this->header[0] = 0x7F;
@@ -34,7 +34,113 @@ ELFFileHeader::ELFFileHeader()
     this->header[0x12] = 0x8;   // MIPS machine 
 }
 
-void ELFFileHeader::setProgStart(const uint32_t val)
+// getters
+
+uint8_t ELFFileHeader::get_e_type(void) const
+{
+    return this->header[0x10];
+}
+
+uint32_t ELFFileHeader::get_e_version(void) const
+{
+    uint32_t version = this->header[0x14] + 
+        (this->header[0x15] << 8) +
+        (this->header[0x16] << 16) + 
+        (this->header[0x17] << 24);
+    return version;
+}
+
+uint32_t ELFFileHeader::get_e_entry(void) const
+{
+    uint32_t offset = this->header[0x18] + 
+        (this->header[0x19] << 8) + 
+        (this->header[0x1A] << 16) + 
+        (this->header[0x1B] << 24);
+
+    return offset;
+}
+
+uint32_t ELFFileHeader::get_e_phoff(void) const
+{
+    uint32_t entry = this->header[0x1C] + 
+        (this->header[0x1D] << 8) +
+        (this->header[0x1E] << 16) + 
+        (this->header[0x1F] << 24);
+
+    return entry;
+}
+
+uint32_t ELFFileHeader::get_e_shoff(void) const
+{
+    uint32_t offset = this->header[0x20] + 
+        (this->header[0x21] << 8) + 
+        (this->header[0x22] << 16) + 
+        (this->header[0x23] << 24);
+
+    return offset;
+}
+
+uint32_t ELFFileHeader::get_e_flags(void) const
+{
+    uint32_t flags = this->header[0x24] + 
+        (this->header[0x25] << 8) + 
+        (this->header[0x26] << 16) + 
+        (this->header[0x27] << 24);
+    return flags;
+}
+
+uint16_t ELFFileHeader::get_e_ehsize(void) const
+{
+    uint16_t size = this->header[0x28] +
+        (this->header[0x29] << 8);
+    return size;
+}
+
+uint16_t ELFFileHeader::get_e_phentsize(void) const
+{
+    uint16_t size = this->header[0x2A] + 
+        (this->header[0x2B] << 8);
+    return size;
+}
+
+uint16_t ELFFileHeader::get_e_phnum(void) const
+{
+    uint16_t num = this->header[0x2C] + 
+        (this->header[0x2D] << 8);
+    return num;
+}
+  
+uint16_t ELFFileHeader::get_e_shentsize(void) const
+{
+    uint16_t size = this->header[0x2E] + 
+        (this->header[0x2F] << 8);
+    return size;
+}
+
+uint16_t ELFFileHeader::get_e_shnum(void) const
+{
+    uint16_t num = this->header[0x30] + 
+        (this->header[0x31] << 8);
+    return num;
+}
+
+uint16_t ELFFileHeader::get_e_shstrndx(void) const
+{
+    uint16_t num = this->header[0x32] + 
+        (this->header[0x33] << 8);
+    return num;
+}
+
+// setters 
+void ELFFileHeader::set_e_entry(const uint32_t val)
+{
+    this->header[0x18] =  val & 0x000000FF;
+    this->header[0x19] = (val & 0x0000FF00) >> 8;
+    this->header[0x1A] = (val & 0x00FF0000) >> 16;
+    this->header[0x1B] = (val & 0xFF000000) >> 24;
+}
+
+void ELFFileHeader::set_e_phoff(const uint32_t val)
 {
     this->header[0x1C] =  val & 0x000000FF;
     this->header[0x1D] = (val & 0x0000FF00) >> 8;
@@ -42,7 +148,7 @@ void ELFFileHeader::setProgStart(const uint32_t val)
     this->header[0x1F] = (val & 0xFF000000) >> 24;
 }
 
-void ELFFileHeader::setProgTableStart(const uint32_t val)
+void ELFFileHeader::set_e_shoff(const uint32_t val)
 {
     this->header[0x20] =  val & 0x000000FF;
     this->header[0x21] = (val & 0x0000FF00) >> 8;
@@ -50,7 +156,7 @@ void ELFFileHeader::setProgTableStart(const uint32_t val)
     this->header[0x23] = (val & 0xFF000000) >> 24;
 }
 
-void ELFFileHeader::setSectionStart(const uint32_t val)
+void ELFFileHeader::set_e_flags(const uint32_t val)
 {
     this->header[0x24] =  val & 0x000000FF;
     this->header[0x25] = (val & 0x0000FF00) >> 8;
@@ -58,10 +164,40 @@ void ELFFileHeader::setSectionStart(const uint32_t val)
     this->header[0x27] = (val & 0xFF000000) >> 24;
 }
 
-void ELFFileHeader::setNumSectionHeaders(const uint16_t val)
+void ELFFileHeader::set_e_ehsize(const uint16_t val)
+{
+    this->header[0x28] = val & 0x00FF;
+    this->header[0x29] = (val & 0xFF00) >> 8;
+}
+
+void ELFFileHeader::set_e_phentsize(const uint16_t val)
+{
+    this->header[0x2A] = val & 0x00FF;
+    this->header[0x2B] = (val & 0xFF00) >> 8;
+}
+
+void ELFFileHeader::set_e_phnum(const uint16_t val)
+{
+    this->header[0x2C] = val & 0x00FF;
+    this->header[0x2D] = (val & 0xFF00) >> 8;
+}
+
+void ELFFileHeader::set_e_shentsize(const uint16_t val)
+{
+    this->header[0x2E] = val & 0x00FF;
+    this->header[0x2F] = (val & 0xFF00) >> 8;
+}
+
+void ELFFileHeader::set_e_shnum(const uint16_t val)
 {
     this->header[0x30] = val & 0x00FF;
     this->header[0x31] = (val & 0xFF00) >> 8;
+}
+
+void ELFFileHeader::set_e_shstrndx(const uint16_t val)
+{
+    this->header[0x32] = val & 0x00FF;
+    this->header[0x33] = (val & 0xFF00) >> 8;
 }
 
 
