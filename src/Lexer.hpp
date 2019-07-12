@@ -46,7 +46,8 @@ class Lexer
         std::string  source_text;
         std::string  filename;
         SourceInfo   source_info;
-        LineInfo     line_info;
+        TextInfo     text_info;
+        DataInfo     data_info;
         SymbolTable  sym_table;
         unsigned int cur_addr;
 
@@ -72,6 +73,7 @@ class Lexer
         void parseASCIIZ(void);
         void parseAlign(void);
         void parseByte(void);
+        void parseData(void);
         void parseDouble(void);
         void parseHalf(void);
         void parseMacro(void);
@@ -79,6 +81,8 @@ class Lexer
         void parseWord(void);
         void parseSpace(void);
         void parseText(void);
+
+        // TODO: make a new sub-section for all data handling functions
 
     private:
         void resolveLabels(void);

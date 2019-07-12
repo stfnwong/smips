@@ -60,10 +60,11 @@ struct Token
 
 
 /*
- * LineInfo
+ * TextInfo
  * Information about a single line of assembly source
  */
-struct LineInfo
+// TODO : change name to TextInfo
+struct TextInfo
 {
     std::string  label;
     std::string  symbol;
@@ -80,23 +81,42 @@ struct LineInfo
     Opcode       opcode;
 
     public:
-        LineInfo(); 
+        TextInfo(); 
         void init(void);
         std::string toString(void) const;
-        // TODO: fomats the LineInfo like an instruction
+        // TODO: fomats the TextInfo like an instruction
         //std::string toInstrString(void) const;
 
-        bool operator==(const LineInfo& that) const;
-        bool operator!=(const LineInfo& that) const;
+        bool operator==(const TextInfo& that) const;
+        bool operator!=(const TextInfo& that) const;
 
-        std::string diff(const LineInfo& that) const;
+        std::string diff(const TextInfo& that) const;
+
 };
 
+
 /*
- * MemLineInfo
+ * DataInfo
  * Information for a directive in the assembly source which contains memory 
  * information (eg: .text, .word, and so on)
  */
+struct DataInfo
+{
+    std::string           errstr;
+    std::vector <uint8_t> data;
+    unsigned int          line_num;
+    unsigned int          addr;
+    unsigned int          space;
+    bool                  error;
+
+    public:
+        DataInfo();
+        void init(void);
+        std::string toString(void) const;
+
+        bool operator==(const DataInfo& that) const;
+};
+
 
 /*
  * Symbol
@@ -139,14 +159,17 @@ class SymbolTable
 class SourceInfo
 {
     private:
-        std::vector<LineInfo> line_info;
-        LineInfo null_line;
+        std::vector<TextInfo> line_info;        // text section(s)
+        std::vector<DataInfo> data_info;        // data sections(s)
+        TextInfo null_line;
+        DataInfo null_data;
 
     public:
         SourceInfo();
-        void         add(const LineInfo& l);
-        void         update(const unsigned int idx, const LineInfo& l);
-        LineInfo&    get(const unsigned int idx);
+        void         addText(const TextInfo& l);
+        void         addData(const DataInfo& d);
+        void         update(const unsigned int idx, const TextInfo& l);
+        TextInfo&    get(const unsigned int idx);
         unsigned int getLineNum(const unsigned int idx) const;
         unsigned int getNumErr(void) const;
         unsigned int getNumLines(void) const;

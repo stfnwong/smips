@@ -19,7 +19,7 @@
 SourceInfo get_mult_add_expected_source_info(void)
 {
     SourceInfo info;
-    LineInfo   line;
+    TextInfo   line;
 
     // line 1
     // lw $t0, 4($gp)
@@ -32,7 +32,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.type[1]         = SYM_REG_GLOBAL;
     line.val[2]          = 4;
     line.type[2]         = SYM_LITERAL;
-    info.add(line);
+    info.addText(line);
 
     // line 2
     // mult $t0, $t0, $t0
@@ -47,7 +47,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.type[1]        = SYM_REG_TEMP;
     line.val[2]         = 0;
     line.type[2]        = SYM_REG_TEMP;
-    info.add(line);
+    info.addText(line);
 
     // line 3
     // lw $t1, 4($gp)
@@ -62,7 +62,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.type[1]         = SYM_REG_GLOBAL;
     line.val[2]          = 4;
     line.type[2]         = SYM_LITERAL;
-    info.add(line);
+    info.addText(line);
 
     // line 4
     // ori $t2, $zero 3
@@ -78,7 +78,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.type[1]         = SYM_REG_ZERO;
     line.val[2]          = 3;
     line.type[3]         = SYM_LITERAL;
-    info.add(line);
+    info.addText(line);
 
     // line 5
     // mult $t1, $t1, $t2
@@ -93,7 +93,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.type[1]         = SYM_REG_TEMP;
     line.val[2]          = 2;
     line.type[3]         = SYM_REG_TEMP;
-    info.add(line);
+    info.addText(line);
 
     // line 7
     // add $t2, $t0, $t1
@@ -108,7 +108,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.type[1]         = SYM_REG_TEMP;
     line.val[2]          = 1;
     line.type[3]         = SYM_REG_TEMP;
-    info.add(line);
+    info.addText(line);
 
     // line 8
     // sw $t2, 0($gp)
@@ -121,7 +121,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
     line.type[1]         = SYM_REG_GLOBAL;
-    info.add(line);
+    info.addText(line);
 
     return info;
 }
@@ -129,7 +129,7 @@ SourceInfo get_mult_add_expected_source_info(void)
 SourceInfo get_for_loop_expected_source_info(void)
 {
     SourceInfo info;
-    LineInfo   line;
+    TextInfo   line;
 
     // line 4
     // ADD $t0, $gp, $zero
@@ -142,7 +142,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.val[1]         = 0;
     line.type[1]        = SYM_REG_GLOBAL;
     line.type[2]        = SYM_REG_ZERO;
-    info.add(line);
+    info.addText(line);
 
     // line 5
     // LW $t1, 4($gp)
@@ -157,7 +157,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.type[1]         = SYM_REG_GLOBAL;
     line.val[2]          = 4;
     line.type[2]         = SYM_LITERAL;
-    info.add(line);
+    info.addText(line);
 
     // line 6
     // SLL $t1, $t1, 2
@@ -173,7 +173,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.val[2]          = 2;
     line.type[2]         = SYM_LITERAL;
     line.is_imm          = true;
-    info.add(line);
+    info.addText(line);
 
     // line 7
     // ADD $t1, $t1, $gp
@@ -188,7 +188,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.type[1]         = SYM_REG_TEMP;
     line.val[2]          = 0;
     line.type[2]         = SYM_REG_GLOBAL;
-    info.add(line);
+    info.addText(line);
 
     // line 8
     // ORI $t2, $zero, 256
@@ -204,7 +204,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.val[2]          = 256;
     line.type[2]         = SYM_LITERAL;
     line.is_imm          = true;
-    info.add(line);
+    info.addText(line);
 
     // label gets attached to first following non-empty line
     // line 10
@@ -222,7 +222,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.type[2]        = SYM_REG_TEMP;
     line.is_label        = true;
     line.label           = "TOP";
-    info.add(line);
+    info.addText(line);
 
     // line 11
     // BEQ $t3, $zero, done
@@ -240,7 +240,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.val[2]          = 0x20A;
     line.is_symbol       = true;
     line.symbol          = "DONE";
-    info.add(line);
+    info.addText(line);
 
     // line 12
     // SW $t2, 28($t8)
@@ -255,7 +255,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.type[1]         = SYM_REG_TEMP;
     line.val[2]          = 28;
     line.type[2]         = SYM_LITERAL;
-    info.add(line);
+    info.addText(line);
 
     // line 13
     // ADDI $t0, $t0, 4
@@ -271,7 +271,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.val[2]          = 4;
     line.type[2]         = SYM_LITERAL;
     line.is_imm          = true;
-    info.add(line);
+    info.addText(line);
 
     // line 14
     // J TOP
@@ -285,7 +285,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     // 3 arg is also converted literal in this case
     line.type[2]         = SYM_LITERAL;
     line.val[2]          = 0x205;
-    info.add(line);
+    info.addText(line);
 
     // DONE
     line.init();
@@ -293,7 +293,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.addr            = 0x20A;
     line.is_label        = true;
     line.label           = "DONE";
-    info.add(line);
+    info.addText(line);
 
     return info;
 }
@@ -333,8 +333,8 @@ TEST_F(TestLexer, test_lex_mult_add)
     ASSERT_EQ(expected_src_out.getNumLines(), src_out.getNumLines());
 
     // Check each line in turn
-    LineInfo expected_line;
-    LineInfo output_line;
+    TextInfo expected_line;
+    TextInfo output_line;
     for(unsigned int line = 0; line < expected_src_out.getNumLines(); ++line)
     {
         expected_line = expected_src_out.get(line);
@@ -388,8 +388,8 @@ TEST_F(TestLexer, test_for_loop)
     //ASSERT_EQ(expected_src_out.getNumLines(), src_out.getNumLines());
 
     // Check each line in turn
-    LineInfo expected_line;
-    LineInfo output_line;
+    TextInfo expected_line;
+    TextInfo output_line;
     for(unsigned int line = 0; line < expected_src_out.getNumLines(); ++line)
     {
         expected_line = expected_src_out.get(line);

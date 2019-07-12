@@ -84,7 +84,7 @@ int Assembler::val2Offset(const TokenType& type, const int val) const
  * asm_r_instr()
  * Assemble the arguments for an R-format instruction
  */
-uint32_t Assembler::asm_r_instr(const LineInfo& l, const int n) const
+uint32_t Assembler::asm_r_instr(const TextInfo& l, const int n) const
 {
     uint32_t instr = 0;
     int reg;
@@ -102,7 +102,7 @@ uint32_t Assembler::asm_r_instr(const LineInfo& l, const int n) const
  * asm_i_instr()
  * Assemble the arguments for an I-format instruction
  */
-uint32_t Assembler::asm_i_instr(const LineInfo& l, const int n) const
+uint32_t Assembler::asm_i_instr(const TextInfo& l, const int n) const
 {
     uint32_t instr = 0;
     int reg;
@@ -123,7 +123,7 @@ uint32_t Assembler::asm_i_instr(const LineInfo& l, const int n) const
  * R-format
  * add $d, $s, $t
  */
-Instr Assembler::asm_add(const LineInfo& l) const
+Instr Assembler::asm_add(const TextInfo& l) const
 {
     Instr instr;
 
@@ -138,7 +138,7 @@ Instr Assembler::asm_add(const LineInfo& l) const
  * I-format
  * addi $t, $s, imm
  */
-Instr Assembler::asm_addi(const LineInfo& l) const
+Instr Assembler::asm_addi(const TextInfo& l) const
 {
     Instr instr;
 
@@ -154,7 +154,7 @@ Instr Assembler::asm_addi(const LineInfo& l) const
  * R-format
  * addu $t, $s, imm
  */
-Instr Assembler::asm_addu(const LineInfo& l) const
+Instr Assembler::asm_addu(const TextInfo& l) const
 {
     Instr instr;
 
@@ -169,7 +169,7 @@ Instr Assembler::asm_addu(const LineInfo& l) const
  * I-format
  * beq $s, $t, label
  */
-Instr Assembler::asm_beq(const LineInfo& l) const
+Instr Assembler::asm_beq(const TextInfo& l) const
 {
     Instr instr;
     
@@ -185,7 +185,7 @@ Instr Assembler::asm_beq(const LineInfo& l) const
  * I-format
  * bne $s, $t, label
  */
-Instr Assembler::asm_bne(const LineInfo& l) const
+Instr Assembler::asm_bne(const TextInfo& l) const
 {
     Instr instr;
 
@@ -201,7 +201,7 @@ Instr Assembler::asm_bne(const LineInfo& l) const
  * J-format
  * j offset
  */
-Instr Assembler::asm_j(const LineInfo& l) const
+Instr Assembler::asm_j(const TextInfo& l) const
 {
     Instr instr;
 
@@ -216,7 +216,7 @@ Instr Assembler::asm_j(const LineInfo& l) const
  * I-format
  * lw $t, OFFSET($s)
  */
-Instr Assembler::asm_lw(const LineInfo& l) const
+Instr Assembler::asm_lw(const TextInfo& l) const
 {
     Instr instr;
 
@@ -232,7 +232,7 @@ Instr Assembler::asm_lw(const LineInfo& l) const
  * R-format
  * mult $s, $t
  */
-Instr Assembler::asm_mult(const LineInfo& l) const
+Instr Assembler::asm_mult(const TextInfo& l) const
 {
     Instr instr;
 
@@ -247,7 +247,7 @@ Instr Assembler::asm_mult(const LineInfo& l) const
  * R-format
  * or $s, $s, $t
  */
-Instr Assembler::asm_or(const LineInfo& l) const
+Instr Assembler::asm_or(const TextInfo& l) const
 {
     Instr instr;
 
@@ -262,7 +262,7 @@ Instr Assembler::asm_or(const LineInfo& l) const
  * I-format
  * ori $t, $s, imm
  */
-Instr Assembler::asm_ori(const LineInfo& l) const
+Instr Assembler::asm_ori(const TextInfo& l) const
 {
     Instr instr;
 
@@ -278,7 +278,7 @@ Instr Assembler::asm_ori(const LineInfo& l) const
  * R-format
  * sll $d, $t, imm
  */
-Instr Assembler::asm_sll(const LineInfo& l) const
+Instr Assembler::asm_sll(const TextInfo& l) const
 {
     Instr instr;
 
@@ -293,7 +293,7 @@ Instr Assembler::asm_sll(const LineInfo& l) const
  * R-format
  * sltu $d, $s, $t
  */
-Instr Assembler::asm_sltu(const LineInfo& l) const
+Instr Assembler::asm_sltu(const TextInfo& l) const
 {
     Instr instr;
 
@@ -308,7 +308,7 @@ Instr Assembler::asm_sltu(const LineInfo& l) const
  * R-format
  * sub $d, $s, $t
  */
-Instr Assembler::asm_sub(const LineInfo& l) const
+Instr Assembler::asm_sub(const TextInfo& l) const
 {
     Instr instr;
 
@@ -323,7 +323,7 @@ Instr Assembler::asm_sub(const LineInfo& l) const
  * R-format
  * subu $d, $s, $t
  */
-Instr Assembler::asm_subu(const LineInfo& l) const
+Instr Assembler::asm_subu(const TextInfo& l) const
 {
     Instr instr;
 
@@ -337,7 +337,7 @@ Instr Assembler::asm_subu(const LineInfo& l) const
  * asm_sw()
  * I-format
  */
-Instr Assembler::asm_sw(const LineInfo& l) const
+Instr Assembler::asm_sw(const TextInfo& l) const
 {
     Instr instr;
 
@@ -352,9 +352,9 @@ Instr Assembler::asm_sw(const LineInfo& l) const
 
 /*
  * AssembleLine()
- * Transform a LineInfo object into an Instr object
+ * Transform a TextInfo object into an Instr object
  */
-Instr Assembler::assembleLine(const LineInfo& line)
+Instr Assembler::assembleLine(const TextInfo& line)
 {
     switch(line.opcode.instr)
     {
@@ -434,7 +434,7 @@ Instr Assembler::assembleLine(const LineInfo& line)
  */
 void Assembler::assemble(void)
 {
-    LineInfo cur_line;
+    TextInfo cur_line;
     Instr    cur_instr;
 
     if(this->source.getNumLines() == 0)
@@ -445,7 +445,9 @@ void Assembler::assemble(void)
     }
 
     this->program.init();
+    // TODO : assemble the data sections
 
+    // TODO : assemble the text sections
     for(unsigned int i = 0; i < this->source.getNumLines(); ++i)
     {
         cur_line = this->source.get(i);

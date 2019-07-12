@@ -113,14 +113,14 @@ bool Token::operator!=(const Token& that) const
 
 
 /*
- * LineInfo
+ * TextInfo
  */
-LineInfo::LineInfo()
+TextInfo::TextInfo()
 {
     this->init();
 }
 
-void LineInfo::init(void)
+void TextInfo::init(void)
 {
     this->label        = "\0";
     this->symbol       = "\0";
@@ -141,7 +141,7 @@ void LineInfo::init(void)
     }
 }
 
-std::string LineInfo::toString(void) const
+std::string TextInfo::toString(void) const
 {
     std::ostringstream oss;
 
@@ -218,7 +218,7 @@ std::string LineInfo::toString(void) const
     return oss.str();
 }
 
-bool LineInfo::operator==(const LineInfo& that) const
+bool TextInfo::operator==(const TextInfo& that) const
 {
     if(this->label != that.label)
         return false;
@@ -250,12 +250,12 @@ bool LineInfo::operator==(const LineInfo& that) const
     return true;
 }
 
-bool LineInfo::operator!=(const LineInfo& that) const
+bool TextInfo::operator!=(const TextInfo& that) const
 {
     return !(*this == that);
 }
 
-std::string LineInfo::diff(const LineInfo& that) const
+std::string TextInfo::diff(const TextInfo& that) const
 {
     std::ostringstream oss;
     int num_err = 0;
@@ -333,6 +333,65 @@ std::string LineInfo::diff(const LineInfo& that) const
     return oss.str();
 }
 
+/*
+ * DataInfo
+ */
+DataInfo::DataInfo()
+{
+    this->init();
+}
+
+void DataInfo::init(void)
+{
+    this->errstr   = "\0";
+    this->line_num = 0;
+    this->addr     = 0;
+    this->space    = 0;
+    this->error    = false;
+    this->data.clear();
+}
+
+std::string DataInfo::toString(void) const
+{
+    std::ostringstream oss;
+
+    oss << "---------------------------------------------------------------------" << std::endl;
+    oss << "Line  Type   Addr  Mnemonic   Opcode   Arguments   literal   error" << std::endl;
+
+    oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
+    oss << std::endl;
+    
+    return oss.str();
+
+}
+
+
+
+bool DataInfo::operator==(const DataInfo& that) const
+{
+    if(this->line_num != that.line_num)
+        return false;
+    if(this->addr != that.addr)
+        return false;
+    if(this->space != that.space)
+        return false;
+    if(this->error != that.error)
+        return false;
+
+    if(this->data.size() != that.data.size())
+        return false;
+    
+    if(this->data.size() > 0)
+    {
+        for(unsigned int i = 0; i < this->data.size(); ++i)
+        {
+            if(this->data[i] != that.data[i])
+                return false;
+        }
+    }
+
+    return true;
+}
 
 /*
  * Symbol
@@ -423,18 +482,23 @@ void SymbolTable::init(void)
  */
 SourceInfo::SourceInfo() {}
 
-void SourceInfo::add(const LineInfo& l)
+void SourceInfo::addText(const TextInfo& l)
 {
     this->line_info.push_back(l);
 }
 
-void SourceInfo::update(const unsigned int idx, const LineInfo& l)
+void SourceInfo::addData(const DataInfo& d)
+{
+    this->data_info.push_back(d);
+}
+
+void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 {
     if(idx < this->line_info.size())
         this->line_info[idx] = l;
 }
 
-LineInfo& SourceInfo::get(const unsigned int idx)
+TextInfo& SourceInfo::get(const unsigned int idx)
 {
     if(idx < this->line_info.size())
         return this->line_info[idx];

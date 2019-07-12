@@ -101,7 +101,8 @@ int main(int argc, char *argv[])
     lexed_source = lexer.getSourceInfo();
 
     // Run through source and print error strings
-    LineInfo line;
+    // TODO : need to handle data sections as well..
+    TextInfo line;
     for(unsigned int idx = 0; idx < lexed_source.getNumLines(); ++idx)
     {
         line = lexed_source.get(idx);

@@ -41,9 +41,12 @@ struct Segment
 class Object
 {
     private:
-        ELFFileHeader header;
-        std::vector<ELFSectionHeader> section_headers;
-        std::vector<ELFProgramHeader> program_headers;
+        ELFFileHeader    file_header;
+        ELFProgramHeader prog_header;
+        ELFSectionHeader sect_header;
+
+    private:
+        std::vector <uint8_t> obj_data;
 
     // ensure that we don't have any copy construction
     private:

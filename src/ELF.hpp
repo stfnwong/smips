@@ -9,7 +9,8 @@
 
 #include <cstdint>
 
-// Type constantsl 
+
+// Program table type constants
 #define ELF_PT_NULL    0x00000000
 #define ELF_PT_LOAD    0x00000001
 #define ELF_PT_DYNAMIC 0x00000002
@@ -21,6 +22,42 @@
 #define ELF_PT_HIOS    0x6FFFFFFF
 #define ELF_PT_LOPROC  0x70000000
 #define ELF_PT_HIPROC  0x7FFFFFFF
+
+// Section header type constants
+#define ELF_SHT_NULL         0x00
+#define ELF_SHT_PROGBITS     0x01
+#define ELF_SHT_SYMTAB       0x02
+#define ELF_SHT_STRTAB       0x03
+#define ELF_SHT_RELA         0x04
+#define ELF_SHT_HASH         0x05
+#define ELF_SHT_DYNAMIC      0x06
+#define ELF_SHT_NOTE         0x07
+#define ELF_SHT_NOBITS       0x08
+#define ELF_SHT_REL          0x09
+#define ELF_SHT_SHLIB        0x0A
+#define ELF_SHT_DYNSYM       0x0B
+#define ELF_SHT_INIT_ARRAY   0x0E
+#define ELF_SHT_FINI_ARRAY   0x0F
+#define ELF_SHT_GROUP        0x10
+#define ELF_SHT_SYMTAB_INDEX 0x11
+#define ELF_SHT_NUM          0x12
+#define ELF_SHT_LOOS         0x13
+
+// Section header flag constants
+#define ELF_SHF_WRITE            0x01
+#define ELF_SHF_ALLOC            0x02
+#define ELF_SHF_EXECINSTR        0x04
+#define ELF_SHF_MERGE            0x10
+#define ELF_SHF_STRINGS          0x20
+#define ELF_SHF_INFO_LINK        0x40
+#define ELF_SHF_LINK_ORDER       0x80
+#define ELF_SHF_OS_NONCONFORMING 0x100
+#define ELF_SHF_GROUP            0x200
+#define ELF_SHF_TLS              0x400
+#define ELF_SHF_MASKOS           0x0FF00000
+#define ELF_SHF_MASKPROC         0xF0000000
+#define ELF_SHF_ORDERED          0x40000000
+#define ELF_SHF_EXCLUDE          0x80000000
 
 // ELF header stuff
 // This might go in another file later

@@ -22,7 +22,7 @@ class Disassembler
     private:
         Program    program;
         SourceInfo source;
-        LineInfo   cur_line;
+        TextInfo   cur_line;
         uint32_t   cur_instr;
 
     // instruction disassembly

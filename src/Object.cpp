@@ -31,10 +31,10 @@ Object::Object() {}
 
 unsigned int Object::getNumSectionHeaders(void) const
 {
-    return this->section_headers.size();
+    return this->file_header.get_e_shnum();
 }
 
 unsigned int Object::getNumProgramHeaders(void) const
 {
-    return this->program_headers.size();
+    return this->file_header.get_e_phnum();
 }
