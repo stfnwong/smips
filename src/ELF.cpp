@@ -198,6 +198,16 @@ void ELFFileHeader::set_e_shstrndx(const uint16_t val)
     this->header[0x33] = (val & 0xFF00) >> 8;
 }
 
+bool ELFFileHeader::operator==(const ELFFileHeader& that) const
+{
+    return this->header == that.header;
+}
+
+bool ELFFileHeader::operator!=(const ELFFileHeader& that) const
+{
+    return this->header != that.header;
+}
+
 
 // ELF Program Header
 ELFProgramHeader::ELFProgramHeader()
@@ -344,6 +354,17 @@ void ELFProgramHeader::set_p_align(const uint32_t val)
     this->header[0x1E] = (val & 0x00FF0000) >> 16;
     this->header[0x1F] = (val & 0xFF000000) >> 24;
 }
+
+bool ELFProgramHeader::operator==(const ELFProgramHeader& that) const
+{
+    return this->header == that.header;
+}
+
+bool ELFProgramHeader::operator!=(const ELFProgramHeader& that) const
+{
+    return this->header != that.header;
+}
+
 
 // ELF Section Header
 ELFSectionHeader::ELFSectionHeader()
@@ -525,8 +546,12 @@ void ELFSectionHeader::set_sh_entsize(const uint32_t val)
 }
 
 
+bool ELFSectionHeader::operator==(const ELFSectionHeader& that) const
+{
+    return this->header == that.header;
+}
 
-
-
-
-
+bool ELFSectionHeader::operator!=(const ELFSectionHeader& that) const
+{
+    return this->header != that.header;
+}

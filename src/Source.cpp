@@ -9,7 +9,20 @@
 #include <sstream>
 #include "Source.hpp"
 
+/*
+ * TODO: 
+ * To match both the ELF format, and the layout of many example programs it might be 
+ * better to restructure this to work with 'segments' rather than just raw symbols.
+ *
+ * The idea I suppose would be to have the .data and .text directives insert a new data
+ * or text segment, and that segment would contain the IR for the actual assembly 
+ * inside of it.
+ *
+ */
 
+/* 
+ * TOKEN
+ */
 Token::Token()
 {
     this->type   = SYM_NONE;
@@ -139,6 +152,11 @@ void TextInfo::init(void)
         this->val[i]    = 0;
         this->type[i]   = SYM_NONE;
     }
+}
+
+bool TextInfo::hasOp(void) const
+{
+    return (this->opcode.instr == 0) ? true : false;
 }
 
 std::string TextInfo::toString(void) const
@@ -351,6 +369,10 @@ void DataInfo::init(void)
     this->data.clear();
 }
 
+/*
+ * toString()
+ * Convert DataInfo to a std::string
+ */
 std::string DataInfo::toString(void) const
 {
     std::ostringstream oss;
@@ -362,11 +384,11 @@ std::string DataInfo::toString(void) const
     oss << std::endl;
     
     return oss.str();
-
 }
 
-
-
+/*
+ * ==
+ */
 bool DataInfo::operator==(const DataInfo& that) const
 {
     if(this->line_num != that.line_num)
@@ -392,6 +414,39 @@ bool DataInfo::operator==(const DataInfo& that) const
 
     return true;
 }
+
+/*
+ * addBytes
+ */
+void DataInfo::addByte(const uint8_t byte)
+{
+    this->data.push_back(byte);
+}
+
+void DataInfo::addHalf(const uint16_t half)
+{
+    uint8_t byte;
+
+    byte = half & 0x00FF;
+    this->data.push_back(byte);
+    byte = (half & 0xFF00) >> 8;
+    this->data.push_back(byte);
+}
+
+void DataInfo::addWord(const uint32_t word)
+{
+    uint8_t byte;
+
+    byte = word & (0x000000FF);
+    this->data.push_back(byte);
+    byte = (word & 0x0000FF00) >> 8;
+    this->data.push_back(byte);
+    byte = (word & 0x00FF0000) >> 16;
+    this->data.push_back(byte);
+    byte = (word & 0xFF000000) >> 24;
+    this->data.push_back(byte);
+}
+
 
 /*
  * Symbol

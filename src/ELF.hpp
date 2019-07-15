@@ -94,6 +94,10 @@ struct ELFFileHeader
         void set_e_shentsize(const uint16_t val);
         void set_e_shnum(const uint16_t val);
         void set_e_shstrndx(const uint16_t val);
+
+        // operators
+        bool operator==(const ELFFileHeader& that) const;
+        bool operator!=(const ELFFileHeader& that) const;
 };
 
 
@@ -122,6 +126,9 @@ struct ELFProgramHeader
         void set_p_memsz(const uint32_t val);
         void set_p_flags(const uint32_t val);
         void set_p_align(const uint32_t val);
+
+        bool operator==(const ELFProgramHeader& that) const;
+        bool operator!=(const ELFProgramHeader& that) const;
 };
 
 
@@ -155,6 +162,9 @@ struct ELFSectionHeader
         void set_sh_info(const uint32_t val);
         void set_sh_addralign(const uint32_t val);
         void set_sh_entsize(const uint32_t val);
+
+        bool operator==(const ELFSectionHeader& that) const;
+        bool operator!=(const ELFSectionHeader& that) const;
 };
 
 

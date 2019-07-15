@@ -205,6 +205,8 @@ void Lexer::scanToken(void)
             break;
         if(this->cur_char == ':')       // end of label
             break;
+        if(this->cur_char == '"')       // start of a string, use scanString() to read
+            break;
         this->token_buf[idx] = toupper(this->cur_char);
         this->advance();
         idx++;
@@ -214,6 +216,59 @@ void Lexer::scanToken(void)
     if(this->cur_char == ',')
         this->advance();
 }
+
+/*
+ * scanString()
+ * Scan a string from the source file. Strings are bounded by '"' characters on each end
+ */
+void Lexer::scanString(void)
+{
+    int idx = 0;
+    std::string str_token = "\0";
+    bool inside_str = false;
+
+    this->skipWhitespace();     // eat any leading whitespace 
+    this->skipSeperators();     // eat any seperators that might be left
+    while(idx < (this->token_buf_size-1))
+    {
+        if(this->cur_char == '"')
+        {
+            if(!inside_str)
+                inside_str = true;
+            else
+            {
+                inside_str = false;
+                break;          // end of string
+            }
+        }
+        if(this->cur_char == '\n')      // newline
+            break;
+        if(this->cur_char == ';')       // comment
+            break;
+        if(this->cur_char == '#')       // also comment
+            break;
+
+        // preserve the original case here
+        this->token_buf[idx] = this->cur_char;
+        this->advance();
+        idx++;
+    }
+
+    // handle unterminated strings
+    if(inside_str)
+    {
+        this->text_info.error = true;
+        this->text_info.errstr = "Unterminated string after ["
+            + std::string(this->token_buf) + "]\n";
+    }
+
+    this->token_buf[idx] = '\0';
+    // If we are on a seperator now, advance the source pointer 
+    if(this->cur_char == ',')
+        this->advance();
+}
+
+
 
 /*
  * nextToken()
@@ -253,6 +308,36 @@ void Lexer::nextToken(void)
             this->cur_token.val  = token_str.substr(2, token_str.length()-1);
 
         goto TOKEN_END;
+    }
+
+    // This is a character 
+    if(token_str[0] == '\'')
+    {
+        this->cur_token.type = SYM_CHAR;
+        this->cur_token.val = token_str[1];
+        // check that there is a closing '''
+        if(token_str[2] != '\'')
+        {
+            this->text_info.error = true;
+            this->text_info.errstr = "expected closing ' after ["
+                + this->cur_token.val + "] token\n";
+            goto TOKEN_END;
+        }
+    }
+
+    // This is a string
+    if(token_str[0] == '"')
+    {
+        this->scanString();
+        this->cur_token.type = SYM_STRING; 
+        this->cur_token.val = token_str;
+        if(this->text_info.error)
+        {
+            if(this->verbose)
+                std::cout << "[" << __func__ << "] (line " << this->cur_line << ") " << 
+                    this->text_info.errstr << std::endl;
+            goto TOKEN_END;
+        }
     }
 
     // This is either an immediate or a register with an offset
@@ -329,37 +414,69 @@ void Lexer::parseASCIIZ(void)
 
 }
 
-// insert a data segment
+// insert a new data segment (ie: parse the .data directive)
 void Lexer::parseData(void)
 {
-    this->data_info.init();
-    this->data_info.line_num = this->cur_line;
-    this->data_info.addr     = this->cur_addr;
+    DataInfo info;
+
+    info.addr     = this->cur_addr;
+    info.line_num = this->cur_line;
+
+
+    // get the tokens from the data instruction and lex
 }
 
 void Lexer::parseByte(void)
 {
+    DataInfo info;
 
+    info.addr     = this->cur_addr;
+    info.line_num = this->cur_line;
+
+    // there should only be one token after the .byte directive which 
+    // must be a character (for numeric input use .word or .half directive)
+    this->nextToken();
+    if(this->cur_token.type != SYM_CHAR)
+    {
+        if(this->verbose)
+        {
+            std::cout << "[" << __func__ << "] got invalid token " << 
+                this->cur_token.toString() << " for .byte directive" << std::endl;
+        }
+
+    }
 }
 
+void Lexer::parseHalf(void)
+{
+    std::cout << "[" << __func__ << "]" << std::endl;
+}
 
+// TODO : need a new architecture that is more localised... the simplest thing to do 
+// is to have something like this->cur_data (which is a kind of analogue to this->cur_line)
 void Lexer::parseWord(void)
 {
-    unsigned int word_line = this->cur_line;
+    uint32_t word;
+    DataInfo info;
 
-    while(this->cur_line < word_line+1)
+    info.addr     = this->cur_addr;
+    info.line_num = this->cur_line;
+
+    while(this->cur_line <= info.line_num)
     {
         this->nextToken();
-        if(this->cur_token.type == SYM_LITERAL)
-            std::cout << "Need to add to array of literals.." << std::endl;
-
+        if(this->cur_token.type != SYM_LITERAL)
+        {
+        }
+        word = std::stoi(this->cur_token.val);
+        info.addWord(word);
     }
 
 }
 
 void Lexer::parseSpace(void)
 {
-
+    std::cout << "[" << __func__ << "]" << std::endl;
 }
 
 
@@ -841,9 +958,23 @@ void Lexer::parseLine(void)
     }
 
 LINE_END:
+    // stuff for text segment
     this->text_info.line_num = line_num;
     this->text_info.addr     = this->cur_addr;
+
+    // stuff for data segment
+    // TODO : Note that part of the problem here is that we need to have a way to tell if
+    // we had any valid data instructions on this 'line'. In the previous versions of this
+    // Lexer/Assembler split that I have done there wasn't really a need to think about 
+    // different segments  (or rather, segments of different types), so you would just end
+    // up with a single LineInfo type structure that captured everything, and from there 
+    // all you had to do was create a list/vector of those and that was basically the IR 
+    // for your program.
+    this->data_info.line_num = line_num;
+    this->data_info.addr     = this->cur_addr;
+
     this->cur_addr++;
+
 }
 
 /*
@@ -923,6 +1054,7 @@ void Lexer::lex(void)
             continue;
         }
         this->parseLine();
+        // add the current line info to the overall source info....
         this->source_info.addText(this->text_info);
     }
     // Resolve symbols

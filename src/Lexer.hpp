@@ -23,6 +23,7 @@ class Lexer
     private:
         OpcodeTable instr_code_table;
         void init_instr_table(void);
+
     private:
         OpcodeTable directive_code_table;
         void init_directive_code_table(void);
@@ -32,6 +33,7 @@ class Lexer
         int   token_buf_size;
         char* token_buf;
         bool  verbose;
+
     private:
         void  alloc_mem(void);
 
@@ -65,9 +67,11 @@ class Lexer
     // Token handling
     private:
         Token cur_token;
+        void scanToken(void);
+        void scanString(void);
         void nextToken(void);
 
-    // handling directives
+    // Assembler directives
     private:
         // TODO : no support for floats in the first version
         void parseASCIIZ(void);
@@ -82,8 +86,6 @@ class Lexer
         void parseSpace(void);
         void parseText(void);
 
-        // TODO: make a new sub-section for all data handling functions
-
     private:
         void resolveLabels(void);
         void parseBranch(void);
@@ -93,7 +95,6 @@ class Lexer
         void parseJump(void);
         void parseLine(void);
         TokenType getRegType(const char& reg_char) const;
-        void scanToken(void);
 
     public:
         Lexer();

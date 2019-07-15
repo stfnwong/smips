@@ -307,6 +307,7 @@ class TestLexer : public ::testing::Test
     public:
         std::string test_mult_add_file = "asm/mult_add.asm";
         std::string test_for_loop_file = "asm/for_loop.asm";
+        std::string test_data_region_file = "asm/data_region_ex.asm";
 };
 
 
@@ -358,7 +359,6 @@ TEST_F(TestLexer, test_lex_mult_add)
  */
 TEST_F(TestLexer, test_for_loop)
 {
-
     Lexer test_lexer;
     SourceInfo src_out;
     SourceInfo expected_src_out;
@@ -406,6 +406,39 @@ TEST_F(TestLexer, test_for_loop)
     }
 }
 
+/*
+ * Test data_region example
+ */
+TEST_F(TestLexer, test_data_region)
+{
+    Lexer test_lexer;
+    SourceInfo src_out;
+    SourceInfo expected_src_out;
+
+    test_lexer.setVerbose(true);
+    test_lexer.loadFile(this->test_data_region_file);
+    test_lexer.lex();
+
+    // get the source info
+    src_out = test_lexer.getSourceInfo();
+
+    std::cout << "Lexer output : " << std::endl;
+    std::cout << src_out.toString() << std::endl;
+
+    expected_src_out = get_for_loop_expected_source_info();
+    // before we check each line, dump the symbol table and print
+    SymbolTable sym_table = test_lexer.getSymTable();
+    std::cout << "Symbol Table: " << std::endl;
+
+    for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
+    {
+        Symbol cur_sym = sym_table.get(sym);
+        std::cout << "     " << sym << " " << 
+            cur_sym.toString() << std::endl;
+    }
+
+    // TODO : Make an expected source output for the assertion check
+}
 
 
 int main(int argc, char *argv[])

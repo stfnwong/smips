@@ -19,6 +19,9 @@ LDFLAGS=
 LIBS = 
 TEST_LIBS = -lgtest -lgtest_main
 
+# style for assembly output
+ASM_STYLE=intel
+
 # Object targets
 INCS=-I$(SRC_DIR)
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
@@ -29,17 +32,21 @@ TOOL_SOURCES = $(wildcard $(TOOL_DIR)/*.cpp)
 
 .PHONY: clean
 
-# Generic build 
+# Objects 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEPS)
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
 OBJECTS := $(SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-
 $(OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-TEST_OBJECTS  := $(TEST_SOURCES:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+# Objects, but output as assembly
+$(ASSEM_OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -S $< -o $(OBJ_DIR)/$@.asm -masm=$(ASM_STYLE)
 
+
+# Unit tests 
+TEST_OBJECTS  := $(TEST_SOURCES:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 $(TEST_OBJECTS): $(OBJ_DIR)/%.o : $(TEST_DIR)/%.cpp 
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@ 
 
@@ -67,6 +74,8 @@ all : test tools
 test : $(TESTS)
 
 tools : $(TOOLS)
+
+assem : $(ASSEM_OBJECTS)
 
 clean:
 	rm -rfv *.o $(OBJ_DIR)/*.o 

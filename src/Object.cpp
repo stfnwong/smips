@@ -9,24 +9,18 @@
 #include "Object.hpp"
 
 
-// Segment 
-
-Segment::Segment()
-{
-    this->offset = 0;
-    this->type = SEG_NONE;
-}
-
-Segment::Segment(const uint32_t offset, const segment_t t )
-{
-    this->offset = offset;
-    this->type = t;
-}
-
-
-
 // Object
+//Object::Object() : code(nullptr), data(nullptr), zero(nullptr), bss(nullptr) {} 
 Object::Object() {} 
+
+
+Object::~Object() 
+{
+    //delete this->code;
+    //delete this->data;
+    //delete this->zero;
+    //delete this->bss;
+}
 
 
 unsigned int Object::getNumSectionHeaders(void) const

@@ -1,6 +1,7 @@
 /*
  * SOURCE
- * Objects for processing assembly source 
+ * Objects for processing assembly source. These are almost like a low-grade IR 
+ * for the assembly source.
  *
  * Stefan Wong 2019
  */
@@ -21,6 +22,8 @@ typedef enum TokenType
     SYM_INSTR,
     SYM_LITERAL,
     SYM_DIRECTIVE,
+    SYM_CHAR,
+    SYM_STRING,
     // register types
     SYM_REG_AT,
     SYM_REG_STACK,
@@ -39,6 +42,7 @@ typedef enum TokenType
 
 /*
  * Token
+ * Represents a single token from the source stream.
  */
 struct Token
 {
@@ -61,9 +65,10 @@ struct Token
 
 /*
  * TextInfo
- * Information about a single line of assembly source
+ * Information about a single line of assembly source. This object is a kind of 
+ * intermediate representation of a line of assembly that will ultimately be placed in 
+ * the text section of the output binary.
  */
-// TODO : change name to TextInfo
 struct TextInfo
 {
     std::string  label;
@@ -83,22 +88,25 @@ struct TextInfo
     public:
         TextInfo(); 
         void init(void);
-        std::string toString(void) const;
-        // TODO: fomats the TextInfo like an instruction
-        //std::string toInstrString(void) const;
+        bool hasOp(void) const;
 
         bool operator==(const TextInfo& that) const;
         bool operator!=(const TextInfo& that) const;
 
+        // string formatting
+        std::string toString(void) const;
         std::string diff(const TextInfo& that) const;
-
+        // TODO: fomats the TextInfo like an instruction
+        //std::string toInstrString(void) const;
 };
 
 
 /*
  * DataInfo
  * Information for a directive in the assembly source which contains memory 
- * information (eg: .text, .word, and so on)
+ * information (eg: .text, .word, and so on). This object forms a kind of intermediate
+ * representation for assembly lines that will appear in the data section of the 
+ * output binary.
  */
 struct DataInfo
 {
@@ -115,6 +123,11 @@ struct DataInfo
         std::string toString(void) const;
 
         bool operator==(const DataInfo& that) const;
+
+        // Insert a new byte into the data section
+        void addByte(const uint8_t byte);
+        void addHalf(const uint16_t half);
+        void addWord(const uint32_t word);
 };
 
 
