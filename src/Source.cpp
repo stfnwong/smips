@@ -539,7 +539,7 @@ SourceInfo::SourceInfo() {}
 
 void SourceInfo::addText(const TextInfo& l)
 {
-    this->line_info.push_back(l);
+    this->text_info.push_back(l);
 }
 
 void SourceInfo::addData(const DataInfo& d)
@@ -549,22 +549,22 @@ void SourceInfo::addData(const DataInfo& d)
 
 void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 {
-    if(idx < this->line_info.size())
-        this->line_info[idx] = l;
+    if(idx < this->text_info.size())
+        this->text_info[idx] = l;
 }
 
-TextInfo& SourceInfo::get(const unsigned int idx)
+TextInfo& SourceInfo::getText(const unsigned int idx)
 {
-    if(idx < this->line_info.size())
-        return this->line_info[idx];
+    if(idx < this->text_info.size())
+        return this->text_info[idx];
     
     return this->null_line;
 }
 
 unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 {
-    if(idx < this->line_info.size())
-        return this->line_info[idx].line_num;
+    if(idx < this->text_info.size())
+        return this->text_info[idx].line_num;
 
     return 0;
 }
@@ -572,34 +572,49 @@ unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 unsigned int SourceInfo::getNumErr(void) const
 {
     unsigned int num_err = 0;
-    for(unsigned int idx = 0; idx < this->line_info.size(); ++idx)
-        num_err += (this->line_info[idx].error) ? 1 : 0;
+    for(unsigned int idx = 0; idx < this->text_info.size(); ++idx)
+        num_err += (this->text_info[idx].error) ? 1 : 0;
 
     return num_err;
 }
 
 unsigned int SourceInfo::getNumLines(void) const
 {
-    return this->line_info.size();
+    return this->text_info.size();
 }
 
 bool SourceInfo::hasError(void) const
 {
-    for(unsigned int idx = 0; idx < this->line_info.size(); ++idx)
+    for(unsigned int idx = 0; idx < this->text_info.size(); ++idx)
     {
-        if(this->line_info[idx].error)
+        if(this->text_info[idx].error)
             return true;
     }
 
     return false;
 }
 
+unsigned int SourceInfo::getTextInfoSize(void) const
+{
+    return this->text_info.size();
+}
+
+unsigned int SourceInfo::getDataInfoSize(void) const
+{
+    return this->data_info.size();
+}
+
+
+
 std::string SourceInfo::toString(void) const
 {
     std::ostringstream oss;
+    for(unsigned int l = 0; l < this->data_info.size(); ++l)
+        oss << this->data_info[l].toString();
 
-    for(unsigned int l = 0; l < this->line_info.size(); ++l)
-        oss << this->line_info[l].toString();
+    // Text infos
+    for(unsigned int l = 0; l < this->text_info.size(); ++l)
+        oss << this->text_info[l].toString();
 
     return oss.str();
 }

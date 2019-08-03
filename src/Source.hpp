@@ -172,7 +172,7 @@ class SymbolTable
 class SourceInfo
 {
     private:
-        std::vector<TextInfo> line_info;        // text section(s)
+        std::vector<TextInfo> text_info;        // text section(s)
         std::vector<DataInfo> data_info;        // data sections(s)
         TextInfo null_line;
         DataInfo null_data;
@@ -182,11 +182,15 @@ class SourceInfo
         void         addText(const TextInfo& l);
         void         addData(const DataInfo& d);
         void         update(const unsigned int idx, const TextInfo& l);
-        TextInfo&    get(const unsigned int idx);
+        DataInfo&    getData(const unsigned int idx);
+        TextInfo&    getText(const unsigned int idx);
         unsigned int getLineNum(const unsigned int idx) const;
         unsigned int getNumErr(void) const;
         unsigned int getNumLines(void) const;
         bool         hasError(void) const;
+
+        unsigned int getTextInfoSize(void) const;
+        unsigned int getDataInfoSize(void) const;
 
         std::string  toString(void) const;
 };

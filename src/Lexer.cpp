@@ -414,17 +414,7 @@ void Lexer::parseASCIIZ(void)
 
 }
 
-// insert a new data segment (ie: parse the .data directive)
-void Lexer::parseData(void)
-{
-    DataInfo info;
 
-    info.addr     = this->cur_addr;
-    info.line_num = this->cur_line;
-
-
-    // get the tokens from the data instruction and lex
-}
 
 void Lexer::parseByte(void)
 {
@@ -477,6 +467,22 @@ void Lexer::parseWord(void)
 void Lexer::parseSpace(void)
 {
     std::cout << "[" << __func__ << "]" << std::endl;
+}
+
+
+/* 
+ * Segment Mode directives
+ */
+
+
+void Lexer::dataSeg(void)
+{
+    this->cur_mode = LEX_DATA_SEG;
+}
+
+void Lexer::textSeg(void)
+{
+    this->cur_mode = LEX_TEXT_SEG;
 }
 
 
@@ -958,23 +964,26 @@ void Lexer::parseLine(void)
     }
 
 LINE_END:
-    // stuff for text segment
-    this->text_info.line_num = line_num;
-    this->text_info.addr     = this->cur_addr;
 
-    // stuff for data segment
-    // TODO : Note that part of the problem here is that we need to have a way to tell if
-    // we had any valid data instructions on this 'line'. In the previous versions of this
-    // Lexer/Assembler split that I have done there wasn't really a need to think about 
-    // different segments  (or rather, segments of different types), so you would just end
-    // up with a single LineInfo type structure that captured everything, and from there 
-    // all you had to do was create a list/vector of those and that was basically the IR 
-    // for your program.
-    this->data_info.line_num = line_num;
-    this->data_info.addr     = this->cur_addr;
+    if(this->cur_mode == LEX_DATA_SEG)
+    {
+        this->text_info.line_num = line_num;
+        this->text_info.addr     = this->cur_addr;
+        this->source_info.addText(this->text_info);
+    }
+    else if(this->cur_mode == LEX_TEXT_SEG)
+    {
+        this->data_info.line_num = line_num;
+        this->data_info.addr     = this->cur_addr;
+        this->source_info.addData(this->data_info);
+    }
+    else
+    {
+        std::cout << "[" << __func__ << "] invalid segment mode " <<
+            std::hex << this->cur_mode << std::endl;
+    }
 
     this->cur_addr++;
-
 }
 
 /*
@@ -1001,7 +1010,7 @@ void Lexer::resolveLabels(void)
 
     for(idx = 0; idx < this->source_info.getNumLines(); ++idx)
     {
-        line = this->source_info.get(idx);
+        line = this->source_info.getText(idx);
         if(line.is_symbol)
         {
             if(this->verbose)
@@ -1055,7 +1064,6 @@ void Lexer::lex(void)
         }
         this->parseLine();
         // add the current line info to the overall source info....
-        this->source_info.addText(this->text_info);
     }
     // Resolve symbols
     this->resolveLabels();

@@ -12,6 +12,8 @@
 #include "Opcode.hpp"
 #include "Source.hpp"
 
+// Give some kind of named identifier to the Lexer mode
+enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};
 
 /*
  * Lexer
@@ -48,10 +50,14 @@ class Lexer
         std::string  source_text;
         std::string  filename;
         SourceInfo   source_info;
-        TextInfo     text_info;
-        DataInfo     data_info;
         SymbolTable  sym_table;
         unsigned int cur_addr;
+
+    // Segments 
+    private:
+        TextInfo     text_info;
+        DataInfo     data_info;
+        LexMode      cur_mode;
 
     // Motion through source file
     private:
@@ -77,14 +83,16 @@ class Lexer
         void parseASCIIZ(void);
         void parseAlign(void);
         void parseByte(void);
-        void parseData(void);
         void parseDouble(void);
         void parseHalf(void);
         void parseMacro(void);
         void parseEndMacro(void);
         void parseWord(void);
         void parseSpace(void);
-        void parseText(void);
+
+        // segment mode directives
+        void dataSeg(void);
+        void textSeg(void);
 
     private:
         void resolveLabels(void);
@@ -95,6 +103,11 @@ class Lexer
         void parseJump(void);
         void parseLine(void);
         TokenType getRegType(const char& reg_char) const;
+
+    // disable copy construction, assignment
+    private:
+        Lexer(const Lexer& that) = delete;
+        Lexer& operator=(const Lexer& that) = delete;
 
     public:
         Lexer();

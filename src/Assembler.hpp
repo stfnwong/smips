@@ -79,7 +79,7 @@ class Assembler
         Assembler();
 
         void assemble(void);
-        Instr assembleLine(const TextInfo& line);
+        Instr assembleText(const TextInfo& line);
 
         void setVerbose(const bool v);
         bool getVerbose(void) const;

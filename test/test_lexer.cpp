@@ -307,7 +307,7 @@ class TestLexer : public ::testing::Test
     public:
         std::string test_mult_add_file = "asm/mult_add.asm";
         std::string test_for_loop_file = "asm/for_loop.asm";
-        std::string test_data_region_file = "asm/data_region_ex.asm";
+        std::string test_array_file = "asm/array.asm";
 };
 
 
@@ -331,17 +331,17 @@ TEST_F(TestLexer, test_lex_mult_add)
     std::cout << src_out.toString() << std::endl;
 
     expected_src_out = get_mult_add_expected_source_info();
-    ASSERT_EQ(expected_src_out.getNumLines(), src_out.getNumLines());
+    ASSERT_EQ(expected_src_out.getTextInfoSize(), src_out.getTextInfoSize());
 
     // Check each line in turn
     TextInfo expected_line;
     TextInfo output_line;
-    for(unsigned int line = 0; line < expected_src_out.getNumLines(); ++line)
+    for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
     {
-        expected_line = expected_src_out.get(line);
-        output_line = src_out.get(line);
+        expected_line = expected_src_out.getText(line);
+        output_line = src_out.getText(line);
         std::cout << "Checking line " << std::dec << line+1 << "/" << 
-            std::dec << expected_src_out.getNumLines();
+            std::dec << expected_src_out.getTextInfoSize();
 
         if(expected_line != output_line)
         {
@@ -385,17 +385,17 @@ TEST_F(TestLexer, test_for_loop)
             cur_sym.toString() << std::endl;
     }
 
-    //ASSERT_EQ(expected_src_out.getNumLines(), src_out.getNumLines());
+    //ASSERT_EQ(expected_src_out.getTextInfoSize(), src_out.getNumLines());
 
     // Check each line in turn
     TextInfo expected_line;
     TextInfo output_line;
-    for(unsigned int line = 0; line < expected_src_out.getNumLines(); ++line)
+    for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
     {
-        expected_line = expected_src_out.get(line);
-        output_line = src_out.get(line);
+        expected_line = expected_src_out.getText(line);
+        output_line = src_out.getText(line);
         std::cout << "Checking line " << std::dec << line+1 << "/" << 
-            std::dec << expected_src_out.getNumLines() << std::endl;
+            std::dec << expected_src_out.getTextInfoSize() << std::endl;
 
         if(expected_line != output_line)
         {
@@ -416,7 +416,7 @@ TEST_F(TestLexer, test_data_region)
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(true);
-    test_lexer.loadFile(this->test_data_region_file);
+    test_lexer.loadFile(this->test_array_file);
     test_lexer.lex();
 
     // get the source info
