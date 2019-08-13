@@ -23,6 +23,7 @@ Lexer::Lexer()
     this->cur_line       = 0;
     this->cur_pos        = 0;
     this->cur_addr       = 0;
+    this->cur_mode       = LEX_TEXT_SEG;
     // create token buffer
     this->alloc_mem();
     this->init_instr_table();
@@ -793,11 +794,18 @@ void Lexer::parseLine(void)
     // if there is a label on this line, add it to the symbol table
     if(this->cur_token.type == SYM_LABEL)
     {
+        this->textSeg();
         this->text_info.is_label = true;
         // add symbol to table, remove any trailing characters
-        char last_char = this->cur_token.val[this->cur_token.val.length() - 1];
-        if((last_char == ';') || (last_char == '#'))
-            sym.label = this->cur_token.val.substr(0, this->cur_token.val.length() - 1);
+        // TODO : this is not robust enough to deal 
+        if(this->cur_token.val.length() > 2)
+        {
+            char last_char = this->cur_token.val[this->cur_token.val.length() - 1];
+            if((last_char == ';') || (last_char == '#'))
+                sym.label = this->cur_token.val.substr(0, this->cur_token.val.length() - 1);
+            else
+                sym.label = this->cur_token.val;
+        }
         else
             sym.label = this->cur_token.val;
         sym.addr = this->cur_addr;
@@ -826,27 +834,34 @@ void Lexer::parseLine(void)
         switch(directive.instr)
         {
             case LEX_ALIGN:
+                this->dataSeg();
                 break;
 
             case LEX_ASCIIZ:
+                this->dataSeg();
                 break;
 
             // Global variable segment 
             case LEX_DATA:
+                this->dataSeg();
                 break;
 
             // Text segment
             case LEX_TEXT:
+                this->textSeg();
                 break;
 
             // data types 
             case LEX_WORD:
+                this->dataSeg();
                 break;
 
             case LEX_HALF:
+                this->dataSeg();
                 break;
 
             case LEX_BYTE:
+                this->dataSeg();
                 break;
 
             default:
@@ -867,6 +882,7 @@ void Lexer::parseLine(void)
     // parse instructions 
     if(this->cur_token.type == SYM_INSTR)
     {
+        this->textSeg();
         op = this->instr_code_table.get(this->cur_token.val);
         if(this->verbose)
         {
@@ -964,14 +980,13 @@ void Lexer::parseLine(void)
     }
 
 LINE_END:
-
-    if(this->cur_mode == LEX_DATA_SEG)
+    if(this->cur_mode == LEX_TEXT_SEG)
     {
         this->text_info.line_num = line_num;
         this->text_info.addr     = this->cur_addr;
         this->source_info.addText(this->text_info);
     }
-    else if(this->cur_mode == LEX_TEXT_SEG)
+    else if(this->cur_mode == LEX_DATA_SEG)
     {
         this->data_info.line_num = line_num;
         this->data_info.addr     = this->cur_addr;
