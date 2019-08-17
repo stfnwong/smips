@@ -6,7 +6,6 @@
                                             # not automatically clear
                                             # These blocks of memory are aligned
                                             # next each other
-
 .text
   la $s0, list                              # Load address of list
   li $t0, 0                                 # Counter
@@ -15,7 +14,7 @@
   loop:
     bgt $t0, $t1, end_loop
 
-    lw $a0, ($s0)
+    lw $a0, ($s0) 
     li $v0, 1
     syscall                                 # Print the number
 

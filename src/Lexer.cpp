@@ -797,17 +797,22 @@ void Lexer::parseLine(void)
         this->textSeg();
         this->text_info.is_label = true;
         // add symbol to table, remove any trailing characters
-        // TODO : this is not robust enough to deal 
-        if(this->cur_token.val.length() > 2)
+        char last_char = this->cur_token.val[
+            this->cur_token.val.length()
+        ];
+
+        if((last_char == ';') || 
+           (last_char == '#') ||
+           (last_char == ':'))
         {
-            char last_char = this->cur_token.val[this->cur_token.val.length() - 1];
-            if((last_char == ';') || (last_char == '#'))
-                sym.label = this->cur_token.val.substr(0, this->cur_token.val.length() - 1);
-            else
-                sym.label = this->cur_token.val;
+
+            sym.label = this->cur_token.val.substr(
+                    0, this->cur_token.val.length() - 1
+            );
         }
         else
             sym.label = this->cur_token.val;
+
         sym.addr = this->cur_addr;
         // add to symbol table 
         this->sym_table.add(sym);
@@ -816,6 +821,14 @@ void Lexer::parseLine(void)
         // scan in the next token
         this->nextToken(); 
         line_num = this->cur_line;
+
+        // if this label token indicates that there is a label on
+        // this line then there should be a ':' character at the 
+        // end. If not, then this is likely a reference to an 
+        // existing symbol and we should therefore skip to the end
+        // of this routine
+        if(last_char != ':')
+            goto LINE_END;
     }
 
     if(this->cur_token.type == SYM_DIRECTIVE)
