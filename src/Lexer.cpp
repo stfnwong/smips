@@ -805,7 +805,6 @@ void Lexer::parseLine(void)
            (last_char == '#') ||
            (last_char == ':'))
         {
-
             sym.label = this->cur_token.val.substr(
                     0, this->cur_token.val.length() - 1
             );
@@ -827,8 +826,8 @@ void Lexer::parseLine(void)
         // end. If not, then this is likely a reference to an 
         // existing symbol and we should therefore skip to the end
         // of this routine
-        if(last_char != ':')
-            goto LINE_END;
+        //if(last_char != ':')
+        //    goto LINE_END;
     }
 
     if(this->cur_token.type == SYM_DIRECTIVE)

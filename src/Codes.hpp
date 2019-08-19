@@ -56,6 +56,14 @@ typedef enum directive_code
     LEX_WORD,      
 } directive_code;
 
+
+// TODO : are syscalls really that different that they need 
+// their own special datatype (the answer may be yes)
+typedef enum sys_code
+{
+    LEX_SYSCALL
+} sys_code;
+
 // MIPS Opcode list 
 const Opcode lex_instr_codes[] = {
     Opcode(LEX_NULL,  "\0"),

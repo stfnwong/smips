@@ -217,8 +217,10 @@ std::string TextInfo::toString(void) const
     // literal (if applicable)
     if(this->is_symbol)
         oss << "0x" << std::hex << std::setw(8) << this->val[2];
+    else if(this->is_imm)
+        oss << "0x" << std::hex << std::setw(8) << this->val[2];
     else
-        oss << "         ";
+        oss << "          ";
     // spacing chars
     oss << " ";
     // insert error (T/F only, full string may not fit)
