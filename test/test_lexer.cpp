@@ -28,6 +28,8 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.addr            = 0x200;      
     line.opcode.instr    = LEX_LW;
     line.opcode.mnemonic = "LW";
+	line.val[0]          = 0;
+	line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
     line.type[1]         = SYM_REG_GLOBAL;
     line.val[2]          = 4;
@@ -65,7 +67,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     info.addText(line);
 
     // line 4
-    // ori $t2, $zero 3
+    // ori $t2, $zero, 3
     line.init();
     line.line_num        = 6;
     line.addr            = 0x203;      
@@ -298,6 +300,27 @@ SourceInfo get_for_loop_expected_source_info(void)
     return info;
 }
 
+SourceInfo get_array_expected_source_info(void)
+{
+	SourceInfo info;
+    TextInfo   line;
+
+    // line 2
+    // ADD $t0, $gp, $zero
+    line.line_num        = 4;
+    line.addr            = 0x200;
+    line.opcode.instr    = LEX_ADD;
+    line.opcode.mnemonic = "ADD";
+    line.val[0]         = 0;
+    line.type[0]        = SYM_REG_TEMP;
+    line.val[1]         = 0;
+    line.type[1]        = SYM_REG_GLOBAL;
+    line.type[2]        = SYM_REG_ZERO;
+    info.addText(line);
+
+	return info;
+}
+
 
 class TestLexer : public ::testing::Test
 {
@@ -325,12 +348,13 @@ TEST_F(TestLexer, test_lex_mult_add)
     test_lexer.lex();
 
     // get the source info
-    src_out = test_lexer.getSourceInfo();
+    expected_src_out = get_mult_add_expected_source_info();
+	std::cout << "Expected output :" << std::endl;
+	std::cout << expected_src_out.toString() << std::endl << std::endl;
 
+    src_out = test_lexer.getSourceInfo();
     std::cout << "Lexer output : " << std::endl;
     std::cout << src_out.toString() << std::endl;
-
-    expected_src_out = get_mult_add_expected_source_info();
     ASSERT_EQ(expected_src_out.getTextInfoSize(), src_out.getTextInfoSize());
 
     // Check each line in turn
@@ -368,12 +392,15 @@ TEST_F(TestLexer, test_for_loop)
     test_lexer.lex();
 
     // get the source info
+    expected_src_out = get_for_loop_expected_source_info();
+	std::cout << "Expected output :" << std::endl;
+	std::cout << expected_src_out.toString() << std::endl << std::endl;
+
     src_out = test_lexer.getSourceInfo();
 
     std::cout << "Lexer output : " << std::endl;
     std::cout << src_out.toString() << std::endl;
 
-    expected_src_out = get_for_loop_expected_source_info();
     // before we check each line, dump the symbol table and print
     SymbolTable sym_table = test_lexer.getSymTable();
     std::cout << "Symbol Table: " << std::endl;
@@ -409,7 +436,7 @@ TEST_F(TestLexer, test_for_loop)
 /*
  * Test data_region example
  */
-TEST_F(TestLexer, test_data_region)
+TEST_F(TestLexer, test_array)
 {
     Lexer test_lexer;
     SourceInfo src_out;
@@ -420,8 +447,11 @@ TEST_F(TestLexer, test_data_region)
     test_lexer.lex();
 
     // get the source info
-    src_out = test_lexer.getSourceInfo();
+    expected_src_out = get_array_expected_source_info();
+	std::cout << "Expected output :" << std::endl;
+	std::cout << expected_src_out.toString() << std::endl << std::endl;
 
+    src_out = test_lexer.getSourceInfo();
     std::cout << "Lexer output : " << std::endl;
     std::cout << src_out.toString() << std::endl;
 

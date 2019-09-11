@@ -10,6 +10,8 @@
 #include <iomanip>
 #include <fstream>
 #include <string>
+#include <stack>
+
 #include "Lexer.hpp"
 #include "Codes.hpp"
 #include "Data.hpp"     // MemLine is here at the moment...
@@ -274,14 +276,28 @@ void Lexer::scanString(void)
 /*
  * nextToken()
  * Get the next token in the stream
+ * TODO : this all being done with GOTOs right now, which is terrible. 
+ * It would be much better to do this in a functional style, where the 
+ * operations can be composed from functions (eg: extract a literal, 
+ * parse parens, etc).
+ * 
+ * This, combined with re-writing everything in a line-oriented style
+ * can probably simplify the implementation and extension of the parser.
  */
 void Lexer::nextToken(void)
 {
     Opcode op;
     std::string token_str;
+    unsigned int token_ptr = 0;
 
+	// TODO : implement stack parser for parethesis?
+	// OR: refactor to do one line at time - that is, have a line buffer that reads a whole line in
+	// and then prase that line (rather than token by token)
+	//
+	
     this->scanToken();
     token_str = std::string(this->token_buf);
+    std::cout << "[" << __func__ << "] : " << token_str << std::endl;
     op = this->instr_code_table.get(token_str);
     // set the offset string for the current token back to null
     this->cur_token.offset = "\0";
@@ -291,22 +307,6 @@ void Lexer::nextToken(void)
     {
         this->cur_token.type = SYM_DIRECTIVE;
         this->cur_token.val  = token_str;
-
-        goto TOKEN_END;
-    }
-
-    // This is a simple register token
-    if(token_str[0] == '$')
-    {
-        this->cur_token.type = this->getRegType(token_str[1]);
-        if(this->cur_token.type == SYM_NONE)
-        {
-            this->text_info.error = true;
-            this->text_info.errstr = "Invalid register type " +
-                token_str[1];
-        }
-        else
-            this->cur_token.val  = token_str.substr(2, token_str.length()-1);
 
         goto TOKEN_END;
     }
@@ -341,47 +341,138 @@ void Lexer::nextToken(void)
         }
     }
 
-    // This is either an immediate or a register with an offset
+    // Check digits, which may be either literals or register offsets 
     if(std::isdigit(token_str[0]))
     {
-        unsigned int tok_ptr = 0;
-        while(std::isdigit(token_str[tok_ptr]))
-            tok_ptr++;
-
-        // if there are more characters, check whether or not this is a 
-        // register with offsets 
-        if(token_str.size() > tok_ptr)
+        token_ptr = 0;
+LITERAL:
+        while(std::isdigit(token_str[token_ptr]))
+            token_ptr++;
+        
+        // if there are more characters in the token buffer, then
+		// then there is more than just a literal here
+        if(token_str.size() > token_ptr)
         {
-            // NOTE: this fall-through structure is a bit hard to read
-            if((token_str[tok_ptr] == '(') && (token_str[tok_ptr+1] == '$'))
-            {
-                this->cur_token.type = this->getRegType(token_str[tok_ptr+2]);
+			std::string token_substr = token_str.substr(token_ptr, token_str.size()-1);
+			// FIXME:  debug, remove
+			std::cout << "[" << __func__ << "] token_substr :"  << token_substr << std::endl;
+			if((token_str[token_ptr] == '(') && (token_str[token_ptr+1] == '$'))
+			{
+				this->cur_token.type = this->getRegType(token_str[token_ptr+2]);
 
-                if(this->cur_token.type == SYM_NONE)
-                {
-                    this->text_info.error = true;
-                    this->text_info.errstr = "Invalid offset syntax " + 
-                        this->cur_token.toString();
-                    goto TOKEN_END;
-                }
+				if(this->cur_token.type == SYM_NONE)
+				{
+					this->text_info.error = true;
+					this->text_info.errstr = "Invalid offset syntax " + 
+						this->cur_token.toString();
+					goto TOKEN_END;
+				}
 
-                this->cur_token.val    = token_str.substr(tok_ptr+3, token_str.length()-2);
-                this->cur_token.offset = token_str.substr(0, tok_ptr);
-            }
-            else
-            {
-                this->text_info.error = true;
-                this->text_info.errstr = "Syntax error (" + token_str + ")";
-            }
+				this->cur_token.val    = token_str.substr(token_ptr+3, token_str.length()-2);
+				this->cur_token.offset = token_str.substr(0, token_ptr);
+			}
+			else
+			{
+				this->text_info.error = true;
+				this->text_info.errstr = "Syntax error (" + token_str + ")";
+			}
+
         }
-        else
-        {
-            this->cur_token.val = token_str.substr(0, tok_ptr);
-            this->cur_token.type = SYM_LITERAL;
-        }
+		else
+		{
+			this->cur_token.val = token_str.substr(0, token_ptr);
+			this->cur_token.type = SYM_LITERAL;
+			// FIXME:  debug, remove
+			std::cout << "[" << __func__ << "] got literal " << this->cur_token.val << std::endl;
+		}
 
         goto TOKEN_END;
     }
+	
+	// Check random parens
+	if(token_str[0] == '(')
+	{
+		token_ptr = 1;
+		if(token_str[1] == '$')
+		{
+			// FIXME: debug 
+			std::cout << "[" << __func__ << "] got paren->token in string " << token_str << std::endl;
+			goto REGULAR_TOKEN;
+		}
+
+		if(std::isdigit(token_str[1]))
+		{
+			std::cout << "[" << __func__ << "] got paren->literal in string " << token_str << std::endl;
+			goto LITERAL;
+		}
+
+		this->text_info.error = true;
+		this->text_info.errstr = "Syntax error (" + token_str + ")";
+		goto TOKEN_END;
+	}
+	
+    // Entry point for simple register token
+    if(token_str[0] == '$')
+    {
+REGULAR_TOKEN:
+        if(token_ptr == 0)
+            token_ptr = 1;
+
+        this->cur_token.type = this->getRegType(token_str[token_ptr]);
+        if(this->cur_token.type == SYM_NONE)
+        {
+            this->text_info.error = true;
+            this->text_info.errstr = "Invalid register type " +
+                token_str[token_ptr];
+        }
+        else
+            this->cur_token.val  = token_str.substr(token_ptr+1, token_str.length()-1);
+
+        goto TOKEN_END;
+    }
+
+
+    // This is either an immediate or a register with an offset
+    //if(std::isdigit(token_str[0]))
+    //{
+    //    unsigned int tok_ptr = 0;
+    //    while(std::isdigit(token_str[tok_ptr]))
+    //        tok_ptr++;
+
+    //    // if there are more characters, check whether or not this is a 
+    //    // register with offsets 
+    //    if(token_str.size() > tok_ptr)
+    //    {
+    //        // NOTE: this fall-through structure is a bit hard to read
+    //        if((token_str[tok_ptr] == '(') && (token_str[tok_ptr+1] == '$'))
+    //        {
+    //            this->cur_token.type = this->getRegType(token_str[tok_ptr+2]);
+
+    //            if(this->cur_token.type == SYM_NONE)
+    //            {
+    //                this->text_info.error = true;
+    //                this->text_info.errstr = "Invalid offset syntax " + 
+    //                    this->cur_token.toString();
+    //                goto TOKEN_END;
+    //            }
+
+    //            this->cur_token.val    = token_str.substr(tok_ptr+3, token_str.length()-2);
+    //            this->cur_token.offset = token_str.substr(0, tok_ptr);
+    //        }
+    //        else
+    //        {
+    //            this->text_info.error = true;
+    //            this->text_info.errstr = "Syntax error (" + token_str + ")";
+    //        }
+    //    }
+    //    else
+    //    {
+    //        this->cur_token.val = token_str.substr(0, tok_ptr);
+    //        this->cur_token.type = SYM_LITERAL;
+    //    }
+
+    //    goto TOKEN_END;
+    //}
 
     // Found an instruction
     if(op.mnemonic != "\0")
@@ -467,7 +558,7 @@ void Lexer::parseWord(void)
 
 void Lexer::parseSpace(void)
 {
-    std::cout << "[" << __func__ << "]" << std::endl;
+    std::cout << "[" << __func__ << "] not yet implemented" << std::endl;
 }
 
 
@@ -476,16 +567,31 @@ void Lexer::parseSpace(void)
  */
 
 
+/*
+ * dataSeg()
+ */
 void Lexer::dataSeg(void)
 {
     this->cur_mode = LEX_DATA_SEG;
+    if(this->verbose)
+    {
+        std::cout << "[" << __func__ << "] (line " << this->cur_line
+            << ") setting mode to LEX_DATA_SEG" << std::endl;
+    }
 }
 
+/*
+ * textSeg()
+ */
 void Lexer::textSeg(void)
 {
     this->cur_mode = LEX_TEXT_SEG;
+    if(this->verbose)
+    {
+        std::cout << "[" << __func__ << "] (line " << this->cur_line
+            << ") setting mode to LEX_TEXT_SEG" << std::endl;
+    }
 }
-
 
 
 
