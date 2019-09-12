@@ -66,8 +66,7 @@ struct Token
 /*
  * TextInfo
  * Information about a single line of assembly source. This object is a kind of 
- * intermediate representation of a line of assembly that will ultimately be placed in 
- * the text section of the output binary.
+ * intermediate representation for text section data.
  */
 struct TextInfo
 {
@@ -82,7 +81,7 @@ struct TextInfo
     bool         is_imm;
     bool         is_symbol;
     int          val[3];
-    TokenType    type[3];      // record types for each register
+    TokenType    type[3];      // record of types for each register
     Opcode       opcode;
 
     public:
@@ -111,10 +110,12 @@ struct TextInfo
 struct DataInfo
 {
     std::string           errstr;
+	std::string           directive;
     std::vector <uint8_t> data;
     unsigned int          line_num;
     unsigned int          addr;
     unsigned int          space;
+	bool                  is_directive;
     bool                  error;
 
     public:

@@ -363,11 +363,13 @@ DataInfo::DataInfo()
 
 void DataInfo::init(void)
 {
-    this->errstr   = "\0";
-    this->line_num = 0;
-    this->addr     = 0;
-    this->space    = 0;
-    this->error    = false;
+    this->errstr       = "\0";
+	this->directive    = "\0";
+    this->line_num     = 0;
+    this->addr         = 0;
+    this->space        = 0;
+    this->error        = false;
+	this->is_directive = false;
     this->data.clear();
 }
 

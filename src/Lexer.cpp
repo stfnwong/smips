@@ -20,6 +20,8 @@
 Lexer::Lexer()
 {
     this->token_buf_size = 512;
+    this->line_buf_size  = 512;
+    void nextLine(void);
     this->verbose        = false;
     this->cur_char       = '\0';
     this->cur_line       = 0;
@@ -35,6 +37,7 @@ Lexer::Lexer()
 Lexer::~Lexer()
 {
     delete[] this->token_buf;
+    delete[] this->line_buf;
 }
 
 /*
@@ -62,6 +65,7 @@ void Lexer::init_directive_code_table(void)
 void Lexer::alloc_mem(void)
 {
     this->token_buf = new char[this->token_buf_size];
+    this->line_buf = new char[this->line_buf_size];
 }
 
 
@@ -272,6 +276,33 @@ void Lexer::scanString(void)
 }
 
 
+/*
+ * extractLiteralString()
+ */
+std::string Lexer::extractLiteralString(const std::string& token, int start_offset, int& tok_ptr)
+{
+	tok_ptr = start_offset;
+	while(std::isdigit(token[tok_ptr]))
+		tok_ptr++;
+	
+	if(tok_ptr == start_offset)		// we didn't move
+		return std::to_string(0);
+
+	return token.substr(start_offset, tok_ptr);
+}
+
+/*
+ * extractRegisterString()
+ */
+std::string Lexer::extractRegisterString(const std::string& token, int start_offset, int& tok_ptr)
+{
+	// this is a simple register (no offsets, etc)
+	if(token[start_offset] == '$')
+	{
+
+	}
+}
+
 
 /*
  * nextToken()
@@ -431,49 +462,6 @@ REGULAR_TOKEN:
         goto TOKEN_END;
     }
 
-
-    // This is either an immediate or a register with an offset
-    //if(std::isdigit(token_str[0]))
-    //{
-    //    unsigned int tok_ptr = 0;
-    //    while(std::isdigit(token_str[tok_ptr]))
-    //        tok_ptr++;
-
-    //    // if there are more characters, check whether or not this is a 
-    //    // register with offsets 
-    //    if(token_str.size() > tok_ptr)
-    //    {
-    //        // NOTE: this fall-through structure is a bit hard to read
-    //        if((token_str[tok_ptr] == '(') && (token_str[tok_ptr+1] == '$'))
-    //        {
-    //            this->cur_token.type = this->getRegType(token_str[tok_ptr+2]);
-
-    //            if(this->cur_token.type == SYM_NONE)
-    //            {
-    //                this->text_info.error = true;
-    //                this->text_info.errstr = "Invalid offset syntax " + 
-    //                    this->cur_token.toString();
-    //                goto TOKEN_END;
-    //            }
-
-    //            this->cur_token.val    = token_str.substr(tok_ptr+3, token_str.length()-2);
-    //            this->cur_token.offset = token_str.substr(0, tok_ptr);
-    //        }
-    //        else
-    //        {
-    //            this->text_info.error = true;
-    //            this->text_info.errstr = "Syntax error (" + token_str + ")";
-    //        }
-    //    }
-    //    else
-    //    {
-    //        this->cur_token.val = token_str.substr(0, tok_ptr);
-    //        this->cur_token.type = SYM_LITERAL;
-    //    }
-
-    //    goto TOKEN_END;
-    //}
-
     // Found an instruction
     if(op.mnemonic != "\0")
     {
@@ -500,14 +488,24 @@ TOKEN_END:
     }
 }
 
+
+
+
+
 // DIRECTIVES 
+
+/*
+ * parseASCIIZ()
+ */
 void Lexer::parseASCIIZ(void)
 {
 
 }
 
 
-
+/*
+ * parseByte()
+ */
 void Lexer::parseByte(void)
 {
     DataInfo info;

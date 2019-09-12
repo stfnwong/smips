@@ -33,7 +33,9 @@ class Lexer
     // Token memory
     private:
         int   token_buf_size;
+        int   line_buf_size;
         char* token_buf;
+        char* line_buf;
         bool  verbose;
 
     private:
@@ -74,8 +76,15 @@ class Lexer
     private:
         Token cur_token;
         void scanToken(void);
+        //void scanLine(void);
         void scanString(void);
+
+
+		// extra token handling functions
+		std::string extractLiteralString(const std::string& token, int start_offset, int& end_offset);
+		std::string extractRegisterString(const std::string& token, int start_offset, int& end_offset);
         void nextToken(void);
+        //void nextLine(void);
 
     // Assembler directives
     private:

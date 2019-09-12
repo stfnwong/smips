@@ -304,19 +304,181 @@ SourceInfo get_array_expected_source_info(void)
 {
 	SourceInfo info;
     TextInfo   line;
+	DataInfo   data_line;
 
-    // line 2
-    // ADD $t0, $gp, $zero
-    line.line_num        = 4;
+	// line 2
+	// .data 
+	// Starts a new data segment. There isn't any lexer output that 
+	// is specifically associated with this line.
+	//data_line.init();
+	//data_line.is_directive = true;
+	//data_line.directive = "data";
+	//info.addData(data_line);
+
+	//// line 3
+	//// list: word 3, 0, 1, 2, 6
+	//data_line.init();
+	//data_line.addr = 0;
+	//data_line.directive = "word";
+	//data_line.data = {3, 0, 1, 2, 6};
+	//info.addData(data_line);
+
+
+	//// line 4 
+	//// char_arr: .asciiz "hello"
+	//data_line.init();
+	//data_line.directive = "asciiz";
+	////data_line.data = {'h', 'e', 'l', 'l', 'o'}; // TODO : convert to int...
+	//info.addData(data_line);
+	//
+	//// line 5 
+	//// buffer: .space 128
+	//data_line.init();
+	//data_line.directive = "space";
+	//data_line.data = {3, 0, 1, 2, 6};
+	//info.addData(data_line);
+	
+	
+	// line 9
+	// .text
+	// Starts a new text segment. There isn't any lexer output that 
+	// is specifically associated with this line.
+	
+
+    // line 10
+	// la $s0, list
+    line.line_num        = 10;
     line.addr            = 0x200;
-    line.opcode.instr    = LEX_ADD;
-    line.opcode.mnemonic = "ADD";
-    line.val[0]         = 0;
-    line.type[0]        = SYM_REG_TEMP;
-    line.val[1]         = 0;
-    line.type[1]        = SYM_REG_GLOBAL;
-    line.type[2]        = SYM_REG_ZERO;
+    line.opcode.instr    = LEX_LA;
+    line.opcode.mnemonic = "LA";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_SAVED;
+	line.is_symbol       = true;
+	line.symbol          = "list";
     info.addText(line);
+
+	// line 11
+	// li $t0, 0
+	line.init();
+	line.line_num        = 11;
+	line.addr            = 0x201;
+	line.opcode.instr    = LEX_LI;
+	line.opcode.mnemonic = "LI";
+	line.val[0]          = 0;
+	line.type[0]         = SYM_REG_TEMP;
+	line.val[1]          = 0;
+	line.val[1]          = SYM_LITERAL;
+	info.addText(line);
+
+	// line 12
+	// li $t1, 5
+	line.init();
+	line.line_num        = 12;
+	line.addr            = 0x202;
+	line.opcode.instr    = LEX_LI;
+	line.opcode.mnemonic = "LI";
+	line.val[0]          = 1;
+	line.type[0]         = SYM_REG_TEMP;
+	line.val[1]          = 5;
+	line.val[1]          = SYM_LITERAL;
+	info.addText(line);
+
+	// line 14 
+	// loop: bgt $t0, $t1, end_loop
+	line.init();
+	line.line_num        = 14;
+	line.addr            = 0x204;
+	line.opcode.instr    = LEX_BGT;
+	line.opcode.mnemonic = "BGT";
+	line.val[0]          = 0;
+	line.type[0]         = SYM_REG_TEMP;
+	line.val[1]          = 1;
+	line.val[1]          = SYM_REG_TEMP;
+	line.is_symbol       = true;
+	line.symbol          = "end_loop";
+	info.addText(line);
+
+	// line 17
+	// lw $a0, $(s0)
+	// NOTE the extra parens here.
+	line.init();
+	line.line_num        = 17;
+	line.addr            = 0x206;
+	line.opcode.instr    = LEX_LW;
+	line.opcode.mnemonic = "LW";
+	line.val[0]          = 0;
+	line.type[0]         = SYM_REG_ARG;
+	line.val[1]          = 5;
+	line.val[1]          = SYM_LITERAL;
+	info.addText(line);
+
+	// line 18
+	// li $v0, 1
+	line.init();
+	line.line_num        = 18;
+	line.addr            = 0x208;
+	line.opcode.instr    = LEX_LI;
+	line.opcode.mnemonic = "LI";
+	line.val[0]          = 0;
+	line.type[0]         = SYM_REG_RET;
+	line.val[1]          = 1;
+	line.val[1]          = SYM_LITERAL;
+	info.addText(line);
+
+	// line 19 
+	// syscall 
+
+
+	// line 21 
+	// addi $s0, $s0, 4
+	line.init();
+	line.line_num        = 21;
+	line.addr            = 0x20C;
+	line.opcode.instr    = LEX_ADDI;
+	line.opcode.mnemonic = "ADDI";
+	line.val[0]          = 0;
+	line.type[0]         = SYM_REG_SAVED;
+	line.val[1]          = 0;
+	line.val[1]          = SYM_REG_SAVED;
+	line.val[2]          = 4;
+	line.type[2]         = SYM_LITERAL;
+	info.addText(line);
+	
+	// line 22 
+	// addi $t0, $t0, 1
+	line.init();
+	line.line_num        = 22;
+	line.addr            = 0x20E;
+	line.opcode.instr    = LEX_ADDI;
+	line.opcode.mnemonic = "ADDI";
+	line.val[0]          = 0;
+	line.type[0]         = SYM_REG_TEMP;
+	line.val[1]          = 0;
+	line.val[1]          = SYM_REG_TEMP;
+	line.val[2]          = 1;
+	line.type[2]         = SYM_LITERAL;
+	info.addText(line);
+	
+
+	// line 23
+	// j loop
+	line.init();
+	line.line_num        = 23;
+	line.addr            = 0x210;
+	line.opcode.instr    = LEX_J;
+	line.opcode.mnemonic = "J";
+	line.is_symbol       = true;
+	line.symbol          = "loop";
+	info.addText(line);
+
+	// line 24
+	// end_loop:
+	line.init();
+	line.line_num        = 24;
+	line.addr            = 0x212;
+	line.is_label        = true;
+	line.label           = "end_loop";
+	info.addText(line);
 
 	return info;
 }
