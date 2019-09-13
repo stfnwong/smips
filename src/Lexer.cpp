@@ -276,8 +276,96 @@ void Lexer::scanString(void)
 }
 
 
+
+/*
+ * extractLiteralOrReg()
+ */
+Token Lexer::extractLiteralOrReg(const std::string& token, int start_offset, int& end_offset)
+{
+	Token out_token;
+	int tok_ptr,paren_ptr;
+	std::string offset;
+
+	// TODO : is it worth checking for the closing paren? There aren't any statements in
+	// the MIPS assembly language that can actually be nested, so as long as we have the 
+	// opening paren it should be sufficient.
+	bool has_paren = false;
+
+	tok_ptr = start_offset;
+	while(std::isdigit(token[tok_ptr]))
+		tok_ptr++;
+	
+	if(tok_ptr == start_offset)		// we didn't move
+		goto LITERAL_REG_END;
+
+	if(unsigned(tok_ptr) >= (token.size()))   // no more chars, this is just a literal
+	{
+		out_token.val = token.substr(start_offset, tok_ptr);
+		out_token.type = SYM_LITERAL;
+		goto LITERAL_REG_END;
+	}
+
+	// since there are more chars, we presume that the literal was an
+	// offset and save it here.
+	offset = out_token.val;
+
+	// FIXME:  debug, remove
+	std::cout << "[" << __func__ << "] token: [" << token << "], length " 
+		<< token.length() << " token[" << tok_ptr << "] : <" << token[tok_ptr] 
+		<< ">" << std::endl;
+
+	while(token[tok_ptr] != '$')
+	{
+		//  if we get to the end and havent found a register then mark this as garbage
+		if(unsigned(tok_ptr) >= token.size())
+		{
+			out_token.type = SYM_NONE;
+			goto LITERAL_REG_END;
+		}
+		if(token[tok_ptr] == '(')
+			has_paren = true;
+		tok_ptr++;
+	}
+
+	// we should now be right on the '$' character
+	out_token.type = this->getRegType(token[tok_ptr+1]);
+	if(has_paren)
+	{
+		std::cout << "[" << __func__ << "] has paren" << std::endl;
+		paren_ptr = tok_ptr;
+		while(token[paren_ptr] != ')')
+		{
+			// we can't find the closing paren.
+			if(unsigned(paren_ptr) >= token.size())
+			{
+				out_token.type = SYM_NONE;
+				goto LITERAL_REG_END;
+			}
+			paren_ptr++;
+		}
+		out_token.val = token.substr(tok_ptr+1, 1);
+		//out_token.val = token.substr(tok_ptr+1, (paren_ptr - tok_ptr - 2));
+	}
+	else
+		out_token.val = token.substr(tok_ptr+1);
+		//out_token.val = token.substr(tok_ptr, token.length()-2);
+
+	out_token.val    = token.substr(tok_ptr+1, tok_ptr+2);
+	out_token.offset = offset;
+
+
+LITERAL_REG_END:
+	std::cout << "[" << __func__ << "] out_token        : " << out_token.toString() << std::endl;
+	std::cout << "[" << __func__ << "] out_token.val    : " << out_token.val << " [length " << out_token.val.length() << "]" << std::endl;
+	std::cout << "[" << __func__ << "] out_token.offset : " << out_token.offset << std::endl;
+	return out_token;
+}
+
+
+
 /*
  * extractLiteralString()
+ * TODO: remove
  */
 std::string Lexer::extractLiteralString(const std::string& token, int start_offset, int& tok_ptr)
 {
@@ -291,16 +379,45 @@ std::string Lexer::extractLiteralString(const std::string& token, int start_offs
 	return token.substr(start_offset, tok_ptr);
 }
 
+
+
 /*
  * extractRegisterString()
+ * TODO: remove
  */
-std::string Lexer::extractRegisterString(const std::string& token, int start_offset, int& tok_ptr)
+Token Lexer::extractRegisterString(const std::string& token, int start_offset, int& tok_ptr)
 {
-	// this is a simple register (no offsets, etc)
-	if(token[start_offset] == '$')
+	Token out_token;
+	bool has_paren = false;
+	
+	tok_ptr = start_offset;
+	// this is not a simple register (eg: may have paren)
+	if(token[start_offset] != '$')
 	{
-
+		// check to see if there is a '$' further along in the buffer
+		while(token[tok_ptr] != '$')
+		{
+			tok_ptr++;
+			if(token[tok_ptr] == '(')
+				has_paren = true;
+			if(unsigned(tok_ptr) >= token.size())
+			{
+				goto EXTRACT_REG_STRING;
+			}
+		}
 	}
+
+	if(has_paren)		// shut compiler up
+		std::cout << "[" << __func__ << "] has paren" << std::endl;
+
+	// Now we are at the location in the buffer where the '$' is, 
+	// figure out the type of register and place into Token structure
+	std::cout << "[" << __func__ << "] tok_ptr : " << tok_ptr << std::endl;
+	std::cout << "[" << __func__ << "] token[tok_ptr] : " << token[tok_ptr] << std::endl;
+	//out_token.type = this->getRegType(token_str[token_ptr+2]);
+		
+EXTRACT_REG_STRING:
+	return out_token;
 }
 
 
@@ -318,8 +435,10 @@ std::string Lexer::extractRegisterString(const std::string& token, int start_off
 void Lexer::nextToken(void)
 {
     Opcode op;
+	Token out_token;
     std::string token_str;
     unsigned int token_ptr = 0;
+	int start_offset, end_offset;
 
 	// TODO : implement stack parser for parethesis?
 	// OR: refactor to do one line at time - that is, have a line buffer that reads a whole line in
@@ -358,6 +477,7 @@ void Lexer::nextToken(void)
     }
 
     // This is a string
+	start_offset = 0;
     if(token_str[0] == '"')
     {
         this->scanString();
@@ -371,81 +491,91 @@ void Lexer::nextToken(void)
             goto TOKEN_END;
         }
     }
-
-    // Check digits, which may be either literals or register offsets 
-    if(std::isdigit(token_str[0]))
-    {
-        token_ptr = 0;
-LITERAL:
-        while(std::isdigit(token_str[token_ptr]))
-            token_ptr++;
-        
-        // if there are more characters in the token buffer, then
-		// then there is more than just a literal here
-        if(token_str.size() > token_ptr)
-        {
-			std::string token_substr = token_str.substr(token_ptr, token_str.size()-1);
-			// FIXME:  debug, remove
-			std::cout << "[" << __func__ << "] token_substr :"  << token_substr << std::endl;
-			if((token_str[token_ptr] == '(') && (token_str[token_ptr+1] == '$'))
-			{
-				this->cur_token.type = this->getRegType(token_str[token_ptr+2]);
-
-				if(this->cur_token.type == SYM_NONE)
-				{
-					this->text_info.error = true;
-					this->text_info.errstr = "Invalid offset syntax " + 
-						this->cur_token.toString();
-					goto TOKEN_END;
-				}
-
-				this->cur_token.val    = token_str.substr(token_ptr+3, token_str.length()-2);
-				this->cur_token.offset = token_str.substr(0, token_ptr);
-			}
-			else
-			{
-				this->text_info.error = true;
-				this->text_info.errstr = "Syntax error (" + token_str + ")";
-			}
-
-        }
-		else
-		{
-			this->cur_token.val = token_str.substr(0, token_ptr);
-			this->cur_token.type = SYM_LITERAL;
-			// FIXME:  debug, remove
-			std::cout << "[" << __func__ << "] got literal " << this->cur_token.val << std::endl;
-		}
-
-        goto TOKEN_END;
-    }
 	
-	// Check random parens
-	if(token_str[0] == '(')
+    // Check digits, which may be either literals or register offsets 
+	if(std::isdigit(token_str[0]))
 	{
-		token_ptr = 1;
-		if(token_str[1] == '$')
+		out_token = this->extractLiteralOrReg(token_str, start_offset, end_offset);
+		if(out_token.type == SYM_NONE)
 		{
-			// FIXME: debug 
-			std::cout << "[" << __func__ << "] got paren->token in string " << token_str << std::endl;
-			goto REGULAR_TOKEN;
+			this->text_info.error  = true;
+			this->text_info.errstr = "Got blank symbol " + out_token.toString();
 		}
-
-		if(std::isdigit(token_str[1]))
-		{
-			std::cout << "[" << __func__ << "] got paren->literal in string " << token_str << std::endl;
-			goto LITERAL;
-		}
-
-		this->text_info.error = true;
-		this->text_info.errstr = "Syntax error (" + token_str + ")";
 		goto TOKEN_END;
 	}
+
+    // Check digits, which may be either literals or register offsets 
+    //if(std::isdigit(token_str[0]))
+    //{
+    //    token_ptr = 0;
+    //    while(std::isdigit(token_str[token_ptr]))
+    //        token_ptr++;
+    //    
+    //    // if there are more characters in the token buffer, then
+	//	// then there is more than just a literal here
+    //    if(token_str.size() > token_ptr)
+    //    {
+	//		std::string token_substr = token_str.substr(token_ptr, token_str.size()-1);
+	//		// FIXME:  debug, remove
+	//		std::cout << "[" << __func__ << "] token_substr :"  << token_substr << std::endl;
+	//		if((token_str[token_ptr] == '(') && (token_str[token_ptr+1] == '$'))
+	//		{
+	//			this->cur_token.type = this->getRegType(token_str[token_ptr+2]);
+
+	//			if(this->cur_token.type == SYM_NONE)
+	//			{
+	//				this->text_info.error = true;
+	//				this->text_info.errstr = "Invalid offset syntax " + 
+	//					this->cur_token.toString();
+	//				goto TOKEN_END;
+	//			}
+
+	//			this->cur_token.val    = token_str.substr(token_ptr+3, token_str.length()-2);
+	//			this->cur_token.offset = token_str.substr(0, token_ptr);
+	//		}
+	//		else
+	//		{
+	//			this->text_info.error = true;
+	//			this->text_info.errstr = "Syntax error (" + token_str + ")";
+	//		}
+
+    //    }
+	//	else
+	//	{
+	//		this->cur_token.val = token_str.substr(0, token_ptr);
+	//		this->cur_token.type = SYM_LITERAL;
+	//		// FIXME:  debug, remove
+	//		std::cout << "[" << __func__ << "] got literal " << this->cur_token.val << std::endl;
+	//	}
+
+    //    goto TOKEN_END;
+    //}
+	
+	// Check random parens
+	//if(token_str[0] == '(')
+	//{
+	//	token_ptr = 1;
+	//	if(token_str[1] == '$')
+	//	{
+	//		// FIXME: debug 
+	//		std::cout << "[" << __func__ << "] got paren->token in string " << token_str << std::endl;
+	//		goto REGULAR_TOKEN;
+	//	}
+
+	//	if(std::isdigit(token_str[1]))
+	//	{
+	//		std::cout << "[" << __func__ << "] got paren->literal in string " << token_str << std::endl;
+	//		goto LITERAL;
+	//	}
+
+	//	this->text_info.error = true;
+	//	this->text_info.errstr = "Syntax error (" + token_str + ")";
+	//	goto TOKEN_END;
+	//}
 	
     // Entry point for simple register token
     if(token_str[0] == '$')
     {
-REGULAR_TOKEN:
         if(token_ptr == 0)
             token_ptr = 1;
 
@@ -456,8 +586,10 @@ REGULAR_TOKEN:
             this->text_info.errstr = "Invalid register type " +
                 token_str[token_ptr];
         }
+		else if(this->cur_token.type == SYM_REG_ZERO || this->cur_token.type == SYM_REG_GLOBAL)
+			this->cur_token.val = "0";
         else
-            this->cur_token.val  = token_str.substr(token_ptr+1, token_str.length()-1);
+            this->cur_token.val  = token_str.substr(token_ptr+1, token_str.length());
 
         goto TOKEN_END;
     }
@@ -548,6 +680,7 @@ void Lexer::parseWord(void)
         if(this->cur_token.type != SYM_LITERAL)
         {
         }
+		std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
         word = std::stoi(this->cur_token.val);
         info.addWord(word);
     }
@@ -615,6 +748,7 @@ void Lexer::parseBranchZero(void)
     // if we have an offset, convert it here 
     if(this->cur_token.offset != "\0")
     {
+		std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
         this->text_info.val[1] = std::stoi(this->cur_token.offset, nullptr, 10);
         this->text_info.type[1] = SYM_LITERAL;
     }
@@ -628,6 +762,7 @@ void Lexer::parseBranchZero(void)
             break;
 
         default:
+		std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
             this->text_info.val[0] = std::stoi(this->cur_token.val, nullptr, 10);
             break;
     }
@@ -686,6 +821,7 @@ void Lexer::parseBranch(void)
                 break;
 
             default:
+				std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
                 this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
                 break;
         }
@@ -732,6 +868,7 @@ void Lexer::parseMemArgs(void)
         goto ARG_END;
     }
     this->text_info.type[0] = this->cur_token.type;
+	std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
     this->text_info.val[0]  = std::stoi(this->cur_token.val, nullptr, 10);
 
     // this should be a register that may or may not
@@ -748,12 +885,15 @@ void Lexer::parseMemArgs(void)
             break;
 
         default:
+			// TODO : this is where registers with spurious parens will trip the parser (eg: ($s0))
+			std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi on token " << this->cur_token.toString() << std::endl;
             this->cur_token.val[1] = std::stoi(this->cur_token.val, nullptr, 10);
             break;
     }
 
     if(this->cur_token.offset != "\0")
     {
+		std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
         this->text_info.val[2]  = std::stoi(this->cur_token.offset, nullptr, 10);
         this->text_info.type[2] = SYM_LITERAL;
     }
@@ -790,15 +930,20 @@ void Lexer::parseRegArgs(const int num_args)
         this->nextToken();
         // Offsets can only occur in certain instructions which have immediates.
         // The rule needs to be that 
-        // 1) if the instruction is an immediate instruction
+        // 1) IF The instruction is an immediate instruction
         // 2) AND there is an offset string in the current Token 
         // 3) THEN we convert that offset string to an int and store it in 
         // this->text_info.val[2] as a SYM_LITERAL
-        if(this->text_info.is_imm && argn == num_args-1)
+		//
+        
+		// NOTE: what if this is the ZERO register or the GLOBAL register?
+		// why are we relying on text_info.is_imm to check?
+		if(this->text_info.is_imm && argn == num_args-1)
         {
             // Check if there is an offset 
+			std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
             if(this->cur_token.offset != "\0")
-                this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
+                this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 11);
             else
                 this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
             this->text_info.type[argn] = SYM_LITERAL;
@@ -818,6 +963,7 @@ void Lexer::parseRegArgs(const int num_args)
             case SYM_REG_ZERO:
             case SYM_REG_GLOBAL:
             case SYM_REG_FRAME:
+				std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
                 if(this->cur_token.offset != "\0")
                     this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
                 else
@@ -825,6 +971,7 @@ void Lexer::parseRegArgs(const int num_args)
                 break;
 
             default:
+				std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
                 this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
                 break;
         }
@@ -1049,6 +1196,10 @@ void Lexer::parseLine(void)
             case LEX_LW:
                 this->parseMemArgs();
                 break;
+
+			case LEX_LI:
+				std::cout << "[" << __func__ << "] LI not yet implemented" << std::endl;
+				break;
 
             case LEX_MULT:
                 this->parseRegArgs(3);

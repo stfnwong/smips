@@ -79,10 +79,10 @@ class Lexer
         //void scanLine(void);
         void scanString(void);
 
-
 		// extra token handling functions
+		Token extractLiteralOrReg(const std::string& token, int start_offset, int& end_offset);
 		std::string extractLiteralString(const std::string& token, int start_offset, int& end_offset);
-		std::string extractRegisterString(const std::string& token, int start_offset, int& end_offset);
+		Token extractRegisterString(const std::string& token, int start_offset, int& end_offset);
         void nextToken(void);
         //void nextLine(void);
 

@@ -60,7 +60,11 @@ struct Token
         // comparisons 
         bool operator==(const Token& that) const;
         bool operator!=(const Token& that) const;
+
+		// assignment
+		Token& operator=(const Token& that);
 };
+
 
 
 /*

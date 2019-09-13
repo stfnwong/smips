@@ -124,6 +124,18 @@ bool Token::operator!=(const Token& that) const
     return true;
 }
 
+// assignment 
+Token& Token::operator=(const Token& that)
+{
+	if(this != &that)
+	{
+		this->type   = that.type;
+		this->val    = that.val;
+		this->offset = that.offset;
+	}
+
+	return *this;
+}
 
 /*
  * TextInfo
