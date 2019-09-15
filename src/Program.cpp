@@ -23,6 +23,13 @@ Instr::Instr(const uint32_t adr, const uint32_t ins)
     this->ins = ins;
 }
 
+// TODO : I suppose that there should also be a move constructor here
+Instr::Instr(const Instr& that)
+{
+    this->adr = that.adr;
+    this->ins = that.ins;
+}
+
 bool Instr::operator==(const Instr& that) const
 {
     if(this->adr != that.adr)
@@ -41,6 +48,14 @@ bool Instr::operator!=(const Instr& that) const
         return false;
 
     return true;
+}
+
+Instr& Instr::operator=(const Instr& that)
+{
+    this->adr = that.adr;
+    this->ins = that.ins;
+
+    return *this;
 }
 
 void Instr::init(void)

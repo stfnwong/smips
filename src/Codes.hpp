@@ -27,13 +27,13 @@ typedef enum instr_code
     LEX_SLT, LEX_SLTU, LEX_SLTI, LEX_SLTIU,
     // load
     LEX_LB, LEX_LBU, LEX_LH, LEX_LHU, 
-    LEX_LW, LEX_LI,
+    LEX_LW, LEX_LI, LEX_LA,
     // store
     LEX_SB, LEX_SH, LEX_SW, 
     // jumps
     LEX_J, LEX_JAL, LEX_JALR, LEX_JR,
     // branches
-    LEX_BEQ, LEX_BGTZ, LEX_BLEZ, LEX_BNE
+    LEX_BEQ, LEX_BGT, LEX_BGTZ, LEX_BLEZ, LEX_BNE
 } instr_code;
 
 
@@ -55,6 +55,14 @@ typedef enum directive_code
     LEX_TEXT,      
     LEX_WORD,      
 } directive_code;
+
+
+// TODO : are syscalls really that different that they need 
+// their own special datatype (the answer may be yes)
+typedef enum sys_code
+{
+    LEX_SYSCALL
+} sys_code;
 
 // MIPS Opcode list 
 const Opcode lex_instr_codes[] = {
@@ -89,6 +97,7 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_LHU,   "LHU"),
     Opcode(LEX_LW,    "LW"),
     Opcode(LEX_LI,    "LI"),
+	Opcode(LEX_LA,    "LA"),
     // store
     Opcode(LEX_SH,    "SH"),
     Opcode(LEX_SW,    "SW"),
@@ -99,6 +108,7 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_JR,    "JR"),
     // branch
     Opcode(LEX_BEQ,   "BEQ"),
+	Opcode(LEX_BGT,   "BGT"),
     Opcode(LEX_BGTZ,  "BGTZ"),
     Opcode(LEX_BLEZ,  "BLEZ"),
     Opcode(LEX_BNE,   "BNE"),

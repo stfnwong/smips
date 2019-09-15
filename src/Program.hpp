@@ -8,7 +8,6 @@
 #ifndef __PROGRAM_HPP
 #define __PROGRAM_HPP
 
-
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -16,7 +15,7 @@
 
 /*
  * Instr
- * Represents a single assembly instruction 
+ * Represents a single assembly instruction.
  * (machine word + address)
  */
 struct Instr
@@ -27,9 +26,12 @@ struct Instr
     public:
         Instr();
         Instr(const uint32_t adr, const uint32_t ins);
+        Instr(const Instr& that);
 
+        // TODO: will the default move constructor be sufficient here?
         bool operator==(const Instr& that) const;
         bool operator!=(const Instr& that) const;
+        Instr& operator=(const Instr& that);
         void init(void);
         std::string toString(void) const;
 };
@@ -44,13 +46,31 @@ class Program
     private:
         std::vector <Instr> instructions;
         Instr null_instr;
+    // TODO : does it make sense to have a copy constructor for Program objects?
+    private:
 
     public:
         Program();
 
+        /*
+         * init()
+         * Reset the program object
+         */
         void init(void);
+        /*
+         * add()
+         * Adds a new instruction object to the end of the instruction list
+         */
         void add(const Instr& i);
+        /*
+         * get()
+         * Returns the Nth instruction object from the instruction list
+         */
         Instr& get(const unsigned int idx);
+        /*
+         * writeMem()
+         * Write a word directly to a specific memory location
+         */
         void writeMem(const uint32_t addr, const uint32_t val);
         unsigned int size(void) const;
         std::string toString(void) const;

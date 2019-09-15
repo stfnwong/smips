@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     TextInfo line;
     for(unsigned int idx = 0; idx < lexed_source.getNumLines(); ++idx)
     {
-        line = lexed_source.get(idx);
+        line = lexed_source.getText(idx);
         if(line.error)
         {
             std::cerr << "[ERROR] line " << line.line_num << std::endl;

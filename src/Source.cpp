@@ -9,7 +9,20 @@
 #include <sstream>
 #include "Source.hpp"
 
+/*
+ * TODO: 
+ * To match both the ELF format, and the layout of many example programs it might be 
+ * better to restructure this to work with 'segments' rather than just raw symbols.
+ *
+ * The idea I suppose would be to have the .data and .text directives insert a new data
+ * or text segment, and that segment would contain the IR for the actual assembly 
+ * inside of it.
+ *
+ */
 
+/* 
+ * TOKEN
+ */
 Token::Token()
 {
     this->type   = SYM_NONE;
@@ -111,6 +124,18 @@ bool Token::operator!=(const Token& that) const
     return true;
 }
 
+// assignment 
+Token& Token::operator=(const Token& that)
+{
+	if(this != &that)
+	{
+		this->type   = that.type;
+		this->val    = that.val;
+		this->offset = that.offset;
+	}
+
+	return *this;
+}
 
 /*
  * TextInfo
@@ -139,6 +164,11 @@ void TextInfo::init(void)
         this->val[i]    = 0;
         this->type[i]   = SYM_NONE;
     }
+}
+
+bool TextInfo::hasOp(void) const
+{
+    return (this->opcode.instr == 0) ? true : false;
 }
 
 std::string TextInfo::toString(void) const
@@ -189,9 +219,8 @@ std::string TextInfo::toString(void) const
             oss << "G  ";
         else if(this->type[i] == SYM_REG_FRAME)
             oss << "F+" << this->val[i];
-        else if(this->type[i] == SYM_LITERAL)
+        else if(this->type[i] == SYM_LITERAL)       // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
             oss << "L  ";
-            //oss << std::left << std::setfill(' ') << std::setw(3) << this->val[i];
         else
             oss << "   ";
     }
@@ -199,8 +228,12 @@ std::string TextInfo::toString(void) const
     // literal (if applicable)
     if(this->is_symbol)
         oss << "0x" << std::hex << std::setw(8) << this->val[2];
+    else if(this->is_imm)
+        oss << "0x" << std::hex << std::setw(8) << this->val[2];
+    else if(!this->is_imm && (this->type[2] == SYM_LITERAL))
+        oss << "   +" << std::left << std::hex << std::setw(4) << std::setfill(' ') << this->val[2] << "  ";
     else
-        oss << "         ";
+        oss << "          ";
     // spacing chars
     oss << " ";
     // insert error (T/F only, full string may not fit)
@@ -343,14 +376,20 @@ DataInfo::DataInfo()
 
 void DataInfo::init(void)
 {
-    this->errstr   = "\0";
-    this->line_num = 0;
-    this->addr     = 0;
-    this->space    = 0;
-    this->error    = false;
+    this->errstr       = "\0";
+	this->directive    = "\0";
+    this->line_num     = 0;
+    this->addr         = 0;
+    this->space        = 0;
+    this->error        = false;
+	this->is_directive = false;
     this->data.clear();
 }
 
+/*
+ * toString()
+ * Convert DataInfo to a std::string
+ */
 std::string DataInfo::toString(void) const
 {
     std::ostringstream oss;
@@ -362,11 +401,11 @@ std::string DataInfo::toString(void) const
     oss << std::endl;
     
     return oss.str();
-
 }
 
-
-
+/*
+ * ==
+ */
 bool DataInfo::operator==(const DataInfo& that) const
 {
     if(this->line_num != that.line_num)
@@ -392,6 +431,39 @@ bool DataInfo::operator==(const DataInfo& that) const
 
     return true;
 }
+
+/*
+ * addBytes
+ */
+void DataInfo::addByte(const uint8_t byte)
+{
+    this->data.push_back(byte);
+}
+
+void DataInfo::addHalf(const uint16_t half)
+{
+    uint8_t byte;
+
+    byte = half & 0x00FF;
+    this->data.push_back(byte);
+    byte = (half & 0xFF00) >> 8;
+    this->data.push_back(byte);
+}
+
+void DataInfo::addWord(const uint32_t word)
+{
+    uint8_t byte;
+
+    byte = word & (0x000000FF);
+    this->data.push_back(byte);
+    byte = (word & 0x0000FF00) >> 8;
+    this->data.push_back(byte);
+    byte = (word & 0x00FF0000) >> 16;
+    this->data.push_back(byte);
+    byte = (word & 0xFF000000) >> 24;
+    this->data.push_back(byte);
+}
+
 
 /*
  * Symbol
@@ -484,7 +556,7 @@ SourceInfo::SourceInfo() {}
 
 void SourceInfo::addText(const TextInfo& l)
 {
-    this->line_info.push_back(l);
+    this->text_info.push_back(l);
 }
 
 void SourceInfo::addData(const DataInfo& d)
@@ -494,22 +566,22 @@ void SourceInfo::addData(const DataInfo& d)
 
 void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 {
-    if(idx < this->line_info.size())
-        this->line_info[idx] = l;
+    if(idx < this->text_info.size())
+        this->text_info[idx] = l;
 }
 
-TextInfo& SourceInfo::get(const unsigned int idx)
+TextInfo& SourceInfo::getText(const unsigned int idx)
 {
-    if(idx < this->line_info.size())
-        return this->line_info[idx];
+    if(idx < this->text_info.size())
+        return this->text_info[idx];
     
     return this->null_line;
 }
 
 unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 {
-    if(idx < this->line_info.size())
-        return this->line_info[idx].line_num;
+    if(idx < this->text_info.size())
+        return this->text_info[idx].line_num;
 
     return 0;
 }
@@ -517,34 +589,49 @@ unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 unsigned int SourceInfo::getNumErr(void) const
 {
     unsigned int num_err = 0;
-    for(unsigned int idx = 0; idx < this->line_info.size(); ++idx)
-        num_err += (this->line_info[idx].error) ? 1 : 0;
+    for(unsigned int idx = 0; idx < this->text_info.size(); ++idx)
+        num_err += (this->text_info[idx].error) ? 1 : 0;
 
     return num_err;
 }
 
 unsigned int SourceInfo::getNumLines(void) const
 {
-    return this->line_info.size();
+    return this->text_info.size();
 }
 
 bool SourceInfo::hasError(void) const
 {
-    for(unsigned int idx = 0; idx < this->line_info.size(); ++idx)
+    for(unsigned int idx = 0; idx < this->text_info.size(); ++idx)
     {
-        if(this->line_info[idx].error)
+        if(this->text_info[idx].error)
             return true;
     }
 
     return false;
 }
 
+unsigned int SourceInfo::getTextInfoSize(void) const
+{
+    return this->text_info.size();
+}
+
+unsigned int SourceInfo::getDataInfoSize(void) const
+{
+    return this->data_info.size();
+}
+
+
+
 std::string SourceInfo::toString(void) const
 {
     std::ostringstream oss;
+    for(unsigned int l = 0; l < this->data_info.size(); ++l)
+        oss << this->data_info[l].toString();
 
-    for(unsigned int l = 0; l < this->line_info.size(); ++l)
-        oss << this->line_info[l].toString();
+    // Text infos
+    for(unsigned int l = 0; l < this->text_info.size(); ++l)
+        oss << this->text_info[l].toString();
 
     return oss.str();
 }

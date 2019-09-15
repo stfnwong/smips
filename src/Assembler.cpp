@@ -354,7 +354,7 @@ Instr Assembler::asm_sw(const TextInfo& l) const
  * AssembleLine()
  * Transform a TextInfo object into an Instr object
  */
-Instr Assembler::assembleLine(const TextInfo& line)
+Instr Assembler::assembleText(const TextInfo& line)
 {
     switch(line.opcode.instr)
     {
@@ -448,10 +448,10 @@ void Assembler::assemble(void)
     // TODO : assemble the data sections
 
     // TODO : assemble the text sections
-    for(unsigned int i = 0; i < this->source.getNumLines(); ++i)
+    for(unsigned int i = 0; i < this->source.getTextInfoSize(); ++i)
     {
-        cur_line = this->source.get(i);
-        cur_instr = this->assembleLine(cur_line);
+        cur_line = this->source.getText(i);
+        cur_instr = this->assembleText(cur_line);
         this->program.add(cur_instr);
     }
 

@@ -12,6 +12,8 @@
 #include "Opcode.hpp"
 #include "Source.hpp"
 
+// Give some kind of named identifier to the Lexer mode
+enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};
 
 /*
  * Lexer
@@ -23,6 +25,7 @@ class Lexer
     private:
         OpcodeTable instr_code_table;
         void init_instr_table(void);
+
     private:
         OpcodeTable directive_code_table;
         void init_directive_code_table(void);
@@ -30,8 +33,11 @@ class Lexer
     // Token memory
     private:
         int   token_buf_size;
+        int   line_buf_size;
         char* token_buf;
+        char* line_buf;
         bool  verbose;
+
     private:
         void  alloc_mem(void);
 
@@ -46,10 +52,14 @@ class Lexer
         std::string  source_text;
         std::string  filename;
         SourceInfo   source_info;
-        TextInfo     text_info;
-        DataInfo     data_info;
         SymbolTable  sym_table;
         unsigned int cur_addr;
+
+    // Segments 
+    private:
+        TextInfo     text_info;
+        DataInfo     data_info;
+        LexMode      cur_mode;
 
     // Motion through source file
     private:
@@ -65,24 +75,29 @@ class Lexer
     // Token handling
     private:
         Token cur_token;
+        void scanToken(void);
+        void scanString(void);
+		// extra token handling functions
+		Token extractLiteral(const std::string& token, unsigned int start_offset, unsigned int& end_offset);
+        Token extractReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset);
         void nextToken(void);
 
-    // handling directives
+    // Assembler directives
     private:
         // TODO : no support for floats in the first version
         void parseASCIIZ(void);
         void parseAlign(void);
         void parseByte(void);
-        void parseData(void);
         void parseDouble(void);
         void parseHalf(void);
         void parseMacro(void);
         void parseEndMacro(void);
         void parseWord(void);
         void parseSpace(void);
-        void parseText(void);
 
-        // TODO: make a new sub-section for all data handling functions
+        // segment mode directives
+        void dataSeg(void);
+        void textSeg(void);
 
     private:
         void resolveLabels(void);
@@ -93,7 +108,11 @@ class Lexer
         void parseJump(void);
         void parseLine(void);
         TokenType getRegType(const char& reg_char) const;
-        void scanToken(void);
+
+    // disable copy construction, assignment
+    private:
+        Lexer(const Lexer& that) = delete;
+        Lexer& operator=(const Lexer& that) = delete;
 
     public:
         Lexer();

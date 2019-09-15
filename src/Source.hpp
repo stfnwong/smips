@@ -1,6 +1,7 @@
 /*
  * SOURCE
- * Objects for processing assembly source 
+ * Objects for processing assembly source. These are almost like a low-grade IR 
+ * for the assembly source.
  *
  * Stefan Wong 2019
  */
@@ -21,6 +22,8 @@ typedef enum TokenType
     SYM_INSTR,
     SYM_LITERAL,
     SYM_DIRECTIVE,
+    SYM_CHAR,
+    SYM_STRING,
     // register types
     SYM_REG_AT,
     SYM_REG_STACK,
@@ -39,6 +42,7 @@ typedef enum TokenType
 
 /*
  * Token
+ * Represents a single token from the source stream.
  */
 struct Token
 {
@@ -56,14 +60,18 @@ struct Token
         // comparisons 
         bool operator==(const Token& that) const;
         bool operator!=(const Token& that) const;
+
+		// assignment
+		Token& operator=(const Token& that);
 };
+
 
 
 /*
  * TextInfo
- * Information about a single line of assembly source
+ * Information about a single line of assembly source. This object is a kind of 
+ * intermediate representation for text section data.
  */
-// TODO : change name to TextInfo
 struct TextInfo
 {
     std::string  label;
@@ -77,36 +85,41 @@ struct TextInfo
     bool         is_imm;
     bool         is_symbol;
     int          val[3];
-    TokenType    type[3];      // record types for each register
+    TokenType    type[3];      // record of types for each register
     Opcode       opcode;
 
     public:
         TextInfo(); 
         void init(void);
-        std::string toString(void) const;
-        // TODO: fomats the TextInfo like an instruction
-        //std::string toInstrString(void) const;
+        bool hasOp(void) const;
 
         bool operator==(const TextInfo& that) const;
         bool operator!=(const TextInfo& that) const;
 
+        // string formatting
+        std::string toString(void) const;
         std::string diff(const TextInfo& that) const;
-
+        // TODO: fomats the TextInfo like an instruction
+        //std::string toInstrString(void) const;
 };
 
 
 /*
  * DataInfo
  * Information for a directive in the assembly source which contains memory 
- * information (eg: .text, .word, and so on)
+ * information (eg: .text, .word, and so on). This object forms a kind of intermediate
+ * representation for assembly lines that will appear in the data section of the 
+ * output binary.
  */
 struct DataInfo
 {
     std::string           errstr;
+	std::string           directive;
     std::vector <uint8_t> data;
     unsigned int          line_num;
     unsigned int          addr;
     unsigned int          space;
+	bool                  is_directive;
     bool                  error;
 
     public:
@@ -115,6 +128,11 @@ struct DataInfo
         std::string toString(void) const;
 
         bool operator==(const DataInfo& that) const;
+
+        // Insert a new byte into the data section
+        void addByte(const uint8_t byte);
+        void addHalf(const uint16_t half);
+        void addWord(const uint32_t word);
 };
 
 
@@ -159,7 +177,7 @@ class SymbolTable
 class SourceInfo
 {
     private:
-        std::vector<TextInfo> line_info;        // text section(s)
+        std::vector<TextInfo> text_info;        // text section(s)
         std::vector<DataInfo> data_info;        // data sections(s)
         TextInfo null_line;
         DataInfo null_data;
@@ -169,11 +187,15 @@ class SourceInfo
         void         addText(const TextInfo& l);
         void         addData(const DataInfo& d);
         void         update(const unsigned int idx, const TextInfo& l);
-        TextInfo&    get(const unsigned int idx);
+        DataInfo&    getData(const unsigned int idx);
+        TextInfo&    getText(const unsigned int idx);
         unsigned int getLineNum(const unsigned int idx) const;
         unsigned int getNumErr(void) const;
         unsigned int getNumLines(void) const;
         bool         hasError(void) const;
+
+        unsigned int getTextInfoSize(void) const;
+        unsigned int getDataInfoSize(void) const;
 
         std::string  toString(void) const;
 };

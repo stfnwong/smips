@@ -11,6 +11,7 @@
 #include <string>
 #include "Program.hpp"
 #include "Source.hpp"
+#include "Object.hpp"
 
 
 /*
@@ -44,6 +45,7 @@ class Assembler
     // program binary
     private:
         Program program;
+        Object  object;
 
     // assemble by instruction type
     private:
@@ -55,7 +57,7 @@ class Assembler
     // data region assembly
     private:
 
-    // instruction assembly
+    // text region/instruction assembly
     private:
         Instr asm_add(const TextInfo& l) const;
         Instr asm_addi(const TextInfo& l) const;
@@ -77,7 +79,7 @@ class Assembler
         Assembler();
 
         void assemble(void);
-        Instr assembleLine(const TextInfo& line);
+        Instr assembleText(const TextInfo& line);
 
         void setVerbose(const bool v);
         bool getVerbose(void) const;
