@@ -339,10 +339,10 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
     unsigned int tok_ptr;
     unsigned int paren_ptr = 0;
     std::stack<int> paren_stack;
+    std::string offset;
 
     tok_ptr = start_offset;
     
-
     while(tok_ptr < token.length())
     {
         if(token[tok_ptr] == '(')
@@ -352,6 +352,12 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
             //paren_stack.push(tok_ptr);
         if(token[tok_ptr] == '$')
             break;
+        if(std::isdigit(token[tok_ptr]))
+        {
+            // this will be an offset
+            out_token = this->extractLiteral(token, tok_ptr, end_offset);
+            offset = out_token.offset;
+        }
         tok_ptr++;
     }
 
