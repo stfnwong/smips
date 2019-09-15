@@ -78,8 +78,15 @@ class Lexer
         void scanToken(void);
         void scanString(void);
 		// extra token handling functions
-		Token extractLiteral(const std::string& token, unsigned int start_offset, unsigned int& end_offset);
-        Token extractReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset);
+		Token extractLiteral(
+				const std::string& token, 
+				unsigned int start_offset, 
+				unsigned int& end_offset);
+        Token extractReg(
+				const std::string& token, 
+				unsigned int start_offset, 
+				unsigned int& end_offset);
+
         void nextToken(void);
 
     // Assembler directives
@@ -106,6 +113,7 @@ class Lexer
         void parseMemArgs(void);
         void parseRegArgs(const int num);
         void parseJump(void);
+		void parseLabel(void);
         void parseLine(void);
         TokenType getRegType(const char& reg_char) const;
 

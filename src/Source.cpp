@@ -25,15 +25,20 @@
  */
 Token::Token()
 {
-    this->type   = SYM_NONE;
-    this->val    = "\0";
-    this->offset = "\0";
+	this->init();
 }
 
 Token::Token(const TokenType& t, const std::string& v)
 {
     this->type = t;
     this->val = v;
+}
+
+void Token::init(void)
+{
+    this->type   = SYM_NONE;
+    this->val    = "\0";
+    this->offset = "\0";
 }
 
 bool Token::isReg(void) const
@@ -74,10 +79,14 @@ std::string Token::toString(void) const
             return "NONE <" + this->val + ">";
         case SYM_EOF:
             return "EOF <" + this->val + ">";
+		case SYM_LABEL:
+			return "LABEL <" + this->val + ">";
         case SYM_INSTR:
             return "INSTR <" + this->val + ">";
         case SYM_LITERAL:
             return "LITERAL <" + this->val + ">";
+		case SYM_DIRECTIVE:
+			return "DIRECTIVE <" + this->val + ">";
         case SYM_REG_TEMP:
             return "R_TEMP <" + this->val + ">";
         case SYM_REG_SAVED:

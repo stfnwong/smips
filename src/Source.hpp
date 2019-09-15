@@ -53,6 +53,7 @@ struct Token
     public:
         Token();
         Token(const TokenType& t, const std::string& v);
+		void init(void);
         bool isReg(void) const;
         bool isOffset(void) const;
         std::string toString(void) const;
@@ -126,6 +127,7 @@ struct DataInfo
         DataInfo();
         void init(void);
         std::string toString(void) const;
+		// TODO: assignment operator?
 
         bool operator==(const DataInfo& that) const;
 
