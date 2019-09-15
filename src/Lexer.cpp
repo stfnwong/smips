@@ -282,16 +282,11 @@ void Lexer::scanString(void)
  * TODO: factor out register, check for literal and if there is more, call the extractReg()
  * function to get the register out and insert the offset after
  */
-Token Lexer::extractLiteralOrReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
+Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
 {
     Token out_token;
     unsigned int tok_ptr,paren_ptr;
     std::string offset;
-
-    // TODO : is it worth checking for the closing paren? There aren't any statements in
-    // the MIPS assembly language that can actually be nested, so as long as we have the 
-    // opening paren it should be sufficient.
-    bool has_paren = false;
 
     tok_ptr = start_offset;
     while(std::isdigit(token[tok_ptr]))
@@ -307,59 +302,24 @@ Token Lexer::extractLiteralOrReg(const std::string& token, unsigned int start_of
     {
         out_token.val = token.substr(start_offset, tok_ptr);
         out_token.type = SYM_LITERAL;
-        end_offset = tok_ptr;
         goto LITERAL_REG_END;
     }
 
     // since there are more chars, we presume that the literal was an
     // offset and save it here.
-    offset = out_token.val;
+    offset = token.substr(start_offset, tok_ptr - start_offset);
+    std::cout << "[" << __func__ << "] out_token.offset : " << out_token.offset << std::endl;
+    std::cout << "[" << __func__ << "] out token before calling this->extracReg() : " << out_token.toString() << std::endl;
+    out_token        = this->extractReg(token, tok_ptr, end_offset);
+    out_token.offset = offset;
 
     // FIXME:  debug, remove
     std::cout << "[" << __func__ << "] token: [" << token << "], length " 
         << token.length() << " token[" << tok_ptr << "] : <" << token[tok_ptr] 
         << ">" << std::endl;
 
-    while(token[tok_ptr] != '$')
-    {
-        //  if we get to the end and havent found a register then mark this as garbage
-        if(tok_ptr >= token.size())
-        {
-            out_token.type = SYM_NONE;
-            goto LITERAL_REG_END;
-        }
-        if(token[tok_ptr] == '(')
-            has_paren = true;
-        tok_ptr++;
-    }
-
-    // we should now be right on the '$' character
-    out_token.type = this->getRegType(token[tok_ptr+1]);
-    if(has_paren)
-    {
-        std::cout << "[" << __func__ << "] has paren" << std::endl;
-        paren_ptr = tok_ptr;
-        while(token[paren_ptr] != ')')
-        {
-            // we can't find the closing paren.
-            if(unsigned(paren_ptr) >= token.size())
-            {
-                out_token.type = SYM_NONE;
-                goto LITERAL_REG_END;
-            }
-            paren_ptr++;
-        }
-        //int tok_len = paren_ptr - tok_ptr - 1;
-        //std::cout << "[" << __func__ << "] tok_len : " << tok_len << std::endl;
-        out_token.val = token.substr(tok_ptr+1, (paren_ptr - tok_ptr - 1));
-    }
-    else
-        out_token.val = token.substr(tok_ptr+1);
-
-    out_token.offset = offset;
-
-
 LITERAL_REG_END:
+    end_offset = tok_ptr;
     // TODO : eventually get rid of console output here
     std::cout << "[" << __func__ << "] out_token        : " << out_token.toString() << std::endl;
     std::cout << "[" << __func__ << "] out_token.val    : " << out_token.val << " [length " << out_token.val.length() << "]" << std::endl;
@@ -371,6 +331,7 @@ LITERAL_REG_END:
 /*
  * extractReg()
  * Extract a register
+ * TODO: this technique can't extract any offsets if they have parens around them
  */
 Token Lexer::extractReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
 {
@@ -514,7 +475,7 @@ void Lexer::nextToken(void)
     // Check digits, which may be either literals or register offsets 
     if(std::isdigit(token_str[0]))
     {
-        out_token = this->extractLiteralOrReg(token_str, start_offset, end_offset);
+        out_token = this->extractLiteral(token_str, start_offset, end_offset);
         if(out_token.type == SYM_NONE)
         {
             this->text_info.error  = true;
