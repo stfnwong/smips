@@ -278,14 +278,12 @@ void Lexer::scanString(void)
 
 
 /*
- * extractLiteralOrReg()
- * TODO: factor out register, check for literal and if there is more, call the extractReg()
- * function to get the register out and insert the offset after
+ * extractLiteral()
  */
 Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
 {
     Token out_token;
-    unsigned int tok_ptr,paren_ptr;
+    unsigned int tok_ptr;
     std::string offset;
 
     tok_ptr = start_offset;
@@ -305,25 +303,12 @@ Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset,
         goto LITERAL_REG_END;
     }
 
-    // since there are more chars, we presume that the literal was an
-    // offset and save it here.
     offset = token.substr(start_offset, tok_ptr - start_offset);
-    std::cout << "[" << __func__ << "] out_token.offset : " << out_token.offset << std::endl;
-    std::cout << "[" << __func__ << "] out token before calling this->extracReg() : " << out_token.toString() << std::endl;
     out_token        = this->extractReg(token, tok_ptr, end_offset);
     out_token.offset = offset;
 
-    // FIXME:  debug, remove
-    std::cout << "[" << __func__ << "] token: [" << token << "], length " 
-        << token.length() << " token[" << tok_ptr << "] : <" << token[tok_ptr] 
-        << ">" << std::endl;
-
 LITERAL_REG_END:
     end_offset = tok_ptr;
-    // TODO : eventually get rid of console output here
-    std::cout << "[" << __func__ << "] out_token        : " << out_token.toString() << std::endl;
-    std::cout << "[" << __func__ << "] out_token.val    : " << out_token.val << " [length " << out_token.val.length() << "]" << std::endl;
-    std::cout << "[" << __func__ << "] out_token.offset : " << out_token.offset << std::endl;
     return out_token;
 }
 
@@ -360,9 +345,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         }
         tok_ptr++;
     }
-
-    // TODO  remove, debug
-    std::cout << "[" << __func__ << "] paren_stack.size() : " << paren_stack.size() << std::endl;
 
     // we should now be right on the '$' character
     if(paren_stack.empty())
@@ -407,12 +389,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         end_offset = token.length();
     }
 
-
-//EXTRACT_REG_END:
-    // TODO : eventually get rid of console output here
-    std::cout << "[" << __func__ << "] out_token        : " << out_token.toString() << std::endl;
-    std::cout << "[" << __func__ << "] out_token.val    : " << out_token.val << " [length " << out_token.val.length() << "]" << std::endl;
-    std::cout << "[" << __func__ << "] out_token.offset : " << out_token.offset << std::endl;
     return out_token;
 }
 
@@ -506,28 +482,6 @@ void Lexer::nextToken(void)
         goto TOKEN_END;
     }
           
-    
-    // Entry point for simple register token
-    //if(token_str[0] == '$')
-    //{
-    //    if(token_ptr == 0)
-    //        token_ptr = 1;
-
-    //    this->cur_token.type = this->getRegType(token_str[token_ptr]);
-    //    if(this->cur_token.type == SYM_NONE)
-    //    {
-    //        this->text_info.error = true;
-    //        this->text_info.errstr = "Invalid register type " +
-    //            token_str[token_ptr];
-    //    }
-    //    else if(this->cur_token.type == SYM_REG_ZERO || this->cur_token.type == SYM_REG_GLOBAL)
-    //        this->cur_token.val = "0";
-    //    else
-    //        this->cur_token.val  = token_str.substr(token_ptr+1, token_str.length());
-
-    //    goto TOKEN_END;
-    //}
-
     // Found an instruction
     if(op.mnemonic != "\0")
     {

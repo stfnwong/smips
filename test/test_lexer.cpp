@@ -710,6 +710,7 @@ TEST_F(TestLexer, test_paren_parse)
     // Check each line in turn
     TextInfo expected_line;
     TextInfo output_line;
+
     for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
     {
         expected_line = expected_src_out.getText(line);
