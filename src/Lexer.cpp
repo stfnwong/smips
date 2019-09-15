@@ -568,7 +568,6 @@ void Lexer::parseWord(void)
         if(this->cur_token.type != SYM_LITERAL)
         {
         }
-        std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
         word = std::stoi(this->cur_token.val);
         info.addWord(word);
     }
@@ -636,7 +635,6 @@ void Lexer::parseBranchZero(void)
     // if we have an offset, convert it here 
     if(this->cur_token.offset != "\0")
     {
-        std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
         this->text_info.val[1] = std::stoi(this->cur_token.offset, nullptr, 10);
         this->text_info.type[1] = SYM_LITERAL;
     }
@@ -650,7 +648,6 @@ void Lexer::parseBranchZero(void)
             break;
 
         default:
-        std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
             this->text_info.val[0] = std::stoi(this->cur_token.val, nullptr, 10);
             break;
     }
@@ -709,7 +706,6 @@ void Lexer::parseBranch(void)
                 break;
 
             default:
-                std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
                 this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
                 break;
         }
@@ -756,7 +752,6 @@ void Lexer::parseMemArgs(void)
         goto ARG_END;
     }
     this->text_info.type[0] = this->cur_token.type;
-    std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
     this->text_info.val[0]  = std::stoi(this->cur_token.val, nullptr, 10);
 
     // this should be a register that may or may not
@@ -773,15 +768,12 @@ void Lexer::parseMemArgs(void)
             break;
 
         default:
-            // TODO : this is where registers with spurious parens will trip the parser (eg: ($s0))
-            std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi on token " << this->cur_token.toString() << std::endl;
             this->cur_token.val[1] = std::stoi(this->cur_token.val, nullptr, 10);
             break;
     }
 
     if(this->cur_token.offset != "\0")
     {
-        std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
         this->text_info.val[2]  = std::stoi(this->cur_token.offset, nullptr, 10);
         this->text_info.type[2] = SYM_LITERAL;
     }
@@ -829,7 +821,6 @@ void Lexer::parseRegArgs(const int num_args)
         if(this->text_info.is_imm && argn == num_args-1)
         {
             // Check if there is an offset 
-            std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
             if(this->cur_token.offset != "\0")
                 this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 11);
             else
@@ -851,7 +842,6 @@ void Lexer::parseRegArgs(const int num_args)
             case SYM_REG_ZERO:
             case SYM_REG_GLOBAL:
             case SYM_REG_FRAME:
-                std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
                 if(this->cur_token.offset != "\0")
                     this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
                 else
@@ -859,7 +849,6 @@ void Lexer::parseRegArgs(const int num_args)
                 break;
 
             default:
-                std::cout << "[" << __func__ << ":"  << __LINE__ << "] performing std::stoi" << std::endl;
                 this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
                 break;
         }
