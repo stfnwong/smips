@@ -219,9 +219,8 @@ std::string TextInfo::toString(void) const
             oss << "G  ";
         else if(this->type[i] == SYM_REG_FRAME)
             oss << "F+" << this->val[i];
-        else if(this->type[i] == SYM_LITERAL)
+        else if(this->type[i] == SYM_LITERAL)       // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
             oss << "L  ";
-            //oss << std::left << std::setfill(' ') << std::setw(3) << this->val[i];
         else
             oss << "   ";
     }
@@ -231,6 +230,8 @@ std::string TextInfo::toString(void) const
         oss << "0x" << std::hex << std::setw(8) << this->val[2];
     else if(this->is_imm)
         oss << "0x" << std::hex << std::setw(8) << this->val[2];
+    else if(!this->is_imm && (this->type[2] == SYM_LITERAL))
+        oss << "   +" << std::left << std::hex << std::setw(4) << std::setfill(' ') << this->val[2] << "  ";
     else
         oss << "          ";
     // spacing chars

@@ -157,6 +157,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
     line.type[1]         = SYM_REG_GLOBAL;
+    // offset
     line.val[2]          = 4;
     line.type[2]         = SYM_LITERAL;
     info.addText(line);
@@ -493,6 +494,7 @@ class TestLexer : public ::testing::Test
         std::string test_mult_add_file = "asm/mult_add.asm";
         std::string test_for_loop_file = "asm/for_loop.asm";
         std::string test_array_file = "asm/array.asm";
+        std::string test_paren_file = "asm/paren.asm";
 };
 
 
@@ -630,6 +632,98 @@ TEST_F(TestLexer, test_array)
     }
 
     // TODO : Make an expected source output for the assertion check
+}
+
+
+SourceInfo get_paren_expected_source_info(void)
+{
+	SourceInfo info;
+    TextInfo   line;
+
+    // line 4
+    // lw $t1, ($gp)
+    line.init();
+    line.line_num        = 4;
+    line.addr            = 0x200;
+    line.opcode.instr    = LEX_LW;
+    line.opcode.mnemonic = "LW";
+    line.val[0]          = 1;
+    line.type[0]         = SYM_REG_TEMP;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_GLOBAL;
+    info.addText(line);
+
+    // line 5
+    // lw $t1, 4($gp)
+    line.init();
+    line.line_num        = 5;
+    line.addr            = 0x201;
+    line.opcode.instr    = LEX_LW;
+    line.opcode.mnemonic = "LW";
+    line.val[0]          = 2;
+    line.type[0]         = SYM_REG_TEMP;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_GLOBAL;
+    line.val[2]          = 4;
+    line.type[2]         = SYM_LITERAL;
+    info.addText(line);
+
+    // line 6
+    // lw $t1, 4($gp)
+    line.init();
+    line.line_num        = 6;
+    line.addr            = 0x202;
+    line.opcode.instr    = LEX_LW;
+    line.opcode.mnemonic = "LW";
+    line.val[0]          = 1;
+    line.type[0]         = SYM_REG_TEMP;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_GLOBAL;
+    line.val[2]          = 4;
+    line.type[2]         = SYM_LITERAL;
+    info.addText(line);
+
+    return info;
+}
+
+
+
+TEST_F(TestLexer, test_paren_parse)
+{
+    Lexer test_lexer;
+    SourceInfo src_out;
+    SourceInfo expected_src_out;
+
+    test_lexer.setVerbose(true);
+    test_lexer.loadFile(this->test_paren_file);
+    test_lexer.lex();
+
+    // get the source info
+    expected_src_out = get_paren_expected_source_info();
+	std::cout << "Expected output :" << std::endl;
+	std::cout << expected_src_out.toString() << std::endl << std::endl;
+
+    src_out = test_lexer.getSourceInfo();
+    std::cout << "Lexer output : " << std::endl;
+    std::cout << src_out.toString() << std::endl;
+
+    // Check each line in turn
+    TextInfo expected_line;
+    TextInfo output_line;
+    for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
+    {
+        expected_line = expected_src_out.getText(line);
+        output_line = src_out.getText(line);
+        std::cout << "Checking line " << std::dec << line+1 << "/" << 
+            std::dec << expected_src_out.getTextInfoSize() << std::endl;
+
+        if(expected_line != output_line)
+        {
+            std::cout << "    diff : " << std::endl;
+            std::cout << expected_line.diff(output_line) << std::endl;
+        }
+        ASSERT_EQ(expected_line, output_line);
+    }
 }
 
 

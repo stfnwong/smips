@@ -76,15 +76,13 @@ class Lexer
     private:
         Token cur_token;
         void scanToken(void);
-        //void scanLine(void);
         void scanString(void);
 
 		// extra token handling functions
-		Token extractLiteralOrReg(const std::string& token, int start_offset, int& end_offset);
-		std::string extractLiteralString(const std::string& token, int start_offset, int& end_offset);
-		Token extractRegisterString(const std::string& token, int start_offset, int& end_offset);
+		Token extractLiteralOrReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset);
+
+        Token extractReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset);
         void nextToken(void);
-        //void nextLine(void);
 
     // Assembler directives
     private:
