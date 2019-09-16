@@ -387,11 +387,12 @@ void DataInfo::init(void)
 {
     this->errstr       = "\0";
 	this->directive    = "\0";
+	this->label        = "\0";
     this->line_num     = 0;
     this->addr         = 0;
     this->space        = 0;
     this->error        = false;
-	this->is_directive = false;
+	this->is_label     = false;
     this->data.clear();
 }
 
@@ -404,10 +405,36 @@ std::string DataInfo::toString(void) const
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    oss << "Line  Type   Addr  Mnemonic   Opcode   Arguments   literal   error" << std::endl;
+	// extend to the right as needed
+    oss << "Line  Type   Addr  Directive  Label    Error Data                    " << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
-    oss << std::endl;
+    oss << "[";
+	if(this->is_label)
+		oss << "l";
+	else
+		oss << ".";
+    if(this->space > 0)
+        oss << "s";
+	else
+        oss << ".";
+
+	oss << "] ";
+    oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
+	if(this->directive != "\0")
+		oss << std::setw(8) << std::setfill(' ') << this->directive;
+	else
+		oss << "        ";
+	if(this->error)
+		oss << "  YES  ";
+	else
+		oss << "       ";
+	for(unsigned int i = 0; i < this->data.size(); ++i)
+	{
+		oss << std::hex << std::setw(2) << std::setfill('0') 
+			<< unsigned(this->data[i]) << " ";
+	}
+	oss << std::endl;
     
     return oss.str();
 }
@@ -425,6 +452,10 @@ bool DataInfo::operator==(const DataInfo& that) const
         return false;
     if(this->error != that.error)
         return false;
+	if(this->label != that.label)
+		return false;
+	if(this->is_label != that.is_label)
+		return false;
 
     if(this->data.size() != that.data.size())
         return false;
@@ -440,6 +471,36 @@ bool DataInfo::operator==(const DataInfo& that) const
 
     return true;
 }
+
+/*
+ * !=
+ */
+bool DataInfo::operator!=(const DataInfo& that) const
+{
+	return !(*this == that);
+}
+
+/*
+ * =
+ */
+DataInfo& DataInfo::operator=(const DataInfo& that)
+{
+	if(this != &that)
+	{
+		this->errstr = that.errstr;
+		this->directive = that.directive;
+		this->label = that.label;
+		this->data = that.data;
+		this->line_num = that.line_num;
+		this->addr = that.addr;
+		this->space = that.space;
+		this->is_label = that.is_label;
+		this->error = that.error;
+	}
+
+	return *this;
+}
+
 
 /*
  * addBytes

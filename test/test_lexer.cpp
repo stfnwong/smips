@@ -619,10 +619,12 @@ TEST_F(TestLexer, test_array)
     std::cout << "Lexer output : " << std::endl;
     std::cout << src_out.toString() << std::endl;
 
-    expected_src_out = get_for_loop_expected_source_info();
     // before we check each line, dump the symbol table and print
     SymbolTable sym_table = test_lexer.getSymTable();
     std::cout << "Symbol Table: " << std::endl;
+
+	std::cout << std::dec << src_out.getDataInfoSize() << " lines in data segment" << std::endl;
+	std::cout << std::dec << src_out.getTextInfoSize() << " lines in text segment" << std::endl;
 
     for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
     {

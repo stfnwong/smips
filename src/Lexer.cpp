@@ -318,7 +318,6 @@ LITERAL_REG_END:
 /*
  * extractReg()
  * Extract a register
- * TODO: this technique can't extract any offsets if they have parens around them
  */
 Token Lexer::extractReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
 {
@@ -407,8 +406,8 @@ void Lexer::nextToken(void)
     Opcode op;
     Token out_token;
     std::string token_str;
-    //unsigned int token_ptr = 0;
-    unsigned int start_offset, end_offset;
+    unsigned int start_offset; 
+	unsigned int end_offset;
 
     this->scanToken();
     token_str = std::string(this->token_buf);
@@ -496,6 +495,7 @@ void Lexer::nextToken(void)
     // Exhausted all options - assign as label 
     else
     {
+		// TODO : note that it should be legal to have an empty label
         this->cur_token.type = SYM_LABEL;
         this->cur_token.val  = token_str;
     }
@@ -527,8 +527,8 @@ void Lexer::parseAlign(void)
  */
 void Lexer::parseASCIIZ(void)
 {
-    this->data_info.addr     = this->cur_addr;
-    this->data_info.line_num = this->cur_line;
+	this->data_info.directive = ".asciiz";
+	//this->data_info.directive = this->cur_token.val;
 
 	this->nextToken();
 	if(this->cur_token.type == SYM_STRING)
@@ -555,8 +555,8 @@ void Lexer::parseASCIIZ(void)
 void Lexer::parseByte(void)
 {
 	this->data_info.init();
-    this->data_info.addr     = this->cur_addr;
-    this->data_info.line_num = this->cur_line;
+	this->data_info.directive = ".byte";
+	//this->data_info.directive = this->cur_token.val;
 
     // there should only be one token after the .byte directive which 
     // must be a character (for numeric input use .word or .half directive)
@@ -597,8 +597,8 @@ void Lexer::parseWord(void)
     uint32_t word;
 	int word_idx = 0;
 	this->data_info.init();
-    this->data_info.addr     = this->cur_addr;
-    this->data_info.line_num = this->cur_line;
+	this->data_info.directive = ".word";
+	//this->data_info.directive = this->cur_token.val;
 
 	std::cout << "[" << __func__ << "] parsing .words for token string " << this->cur_token.val << std::endl;
 
@@ -625,6 +625,7 @@ void Lexer::parseWord(void)
 
 /*
  * parseSpace()
+ * Reserve a block of memory
  */
 void Lexer::parseSpace(void)
 {
@@ -680,7 +681,7 @@ void Lexer::parseBranchZero(void)
     if(!this->cur_token.isReg())
     {
         error = true;
-        goto BRANCH_END;
+        goto BRANCH_ZERO_END;
     }
 
     this->text_info.type[0]   = this->cur_token.type;
@@ -709,12 +710,12 @@ void Lexer::parseBranchZero(void)
     if(this->cur_token.type != SYM_LABEL)
     {
         error = true;
-        goto BRANCH_END;
+        goto BRANCH_ZERO_END;
     }
     this->text_info.is_symbol = true;
     this->text_info.symbol    = this->cur_token.val;
 
-BRANCH_END:
+BRANCH_ZERO_END:
     if(error)
     {
         this->text_info.error = true;
@@ -994,28 +995,39 @@ void Lexer::parseLine(void)
     // if there is a label at the start of this line, add it to the symbol table
     if(this->cur_token.type == SYM_LABEL)
     {
-        this->textSeg();
-        this->text_info.is_label = true;
-        // add symbol to table, remove any trailing characters
-        char last_char = this->cur_token.val[
-            this->cur_token.val.length()
-        ];
+		// add symbol to table, remove any trailing characters
+		char last_char = this->cur_token.val[
+			this->cur_token.val.length()
+		];
 
-        if((last_char == ';') || 
-           (last_char == '#') ||
-           (last_char == ':'))
-        {
-            sym.label = this->cur_token.val.substr(
-                    0, this->cur_token.val.length() - 1
-            );
-        }
-        else
-            sym.label = this->cur_token.val;
+		if((last_char == ';') || 
+		   (last_char == '#') ||
+		   (last_char == ':'))
+		{
+			sym.label = this->cur_token.val.substr(
+					0, this->cur_token.val.length() - 1
+			);
+		}
+		else
+			sym.label = this->cur_token.val;
 
-        sym.addr = this->cur_addr;
-        // add to symbol table 
-        this->sym_table.add(sym);
-        this->text_info.label = sym.label;
+		sym.addr = this->cur_addr;
+		// add to symbol table 
+		this->sym_table.add(sym);
+
+		if(this->cur_mode == LEX_TEXT_SEG)
+		{
+			std::cout << "[" << __func__ << "] adding symbol [" << sym.label << "] to TEXT segment" << std::endl;
+			this->text_info.is_label = true;
+			this->text_info.label = sym.label;
+		}
+		else
+		{
+			std::cout << "[" << __func__ << "] adding symbol [" << sym.label << "] to DATA segment" << std::endl;
+			this->data_info.is_label = true;
+			this->data_info.label = sym.label;
+		}
+
         this->skipComment();
         // scan in the next token
         this->nextToken(); 
@@ -1037,7 +1049,7 @@ void Lexer::parseLine(void)
         if(this->verbose)
         {
             std::cout << "[" << __func__ << "] (line " << 
-                std::dec << this->cur_line << "0 got directive " <<
+                std::dec << this->cur_line << ") got directive " <<
                 directive.toString() << std::endl;
         }
 
@@ -1051,6 +1063,7 @@ void Lexer::parseLine(void)
                 break;
 
             case LEX_ASCIIZ:
+				std::cout << "[" << __func__ << "] calling parseASCIIZ" << std::endl;
 				this->parseASCIIZ();
                 break;
 
@@ -1060,12 +1073,14 @@ void Lexer::parseLine(void)
 
             // Global variable segment 
             case LEX_DATA:
+				this->dataSeg();
                 break;
 
             case LEX_HALF:
                 break;
 
 			case LEX_SPACE:
+				std::cout << "[" << __func__ << "] calling parseSpace" << std::endl;
 				this->parseSpace();
 				break;
 
@@ -1076,6 +1091,7 @@ void Lexer::parseLine(void)
 
             // data types 
             case LEX_WORD:
+				std::cout << "[" << __func__ << "] calling parseWord" << std::endl;
 				this->parseWord();
                 break;
 

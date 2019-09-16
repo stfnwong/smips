@@ -109,27 +109,29 @@ struct TextInfo
  * DataInfo
  * Information for a directive in the assembly source which contains memory 
  * information (eg: .text, .word, and so on). This object forms a kind of intermediate
- * representation for assembly lines that will appear in the data section of the 
- * output binary.
+ * representation for assembly lines that will ultimately be placed in the data section
+ * of the output binary.
  */
 struct DataInfo
 {
     std::string           errstr;
 	std::string           directive;
+	std::string           label;
     std::vector <uint8_t> data;
     unsigned int          line_num;
     unsigned int          addr;
     unsigned int          space;
-	bool                  is_directive;
+	bool                  is_label;
     bool                  error;
 
     public:
         DataInfo();
         void init(void);
         std::string toString(void) const;
-		// TODO: assignment operator?
 
+		DataInfo& operator=(const DataInfo& that);
         bool operator==(const DataInfo& that) const;
+		bool operator!=(const DataInfo& that) const;
 
         // Insert a new byte into the data section
         void addByte(const uint8_t byte);
