@@ -53,7 +53,7 @@ struct Token
     public:
         Token();
         Token(const TokenType& t, const std::string& v);
-		void init(void);
+        void init(void);
         bool isReg(void) const;
         bool isOffset(void) const;
         std::string toString(void) const;
@@ -62,8 +62,8 @@ struct Token
         bool operator==(const Token& that) const;
         bool operator!=(const Token& that) const;
 
-		// assignment
-		Token& operator=(const Token& that);
+        // assignment
+        Token& operator=(const Token& that);
 };
 
 
@@ -115,13 +115,13 @@ struct TextInfo
 struct DataInfo
 {
     std::string           errstr;
-	std::string           directive;
-	std::string           label;
+    std::string           directive;
+    std::string           label;
     std::vector <uint8_t> data;
     unsigned int          line_num;
     unsigned int          addr;
     unsigned int          space;
-	bool                  is_label;
+    bool                  is_label;
     bool                  error;
 
     public:
@@ -129,9 +129,9 @@ struct DataInfo
         void init(void);
         std::string toString(void) const;
 
-		DataInfo& operator=(const DataInfo& that);
+        DataInfo& operator=(const DataInfo& that);
         bool operator==(const DataInfo& that) const;
-		bool operator!=(const DataInfo& that) const;
+        bool operator!=(const DataInfo& that) const;
 
         // Insert a new byte into the data section
         void addByte(const uint8_t byte);

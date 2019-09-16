@@ -25,7 +25,7 @@
  */
 Token::Token()
 {
-	this->init();
+    this->init();
 }
 
 Token::Token(const TokenType& t, const std::string& v)
@@ -79,14 +79,14 @@ std::string Token::toString(void) const
             return "NONE <" + this->val + ">";
         case SYM_EOF:
             return "EOF <" + this->val + ">";
-		case SYM_LABEL:
-			return "LABEL <" + this->val + ">";
+        case SYM_LABEL:
+            return "LABEL <" + this->val + ">";
         case SYM_INSTR:
             return "INSTR <" + this->val + ">";
         case SYM_LITERAL:
             return "LITERAL <" + this->val + ">";
-		case SYM_DIRECTIVE:
-			return "DIRECTIVE <" + this->val + ">";
+        case SYM_DIRECTIVE:
+            return "DIRECTIVE <" + this->val + ">";
         case SYM_REG_TEMP:
             return "R_TEMP <" + this->val + ">";
         case SYM_REG_SAVED:
@@ -136,14 +136,14 @@ bool Token::operator!=(const Token& that) const
 // assignment 
 Token& Token::operator=(const Token& that)
 {
-	if(this != &that)
-	{
-		this->type   = that.type;
-		this->val    = that.val;
-		this->offset = that.offset;
-	}
+    if(this != &that)
+    {
+        this->type   = that.type;
+        this->val    = that.val;
+        this->offset = that.offset;
+    }
 
-	return *this;
+    return *this;
 }
 
 /*
@@ -386,13 +386,13 @@ DataInfo::DataInfo()
 void DataInfo::init(void)
 {
     this->errstr       = "\0";
-	this->directive    = "\0";
-	this->label        = "\0";
+    this->directive    = "\0";
+    this->label        = "\0";
     this->line_num     = 0;
     this->addr         = 0;
     this->space        = 0;
     this->error        = false;
-	this->is_label     = false;
+    this->is_label     = false;
     this->data.clear();
 }
 
@@ -405,36 +405,36 @@ std::string DataInfo::toString(void) const
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-	// extend to the right as needed
+    // extend to the right as needed
     oss << "Line  Type   Addr  Directive  Label    Error Data                    " << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
-	if(this->is_label)
-		oss << "l";
-	else
-		oss << ".";
+    if(this->is_label)
+        oss << "l";
+    else
+        oss << ".";
     if(this->space > 0)
         oss << "s";
-	else
+    else
         oss << ".";
 
-	oss << "] ";
+    oss << "] ";
     oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
-	if(this->directive != "\0")
-		oss << std::setw(8) << std::setfill(' ') << this->directive;
-	else
-		oss << "        ";
-	if(this->error)
-		oss << "  YES  ";
-	else
-		oss << "       ";
-	for(unsigned int i = 0; i < this->data.size(); ++i)
-	{
-		oss << std::hex << std::setw(2) << std::setfill('0') 
-			<< unsigned(this->data[i]) << " ";
-	}
-	oss << std::endl;
+    if(this->directive != "\0")
+        oss << std::setw(8) << std::setfill(' ') << this->directive;
+    else
+        oss << "        ";
+    if(this->error)
+        oss << "  YES  ";
+    else
+        oss << "       ";
+    for(unsigned int i = 0; i < this->data.size(); ++i)
+    {
+        oss << std::hex << std::setw(2) << std::setfill('0') 
+            << unsigned(this->data[i]) << " ";
+    }
+    oss << std::endl;
     
     return oss.str();
 }
@@ -452,10 +452,10 @@ bool DataInfo::operator==(const DataInfo& that) const
         return false;
     if(this->error != that.error)
         return false;
-	if(this->label != that.label)
-		return false;
-	if(this->is_label != that.is_label)
-		return false;
+    if(this->label != that.label)
+        return false;
+    if(this->is_label != that.is_label)
+        return false;
 
     if(this->data.size() != that.data.size())
         return false;
@@ -477,7 +477,7 @@ bool DataInfo::operator==(const DataInfo& that) const
  */
 bool DataInfo::operator!=(const DataInfo& that) const
 {
-	return !(*this == that);
+    return !(*this == that);
 }
 
 /*
@@ -485,20 +485,20 @@ bool DataInfo::operator!=(const DataInfo& that) const
  */
 DataInfo& DataInfo::operator=(const DataInfo& that)
 {
-	if(this != &that)
-	{
-		this->errstr = that.errstr;
-		this->directive = that.directive;
-		this->label = that.label;
-		this->data = that.data;
-		this->line_num = that.line_num;
-		this->addr = that.addr;
-		this->space = that.space;
-		this->is_label = that.is_label;
-		this->error = that.error;
-	}
+    if(this != &that)
+    {
+        this->errstr = that.errstr;
+        this->directive = that.directive;
+        this->label = that.label;
+        this->data = that.data;
+        this->line_num = that.line_num;
+        this->addr = that.addr;
+        this->space = that.space;
+        this->is_label = that.is_label;
+        this->error = that.error;
+    }
 
-	return *this;
+    return *this;
 }
 
 
