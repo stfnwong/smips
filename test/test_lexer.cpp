@@ -316,13 +316,14 @@ SourceInfo get_array_expected_source_info(void)
     //data_line.directive = "data";
     //info.addData(data_line);
 
-    //// line 3
-    //// list: word 3, 0, 1, 2, 6
-    //data_line.init();
-    //data_line.addr = 0;
-    //data_line.directive = "word";
-    //data_line.data = {3, 0, 1, 2, 6};
-    //info.addData(data_line);
+    // line 3
+    // list: word 3, 0, 1, 2, 6
+    data_line.init();
+    data_line.addr = 0;
+    data_line.label = "list";
+    data_line.directive = "word";
+    data_line.data = {3, 0, 1, 2, 6};
+    info.addData(data_line);
 
 
     //// line 4 
@@ -331,13 +332,14 @@ SourceInfo get_array_expected_source_info(void)
     //data_line.directive = "asciiz";
     ////data_line.data = {'h', 'e', 'l', 'l', 'o'}; // TODO : convert to int...
     //info.addData(data_line);
-    //
-    //// line 5 
-    //// buffer: .space 128
-    //data_line.init();
-    //data_line.directive = "space";
-    //data_line.data = {3, 0, 1, 2, 6};
-    //info.addData(data_line);
+    
+    // line 5 
+    // buffer: .space 128
+    data_line.init();
+    data_line.label = "buffer";
+    data_line.directive = "space";
+    data_line.data = {3, 0, 1, 2, 6};
+    info.addData(data_line);
     
     
     // line 9

@@ -26,7 +26,8 @@ Lexer::Lexer()
     this->cur_char       = '\0';
     this->cur_line       = 0;
     this->cur_pos        = 0;
-    this->cur_addr       = 0;
+    this->text_addr      = 0;
+    this->data_addr      = 0;
     this->cur_mode       = LEX_TEXT_SEG;
     // create token buffer
     this->alloc_mem();
@@ -528,14 +529,12 @@ void Lexer::parseAlign(void)
 void Lexer::parseASCIIZ(void)
 {
     this->data_info.directive = ".asciiz";
-    //this->data_info.directive = this->cur_token.val;
 
     this->nextToken();
     if(this->cur_token.type == SYM_STRING)
     {
         for(unsigned int c = 0; c < this->cur_token.val.length(); ++c)
         {
-            //int data = std::atoi(this->cur_token.val.substr(c, 1));
             this->data_info.addByte(uint8_t(this->cur_token.val[c]));
         }
     }
@@ -547,6 +546,8 @@ void Lexer::parseASCIIZ(void)
         if(this->verbose)
             std::cout << "[" << __func__ << "] " << this->data_info.errstr << std::endl;
     }
+
+    std::cout << "[" << __func__ << "] this->data_info.directive : " << this->data_info.directive << std::endl;
 }
 
 /*
@@ -1011,7 +1012,7 @@ void Lexer::parseLine(void)
         else
             sym.label = this->cur_token.val;
 
-        sym.addr = this->cur_addr;
+        sym.addr = this->text_addr;
         // add to symbol table 
         this->sym_table.add(sym);
 
@@ -1147,8 +1148,9 @@ void Lexer::parseLine(void)
                 break;
 
             case LEX_BGT:
-                this->parseRegArgs(2);
-                this->parseLabel();
+                this->parseBranch();
+                //this->parseRegArgs(2);
+                //this->parseLabel();
                 break;
 
             case LEX_BGTZ:
@@ -1229,14 +1231,16 @@ LINE_END:
     if(this->cur_mode == LEX_TEXT_SEG)
     {
         this->text_info.line_num = line_num;
-        this->text_info.addr     = this->cur_addr;
+        this->text_info.addr     = this->text_addr;
         this->source_info.addText(this->text_info);
+        this->text_addr++;
     }
     else if(this->cur_mode == LEX_DATA_SEG)
     {
         this->data_info.line_num = line_num;
-        this->data_info.addr     = this->cur_addr;
+        this->data_info.addr     = this->data_addr;
         this->source_info.addData(this->data_info);
+        this->data_addr++;
     }
     else
     {
@@ -1244,7 +1248,6 @@ LINE_END:
             std::hex << this->cur_mode << std::endl;
     }
 
-    this->cur_addr++;
 }
 
 /*
@@ -1306,7 +1309,7 @@ void Lexer::lex(void)
 {
     this->cur_line = 1;
     this->cur_pos = 0;
-    this->cur_addr = 0x200;     // TODO : proper address init..
+    this->text_addr = 0x200;     // TODO : proper address init..
 
     while(!this->exhausted())
     {

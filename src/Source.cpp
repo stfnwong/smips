@@ -421,14 +421,23 @@ std::string DataInfo::toString(void) const
 
     oss << "] ";
     oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
+    oss << "   ";
+    // directive
     if(this->directive != "\0")
-        oss << std::setw(8) << std::setfill(' ') << this->directive;
+        oss << std::left << std::setw(8) << std::setfill(' ') << this->directive;
     else
-        oss << "        ";
+        oss << std::left << std::setw(7) << std::setfill(' ') << " ";
+    oss << " ";
+    // label
+    if(this->label != "\0")
+        oss << std::left << std::setw(10) << std::setfill(' ') << this->label;
+    else
+        oss << std::left << std::setw(9) << std::setfill(' ') << " ";
+
     if(this->error)
         oss << "  YES  ";
     else
-        oss << "       ";
+        oss << "  NO   ";
     for(unsigned int i = 0; i < this->data.size(); ++i)
     {
         oss << std::hex << std::setw(2) << std::setfill('0') 

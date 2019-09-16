@@ -53,7 +53,8 @@ class Lexer
         std::string  filename;
         SourceInfo   source_info;
         SymbolTable  sym_table;
-        unsigned int cur_addr;
+        unsigned int text_addr;
+        unsigned int data_addr;
 
     // Segments 
     private:
