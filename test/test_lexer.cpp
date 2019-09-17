@@ -636,6 +636,9 @@ TEST_F(TestLexer, test_array)
     }
 
     // TODO : Make an expected source output for the assertion check
+    // print the error strings 
+    std::cout << "Error strings : " << std::endl << std::endl;
+    std::cout << src_out.errString() << std::endl;
 }
 
 
@@ -729,6 +732,7 @@ TEST_F(TestLexer, test_paren_parse)
         }
         ASSERT_EQ(expected_line, output_line);
     }
+
 }
 
 

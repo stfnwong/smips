@@ -202,6 +202,7 @@ class SourceInfo
         unsigned int getDataInfoSize(void) const;
 
         std::string  toString(void) const;
+        std::string  errString(void) const;
 };
 
 #endif /*__SOURCE_HPP*/

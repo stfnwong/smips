@@ -440,21 +440,22 @@ void Lexer::nextToken(void)
     }
 
     // This is a string
-    start_offset = 0;
-    if(token_str[0] == '"')
-    {
-        this->scanString();
-        this->cur_token.type = SYM_STRING; 
-        this->cur_token.val = token_str;
-        if(this->text_info.error)
-        {
-            if(this->verbose)
-                std::cout << "[" << __func__ << "] (line " << this->cur_line << ") " << 
-                    this->text_info.errstr << std::endl;
-            goto TOKEN_END;
-        }
-    }
+    // FIXME: don't parse strings here, do this in the parseASCIIIZ() method
+    //if(token_str[0] == '"')
+    //{
+    //    this->scanString();
+    //    this->cur_token.type = SYM_STRING; 
+    //    this->cur_token.val = token_str;
+    //    if(this->text_info.error)
+    //    {
+    //        if(this->verbose)
+    //            std::cout << "[" << __func__ << "] (line " << this->cur_line << ") " << 
+    //                this->text_info.errstr << std::endl;
+    //        goto TOKEN_END;
+    //    }
+    //}
     
+    start_offset = 0;
     // Check digits, which may be either literals or register offsets 
     if(std::isdigit(token_str[0]))
     {
@@ -529,6 +530,11 @@ void Lexer::parseAlign(void)
 void Lexer::parseASCIIZ(void)
 {
     this->data_info.directive = ".asciiz";
+    this->data_info.line_num = this->cur_line;
+
+    // keep getting new tokens until we reach the end of the line
+
+
 
     this->nextToken();
     if(this->cur_token.type == SYM_STRING)
@@ -599,7 +605,7 @@ void Lexer::parseWord(void)
     int word_idx = 0;
     this->data_info.init();
     this->data_info.directive = ".word";
-    //this->data_info.directive = this->cur_token.val;
+    this->data_info.line_num = this->cur_line;
 
     std::cout << "[" << __func__ << "] parsing .words for token string " << this->cur_token.val << std::endl;
 
@@ -619,7 +625,7 @@ void Lexer::parseWord(void)
         std::cout << "[" << __func__ << "] about to parse word " << this->cur_token.val 
             << " at index " << word_idx << std::endl;
         word = std::stoi(this->cur_token.val);
-        this->data_info.addWord(word);
+        this->data_info.addByte(word);
         word_idx++;
     }
 }
@@ -630,7 +636,20 @@ void Lexer::parseWord(void)
  */
 void Lexer::parseSpace(void)
 {
-    std::cout << "[" << __func__ << "] not yet implemented" << std::endl;
+    this->data_info.init();
+    this->data_info.directive = ".space";
+    this->data_info.line_num = this->cur_line;
+
+    // the next token should be a literal indicating how many bytes to reserve
+    this->nextToken();
+    if(this->cur_token.type != SYM_LITERAL)
+    {
+
+        this->data_info.error = true;
+        this->data_info.errstr = "Expected literal after directive .space, got " + this->cur_token.toString();
+    }
+    else
+        this->data_info.space = std::stoi(this->cur_token.val);
 }
 
 
@@ -1012,7 +1031,7 @@ void Lexer::parseLine(void)
         else
             sym.label = this->cur_token.val;
 
-        sym.addr = this->text_addr;
+        sym.addr = (this->cur_mode == LEX_TEXT_SEG) ? this->text_addr : this->data_addr;
         // add to symbol table 
         this->sym_table.add(sym);
 
@@ -1029,18 +1048,11 @@ void Lexer::parseLine(void)
             this->data_info.label = sym.label;
         }
 
-        this->skipComment();
+        this->advance();        // skip ahead to align pointer for next token
         // scan in the next token
         this->nextToken(); 
         line_num = this->cur_line;
 
-        // if this label token indicates that there is a label on
-        // this line then there should be a ':' character at the 
-        // end. If not, then this is likely a reference to an 
-        // existing symbol and we should therefore skip to the end
-        // of this routine
-        //if(last_char != ':')
-        //    goto LINE_END;
     }
 
     if(this->cur_token.type == SYM_DIRECTIVE)
@@ -1074,6 +1086,7 @@ void Lexer::parseLine(void)
 
             // Global variable segment 
             case LEX_DATA:
+                this->data_info.directive = ".data";
                 this->dataSeg();
                 break;
 
@@ -1240,7 +1253,11 @@ LINE_END:
         this->data_info.line_num = line_num;
         this->data_info.addr     = this->data_addr;
         this->source_info.addData(this->data_info);
-        this->data_addr++;
+        // TODO : maybe have integer types here instead of doing a string comparison each time
+        if(this->data_info.directive == ".space")
+            this->data_addr += this->data_info.space+1;
+        else if(this->data_info.directive != ".data")
+            this->data_addr++;
     }
     else
     {

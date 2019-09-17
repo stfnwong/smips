@@ -438,10 +438,18 @@ std::string DataInfo::toString(void) const
         oss << "  YES  ";
     else
         oss << "  NO   ";
-    for(unsigned int i = 0; i < this->data.size(); ++i)
+    if(this->space > 0)
     {
-        oss << std::hex << std::setw(2) << std::setfill('0') 
-            << unsigned(this->data[i]) << " ";
+        oss << std::dec << std::setw(4) << this->space 
+            << " bytes";
+    }
+    else
+    {
+        for(unsigned int i = 0; i < this->data.size(); ++i)
+        {
+            oss << std::hex << std::setw(2) << std::setfill('0') 
+                << unsigned(this->data[i]) << ",";
+        }
     }
     oss << std::endl;
     
@@ -713,4 +721,36 @@ std::string SourceInfo::toString(void) const
         oss << this->text_info[l].toString();
 
     return oss.str();
+}
+
+
+std::string SourceInfo::errString(void) const
+{
+    std::ostringstream oss;
+    for(unsigned int l = 0; l < this->data_info.size(); ++l)
+    {
+        if(this->data_info[l].error)
+        {
+            oss << "[line " << this->data_info[l].line_num << "] ";
+            oss << this->data_info[l].errstr;
+            oss << std::endl;
+        }
+    }
+
+    oss << std::endl;
+
+    // Text infos
+    for(unsigned int l = 0; l < this->text_info.size(); ++l)
+    {
+        if(this->text_info[l].error)
+        {
+            oss << "[line " << this->text_info[l].line_num << "] ";
+            oss << this->text_info[l].errstr;
+            oss << std::endl;
+        }
+    }
+
+    return oss.str();
+
+
 }
