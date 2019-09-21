@@ -87,6 +87,10 @@ std::string Token::toString(void) const
             return "LITERAL <" + this->val + ">";
         case SYM_DIRECTIVE:
             return "DIRECTIVE <" + this->val + ">";
+        case SYM_CHAR:
+            return "CHAR <" + this->val + ">";
+        case SYM_STRING:
+            return "STRING <" + this->val + ">";
         case SYM_REG_TEMP:
             return "R_TEMP <" + this->val + ">";
         case SYM_REG_SAVED:

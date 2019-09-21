@@ -215,11 +215,14 @@ void Lexer::scanToken(void)
             break;
         if(this->cur_char == ':')       // end of label
             break;
-        if(this->cur_char == '"')       // start of a string, use scanString() to read
-            break;
+
+        // TODO : don't use toupper here if its a string...
         this->token_buf[idx] = toupper(this->cur_char);
         this->advance();
         idx++;
+
+        //if(this->cur_char == '"')       // start or end of a string, use scanString() to read
+        //    break;
     }
     this->token_buf[idx] = '\0';
     // If we are on a seperator now, advance the source pointer 
@@ -440,20 +443,22 @@ void Lexer::nextToken(void)
     }
 
     // This is a string
-    // FIXME: don't parse strings here, do this in the parseASCIIIZ() method
-    //if(token_str[0] == '"')
-    //{
-    //    this->scanString();
-    //    this->cur_token.type = SYM_STRING; 
-    //    this->cur_token.val = token_str;
-    //    if(this->text_info.error)
-    //    {
-    //        if(this->verbose)
-    //            std::cout << "[" << __func__ << "] (line " << this->cur_line << ") " << 
-    //                this->text_info.errstr << std::endl;
-    //        goto TOKEN_END;
-    //    }
-    //}
+    if(token_str[0] == '"')
+    {
+        // TODO : debug, remove 
+        std::cout << "[" << __func__ << "] got string token. token_buf = " 
+            << this->token_buf << std::endl;
+
+        this->cur_token.type = SYM_STRING; 
+        this->cur_token.val = token_str;
+        if(this->text_info.error)
+        {
+            if(this->verbose)
+                std::cout << "[" << __func__ << "] (line " << this->cur_line << ") " << 
+                    this->text_info.errstr << std::endl;
+        }
+        goto TOKEN_END;
+    }
     
     start_offset = 0;
     // Check digits, which may be either literals or register offsets 
@@ -533,10 +538,14 @@ void Lexer::parseASCIIZ(void)
     this->data_info.line_num = this->cur_line;
 
     // keep getting new tokens until we reach the end of the line
+    std::cout << "[" << __func__ << "] token_buf = " 
+        << this->token_buf << std::endl;
 
 
-
+    std::cout << "[" << __func__ << "] calling nextToken() " << std::endl;
     this->nextToken();
+    std::cout << "[" << __func__ << "] token_buf = " 
+        << this->token_buf << std::endl;
     if(this->cur_token.type == SYM_STRING)
     {
         for(unsigned int c = 0; c < this->cur_token.val.length(); ++c)
