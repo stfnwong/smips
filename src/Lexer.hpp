@@ -77,7 +77,6 @@ class Lexer
     private:
         Token cur_token;
         void scanToken(void);
-        void scanString(void);
 		// extra token handling functions
 		Token extractLiteral(
 				const std::string& token, 

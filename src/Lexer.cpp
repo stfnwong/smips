@@ -116,6 +116,7 @@ void Lexer::skipWhitespace(void)
     }
 }
 
+
 /*
  * skipComment()
  */
@@ -213,14 +214,17 @@ void Lexer::scanToken(void)
     this->skipSeperators();     // eat any seperators that might be left
     while(idx < (this->token_buf_size-1))
     {
-        if(this->cur_char == ' ')       // end 
+        if(this->cur_char == ' ')       // space 
             break;
         if(this->cur_char == '\n')      // newline
             break;
         if(this->cur_char == ';')       // comment
             break;
         if(this->cur_char == '#')       // also comment
+        {
+            this->skipComment();
             break;
+        }
         if(this->cur_char == ',')       // seperator
             break;
         if(this->cur_char == ':')       // end of label
@@ -231,67 +235,12 @@ void Lexer::scanToken(void)
         this->token_buf[idx] = this->cur_char;
         this->advance();
         idx++;
-
-        //if(this->cur_char == '"')       // start or end of a string, use scanString() to read
-        //    break;
     }
     this->token_buf[idx] = '\0';
     // If we are on a seperator now, advance the source pointer 
     if(this->cur_char == ',')
         this->advance();
 }
-
-/*
- * scanString()
- * Scan a string from the source file. Strings are bounded by '"' characters on each end
- */
-void Lexer::scanString(void)
-{
-    int idx = 0;
-    std::string str_token = "\0";
-    bool inside_str = false;
-
-    this->skipWhitespace();     // eat any leading whitespace 
-    this->skipSeperators();     // eat any seperators that might be left
-    while(idx < (this->token_buf_size-1))
-    {
-        if(this->cur_char == '"')
-        {
-            if(!inside_str)
-                inside_str = true;
-            else
-            {
-                inside_str = false;
-                break;          // end of string
-            }
-        }
-        if(this->cur_char == '\n')      // newline
-            break;
-        if(this->cur_char == ';')       // comment
-            break;
-        if(this->cur_char == '#')       // also comment
-            break;
-
-        // preserve the original case here
-        this->token_buf[idx] = this->cur_char;
-        this->advance();
-        idx++;
-    }
-
-    // handle unterminated strings
-    if(inside_str)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Unterminated string after ["
-            + std::string(this->token_buf) + "]\n";
-    }
-
-    this->token_buf[idx] = '\0';
-    // If we are on a seperator now, advance the source pointer 
-    if(this->cur_char == ',')
-        this->advance();
-}
-
 
 
 /*
@@ -504,7 +453,7 @@ void Lexer::nextToken(void)
         goto TOKEN_END;
     }
 
-    // Check if this matches any instructions (TODO: do case conversion here)
+    // Check if this matches any instructions 
     op = this->instr_code_table.get(token_str);
           
     // Found an instruction
@@ -516,7 +465,6 @@ void Lexer::nextToken(void)
     // Exhausted all options - assign as label 
     else
     {
-        // TODO : note that it should be legal to have an empty label
         this->cur_token.type = SYM_LABEL;
         this->cur_token.val  = token_str;
     }
@@ -552,15 +500,7 @@ void Lexer::parseASCIIZ(void)
     this->data_info.directive = ".asciiz";
     this->data_info.line_num = this->cur_line;
 
-    // keep getting new tokens until we reach the end of the line
-    std::cout << "[" << __func__ << "] token_buf = " 
-        << this->token_buf << std::endl;
-
-
-    std::cout << "[" << __func__ << "] calling nextToken() " << std::endl;
     this->nextToken();
-    std::cout << "[" << __func__ << "] token_buf = " 
-        << this->token_buf << std::endl;
     if(this->cur_token.type == SYM_STRING)
     {
         for(unsigned int c = 1; c < this->cur_token.val.length()-1; ++c)
@@ -576,8 +516,6 @@ void Lexer::parseASCIIZ(void)
         if(this->verbose)
             std::cout << "[" << __func__ << "] " << this->data_info.errstr << std::endl;
     }
-
-    std::cout << "[" << __func__ << "] this->data_info.directive : " << this->data_info.directive << std::endl;
 }
 
 /*
@@ -587,7 +525,6 @@ void Lexer::parseByte(void)
 {
     this->data_info.init();
     this->data_info.directive = ".byte";
-    //this->data_info.directive = this->cur_token.val;
 
     // there should only be one token after the .byte directive which 
     // must be a character (for numeric input use .word or .half directive)
@@ -632,16 +569,18 @@ void Lexer::parseWord(void)
     this->data_info.directive = ".word";
     this->data_info.line_num = this->cur_line;
 
-    std::cout << "[" << __func__ << "] parsing .words for token string " << this->cur_token.val << std::endl;
-
-    while(this->cur_line <= this->data_info.line_num)
+    while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
     {
         this->nextToken();
+        // awkward, but works.
+        if(this->cur_line > this->data_info.line_num)
+            break;
+
         if(this->cur_token.type != SYM_LITERAL)
         {
             this->data_info.error = true;
             this->data_info.errstr = ".word directive token " + std::to_string(word_idx) + 
-                " not a valid literal";
+                " (" + std::string(this->token_buf) + ") not a valid literal";
             if(this->verbose)
                 std::cout << "[" << __func__ << "] " << this->data_info.errstr << std::endl;
             break;
@@ -655,6 +594,7 @@ void Lexer::parseWord(void)
         this->data_addr++;
     }
 }
+
 
 /*
  * parseSpace()
@@ -1094,19 +1034,21 @@ void Lexer::parseLine(void)
 
         // Most of the stuff that deals with the data section goes 
         // in here.
-        this->dataSeg();
+        //this->dataSeg();        // TODO : In SPIM word is allowed to appear in the text segment.
         switch(directive.instr)
         {
             case LEX_ALIGN:
+                this->dataSeg();
                 this->parseAlign();
                 break;
 
             case LEX_ASCIIZ:
-                std::cout << "[" << __func__ << "] calling parseASCIIZ" << std::endl;
+                this->dataSeg();
                 this->parseASCIIZ();
                 break;
 
             case LEX_BYTE:
+                this->dataSeg();
                 this->parseByte();
                 break;
 
@@ -1116,11 +1058,14 @@ void Lexer::parseLine(void)
                 this->dataSeg();
                 break;
 
+            // Add a number of half-words to the data segment
             case LEX_HALF:
+                this->dataSeg();
+                this->parseHalf();
                 break;
 
             case LEX_SPACE:
-                std::cout << "[" << __func__ << "] calling parseSpace" << std::endl;
+                this->dataSeg();
                 this->parseSpace();
                 break;
 
@@ -1131,7 +1076,7 @@ void Lexer::parseLine(void)
 
             // data types 
             case LEX_WORD:
-                std::cout << "[" << __func__ << "] calling parseWord" << std::endl;
+                this->dataSeg();
                 this->parseWord();
                 break;
 
