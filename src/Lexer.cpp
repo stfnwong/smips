@@ -487,7 +487,7 @@ TOKEN_END:
 
 void Lexer::parseAlign(void)
 {
-    std::cout << "[" << __func__ << "]" << std::endl;
+    std::cout << "[" << __func__ << "] not yet implemented" << std::endl;
 }
 
 
@@ -554,7 +554,46 @@ void Lexer::parseByte(void)
  */
 void Lexer::parseHalf(void)
 {
-    std::cout << "[" << __func__ << "]" << std::endl;
+    int word_idx = 0;
+    uint32_t word;
+    this->data_info.init();
+    this->data_info.directive = ".half";
+    this->data_info.line_num = this->cur_line;
+
+    while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
+    {
+        this->nextToken();
+        // awkward, but works.
+        if(this->cur_line > this->data_info.line_num)
+            break;
+
+        if(this->cur_token.type != SYM_LITERAL)
+        {
+            this->data_info.error = true;
+            this->data_info.errstr = ".half directive token " + std::to_string(word_idx) + 
+                " (" + std::string(this->token_buf) + ") not a valid literal";
+            if(this->verbose)
+                std::cout << "[" << __func__ << "] " << this->data_info.errstr << std::endl;
+            break;
+
+        }
+
+        word = std::stoi(this->cur_token.val);
+        if(word > ((1 << 16) - 1))
+        {
+            if(this->verbose)
+            {
+                std::cout << "[" << __func__ << "] word " << word_idx 
+                    << " (" << word << ") will be truncated to ("
+                    << unsigned((1 << 16) - 1) << ")" << std::endl;
+            }
+            word = (1 << 16) - 1;
+        }
+
+        this->data_info.addByte(word);
+        word_idx++;
+        this->data_addr++;
+    }
 }
 
 
@@ -586,8 +625,7 @@ void Lexer::parseWord(void)
             break;
 
         }
-        std::cout << "[" << __func__ << "] about to parse word " << this->cur_token.val 
-            << " at index " << word_idx << std::endl;
+
         word = std::stoi(this->cur_token.val);
         this->data_info.addByte(word);
         word_idx++;
@@ -615,7 +653,10 @@ void Lexer::parseSpace(void)
         this->data_info.errstr = "Expected literal after directive .space, got " + this->cur_token.toString();
     }
     else
+    {
         this->data_info.space = std::stoi(this->cur_token.val);
+        this->data_addr += this->data_info.space;
+    }
 }
 
 
@@ -1054,7 +1095,6 @@ void Lexer::parseLine(void)
 
             // Global variable segment 
             case LEX_DATA:
-                this->data_info.directive = ".data";
                 this->dataSeg();
                 break;
 
