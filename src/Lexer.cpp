@@ -5,6 +5,7 @@
  * Stefan Wong 2019
  */
 
+#include <algorithm>
 #include <cctype>
 #include <iostream>
 #include <iomanip>
@@ -165,22 +166,31 @@ TokenType Lexer::getRegType(const char& reg_char) const
     switch(reg_char)
     {
         case 'A':
+        case 'a':
             return SYM_REG_ARG;
         case 'F':
+        case 'f':
             return SYM_REG_FRAME;
         case 'R':
+        case 'r':
             return SYM_REG_RET;
         case 'S':
+        case 's':
             return SYM_REG_SAVED;
         case 'T':
+        case 't':
             return SYM_REG_TEMP;
         case 'Z':
+        case 'z':
             return SYM_REG_ZERO;
         case 'G':
+        case 'g':
             return SYM_REG_GLOBAL;
         case 'K':
+        case 'k':
             return SYM_REG_KERN;
         case 'V':
+        case 'v':
             return SYM_REG_RET;
         default:
             return SYM_NONE;
@@ -217,7 +227,8 @@ void Lexer::scanToken(void)
             break;
 
         // TODO : don't use toupper here if its a string...
-        this->token_buf[idx] = toupper(this->cur_char);
+        //this->token_buf[idx] = toupper(this->cur_char);
+        this->token_buf[idx] = this->cur_char;
         this->advance();
         idx++;
 
@@ -339,7 +350,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
             paren_stack.push(tok_ptr);
         if(token[tok_ptr] == ')')
             paren_stack.pop();
-            //paren_stack.push(tok_ptr);
         if(token[tok_ptr] == '$')
             break;
         if(std::isdigit(token[tok_ptr]))
@@ -382,9 +392,8 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
             }
             paren_ptr++;
         }
-        // the value now lies between tok_ptr and paren_ptr-1
-        //out_token.val = token.substr(tok_ptr, (paren_ptr - tok_ptr - 1));
-        // now ensure that we've checked all parenthesis
+        // The value now lies between tok_ptr and paren_ptr-1
+        // Ensure that we've checked all parenthesis
         if(out_token.type == SYM_NONE)
             out_token.val = "\0";           // ensure there is no string here
         else if(out_token.type == SYM_REG_ZERO || out_token.type == SYM_REG_GLOBAL)
@@ -418,15 +427,6 @@ void Lexer::nextToken(void)
     // set the offset string for the current token back to null
     this->cur_token.init();
 
-    // this is a directive token
-    if(token_str[0] == '.')
-    {
-        this->cur_token.type = SYM_DIRECTIVE;
-        this->cur_token.val  = token_str;
-
-        goto TOKEN_END;
-    }
-
     // This is a character 
     if(token_str[0] == '\'')
     {
@@ -457,6 +457,20 @@ void Lexer::nextToken(void)
                 std::cout << "[" << __func__ << "] (line " << this->cur_line << ") " << 
                     this->text_info.errstr << std::endl;
         }
+        goto TOKEN_END;
+    }
+
+    // From here on we can force the case to match the case we are using 
+    // in the source (in this instance, uppercase)
+    std::transform(token_str.begin(), token_str.end(), token_str.begin(),
+            [](unsigned char c){ return std::tolower(c); });
+
+    // this is a directive token
+    if(token_str[0] == '.')
+    {
+        this->cur_token.type = SYM_DIRECTIVE;
+        this->cur_token.val  = token_str;
+
         goto TOKEN_END;
     }
     
@@ -490,7 +504,7 @@ void Lexer::nextToken(void)
         goto TOKEN_END;
     }
 
-    // Check if this matches any instructions
+    // Check if this matches any instructions (TODO: do case conversion here)
     op = this->instr_code_table.get(token_str);
           
     // Found an instruction
@@ -534,6 +548,7 @@ void Lexer::parseAlign(void)
  */
 void Lexer::parseASCIIZ(void)
 {
+    this->data_info.init();
     this->data_info.directive = ".asciiz";
     this->data_info.line_num = this->cur_line;
 
@@ -548,7 +563,7 @@ void Lexer::parseASCIIZ(void)
         << this->token_buf << std::endl;
     if(this->cur_token.type == SYM_STRING)
     {
-        for(unsigned int c = 0; c < this->cur_token.val.length(); ++c)
+        for(unsigned int c = 1; c < this->cur_token.val.length()-1; ++c)
         {
             this->data_info.addByte(uint8_t(this->cur_token.val[c]));
         }
@@ -593,6 +608,7 @@ void Lexer::parseByte(void)
         if(byte > 255)
             byte = 255;
         this->data_info.addByte(uint8_t(byte));
+        this->data_addr++;
     }
 }
 
@@ -636,6 +652,7 @@ void Lexer::parseWord(void)
         word = std::stoi(this->cur_token.val);
         this->data_info.addByte(word);
         word_idx++;
+        this->data_addr++;
     }
 }
 

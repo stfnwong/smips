@@ -451,7 +451,7 @@ std::string DataInfo::toString(void) const
     {
         for(unsigned int i = 0; i < this->data.size(); ++i)
         {
-            oss << std::hex << std::setw(2) << std::setfill('0') 
+            oss << "$" << std::right << std::hex  << std::setfill('0') 
                 << unsigned(this->data[i]) << ",";
         }
     }

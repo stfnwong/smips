@@ -326,12 +326,14 @@ SourceInfo get_array_expected_source_info(void)
     info.addData(data_line);
 
 
-    //// line 4 
-    //// char_arr: .asciiz "hello"
-    //data_line.init();
-    //data_line.directive = "asciiz";
-    ////data_line.data = {'h', 'e', 'l', 'l', 'o'}; // TODO : convert to int...
-    //info.addData(data_line);
+    // line 4 
+    // char_arr: .asciiz "hello"
+    data_line.init();
+    data_line.addr = 4;
+    data_line.label = "char_arr";
+    data_line.directive = "asciiz";
+    data_line.data = {0x68, 0x65, 0x6C, 0x6C, 0x6F};
+    info.addData(data_line);
     
     // line 5 
     // buffer: .space 128
