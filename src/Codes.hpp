@@ -33,7 +33,9 @@ typedef enum instr_code
     // jumps
     LEX_J, LEX_JAL, LEX_JALR, LEX_JR,
     // branches
-    LEX_BEQ, LEX_BGT, LEX_BGTZ, LEX_BLEZ, LEX_BNE
+    LEX_BEQ, LEX_BGT, LEX_BGTZ, LEX_BLEZ, LEX_BNE,
+    // syscall
+    LEX_SYSCALL     // not strictly an instruction
 } instr_code;
 
 
@@ -57,12 +59,6 @@ typedef enum directive_code
 } directive_code;
 
 
-// TODO : are syscalls really that different that they need 
-// their own special datatype (the answer may be yes)
-typedef enum sys_code
-{
-    LEX_SYSCALL
-} sys_code;
 
 // MIPS Opcode list 
 const Opcode lex_instr_codes[] = {
@@ -112,6 +108,8 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_BGTZ,  "bgtz"),
     Opcode(LEX_BLEZ,  "blez"),
     Opcode(LEX_BNE,   "bne"),
+    // syscall
+    Opcode(LEX_SYSCALL, "syscall"),
 };
 
 

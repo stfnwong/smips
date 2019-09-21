@@ -27,7 +27,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.line_num        = 3;
     line.addr            = 0x200;      
     line.opcode.instr    = LEX_LW;
-    line.opcode.mnemonic = "LW";
+    line.opcode.mnemonic = "lw";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -42,7 +42,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.line_num        = 4;
     line.addr            = 0x201;      
     line.opcode.instr    = LEX_MULT;
-    line.opcode.mnemonic = "MULT";
+    line.opcode.mnemonic = "mult";
     line.val[0]         = 0;
     line.type[0]        = SYM_REG_TEMP;
     line.val[1]         = 0;
@@ -57,7 +57,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.line_num        = 5;
     line.addr            = 0x202;      
     line.opcode.instr    = LEX_LW;
-    line.opcode.mnemonic = "LW";
+    line.opcode.mnemonic = "lw";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -72,7 +72,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.line_num        = 6;
     line.addr            = 0x203;      
     line.opcode.instr    = LEX_ORI;
-    line.opcode.mnemonic = "ORI";
+    line.opcode.mnemonic = "ori";
     line.is_imm          = true;
     line.val[0]          = 2;
     line.type[0]         = SYM_REG_TEMP;
@@ -88,7 +88,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.line_num        = 7;
     line.addr            = 0x204;      
     line.opcode.instr    = LEX_MULT;
-    line.opcode.mnemonic = "MULT";
+    line.opcode.mnemonic = "mult";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 1;
@@ -103,7 +103,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.line_num        = 8;
     line.addr            = 0x205;      
     line.opcode.instr    = LEX_ADD;
-    line.opcode.mnemonic = "ADD";
+    line.opcode.mnemonic = "add";
     line.val[0]          = 2;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -118,7 +118,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.line_num        = 9;
     line.addr            = 0x206;
     line.opcode.instr    = LEX_SW;
-    line.opcode.mnemonic = "SW";
+    line.opcode.mnemonic = "sw";
     line.val[0]          = 2;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -138,7 +138,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 4;
     line.addr            = 0x200;
     line.opcode.instr    = LEX_ADD;
-    line.opcode.mnemonic = "ADD";
+    line.opcode.mnemonic = "add";
     line.val[0]         = 0;
     line.type[0]        = SYM_REG_TEMP;
     line.val[1]         = 0;
@@ -152,7 +152,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 5;
     line.addr            = 0x201;
     line.opcode.instr    = LEX_LW;
-    line.opcode.mnemonic = "LW";
+    line.opcode.mnemonic = "lw";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -168,7 +168,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 6;
     line.addr            = 0x202;
     line.opcode.instr    = LEX_SLL;
-    line.opcode.mnemonic = "SLL";
+    line.opcode.mnemonic = "sll";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 1;
@@ -184,7 +184,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 7;
     line.addr            = 0x203;
     line.opcode.instr    = LEX_ADD;
-    line.opcode.mnemonic = "ADD";
+    line.opcode.mnemonic = "add";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 1;
@@ -199,7 +199,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 8;
     line.addr            = 0x204;
     line.opcode.instr    = LEX_ORI;
-    line.opcode.mnemonic = "ORI";
+    line.opcode.mnemonic = "ori";
     line.val[0]          = 2;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -233,7 +233,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 11;
     line.addr            = 0x206;
     line.opcode.instr    = LEX_BEQ;
-    line.opcode.mnemonic = "BEQ";
+    line.opcode.mnemonic = "beq";
     line.val[0]          = 3;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -251,7 +251,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 12;
     line.addr            = 0x207;
     line.opcode.instr    = LEX_SW;
-    line.opcode.mnemonic = "SW";
+    line.opcode.mnemonic = "sw";
     line.val[0]          = 2;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -266,7 +266,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 13;
     line.addr            = 0x208;
     line.opcode.instr    = LEX_ADDI;
-    line.opcode.mnemonic = "SW";
+    line.opcode.mnemonic = "sw";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -282,7 +282,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 14;
     line.addr            = 0x209;
     line.opcode.instr    = LEX_J;
-    line.opcode.mnemonic = "J";
+    line.opcode.mnemonic = "j";
     line.is_symbol       = true;
     line.symbol          = "TOP";
     // 3 arg is also converted literal in this case
@@ -321,7 +321,7 @@ SourceInfo get_array_expected_source_info(void)
     data_line.init();
     data_line.addr = 0;
     data_line.label = "list";
-    data_line.directive = "word";
+    data_line.directive = ".word";
     data_line.data = {3, 0, 1, 2, 6};
     info.addData(data_line);
 
@@ -331,7 +331,7 @@ SourceInfo get_array_expected_source_info(void)
     data_line.init();
     data_line.addr = 4;
     data_line.label = "char_arr";
-    data_line.directive = "asciiz";
+    data_line.directive = ".asciiz";
     data_line.data = {0x68, 0x65, 0x6C, 0x6C, 0x6F};
     info.addData(data_line);
     
@@ -339,8 +339,8 @@ SourceInfo get_array_expected_source_info(void)
     // buffer: .space 128
     data_line.init();
     data_line.label = "buffer";
-    data_line.directive = "space";
-    data_line.data = {3, 0, 1, 2, 6};
+    data_line.directive = ".space";
+    data_line.space = 128;
     info.addData(data_line);
     
     
@@ -355,7 +355,7 @@ SourceInfo get_array_expected_source_info(void)
     line.line_num        = 10;
     line.addr            = 0x200;
     line.opcode.instr    = LEX_LA;
-    line.opcode.mnemonic = "LA";
+    line.opcode.mnemonic = "la";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_SAVED;
     line.is_symbol       = true;
@@ -368,11 +368,12 @@ SourceInfo get_array_expected_source_info(void)
     line.line_num        = 11;
     line.addr            = 0x201;
     line.opcode.instr    = LEX_LI;
-    line.opcode.mnemonic = "LI";
+    line.opcode.mnemonic = "li";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
-    line.val[1]          = SYM_LITERAL;
+    line.type[1]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.addText(line);
 
     // line 12
@@ -381,26 +382,32 @@ SourceInfo get_array_expected_source_info(void)
     line.line_num        = 12;
     line.addr            = 0x202;
     line.opcode.instr    = LEX_LI;
-    line.opcode.mnemonic = "LI";
+    line.opcode.mnemonic = "li";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 5;
-    line.val[1]          = SYM_LITERAL;
+    line.type[1]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.addText(line);
 
-    // line 14 
+    // line 15 
     // loop: bgt $t0, $t1, end_loop
     line.init();
-    line.line_num        = 14;
-    line.addr            = 0x204;
+    line.line_num        = 15;
+    line.addr            = 0x203;
     line.opcode.instr    = LEX_BGT;
-    line.opcode.mnemonic = "BGT";
+    line.opcode.mnemonic = "bgt";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 1;
-    line.val[1]          = SYM_REG_TEMP;
+    line.type[1]          = SYM_REG_TEMP;
+    // the immediate here is the address of end_loop
+    line.val[2]          = 0x20A;
+    line.type[2]         = SYM_LITERAL;
     line.is_symbol       = true;
     line.symbol          = "end_loop";
+    line.is_label        = true;
+    line.label           = "loop";
     info.addText(line);
 
     // line 17
@@ -408,60 +415,67 @@ SourceInfo get_array_expected_source_info(void)
     // NOTE the extra parens here.
     line.init();
     line.line_num        = 17;
-    line.addr            = 0x206;
+    line.addr            = 0x204;
     line.opcode.instr    = LEX_LW;
-    line.opcode.mnemonic = "LW";
+    line.opcode.mnemonic = "lw";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_ARG;
-    line.val[1]          = 5;
-    line.val[1]          = SYM_LITERAL;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_SAVED;
     info.addText(line);
 
     // line 18
     // li $v0, 1
     line.init();
     line.line_num        = 18;
-    line.addr            = 0x208;
+    line.addr            = 0x205;
     line.opcode.instr    = LEX_LI;
-    line.opcode.mnemonic = "LI";
+    line.opcode.mnemonic = "li";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_RET;
     line.val[1]          = 1;
-    line.val[1]          = SYM_LITERAL;
+    line.type[1]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.addText(line);
 
     // line 19 
-    // syscall 
-
+    line.init();
+    line.line_num        = 19;
+    line.addr            = 0x206;
+    line.opcode.instr    = LEX_SYSCALL;
+    line.opcode.mnemonic = "syscall";
+    info.addText(line);
 
     // line 21 
     // addi $s0, $s0, 4
     line.init();
     line.line_num        = 21;
-    line.addr            = 0x20C;
+    line.addr            = 0x207;
     line.opcode.instr    = LEX_ADDI;
-    line.opcode.mnemonic = "ADDI";
+    line.opcode.mnemonic = "addi";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_SAVED;
     line.val[1]          = 0;
-    line.val[1]          = SYM_REG_SAVED;
+    line.type[1]         = SYM_REG_SAVED;
     line.val[2]          = 4;
     line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.addText(line);
     
     // line 22 
     // addi $t0, $t0, 1
     line.init();
     line.line_num        = 22;
-    line.addr            = 0x20E;
+    line.addr            = 0x208;
     line.opcode.instr    = LEX_ADDI;
-    line.opcode.mnemonic = "ADDI";
+    line.opcode.mnemonic = "addi";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
-    line.val[1]          = SYM_REG_TEMP;
+    line.type[1]         = SYM_REG_TEMP;
     line.val[2]          = 1;
     line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.addText(line);
     
 
@@ -469,18 +483,21 @@ SourceInfo get_array_expected_source_info(void)
     // j loop
     line.init();
     line.line_num        = 23;
-    line.addr            = 0x210;
+    line.addr            = 0x209;
     line.opcode.instr    = LEX_J;
-    line.opcode.mnemonic = "J";
+    line.opcode.mnemonic = "j";
     line.is_symbol       = true;
     line.symbol          = "loop";
+    line.val[2]          = 0x203;
+    line.type[2]         = SYM_LITERAL;
     info.addText(line);
 
-    // line 24
+    // line 25
     // end_loop:
+    // NOTE: 25 due to line end 'overflow'
     line.init();
-    line.line_num        = 24;
-    line.addr            = 0x212;
+    line.line_num        = 25;
+    line.addr            = 0x20A;
     line.is_label        = true;
     line.label           = "end_loop";
     info.addText(line);
@@ -602,7 +619,7 @@ TEST_F(TestLexer, test_for_loop)
 }
 
 /*
- * Test data_region example
+ * Test data_region example (arrays, etc)
  */
 TEST_F(TestLexer, test_array)
 {
@@ -624,11 +641,12 @@ TEST_F(TestLexer, test_array)
     std::cout << src_out.toString() << std::endl;
 
     // before we check each line, dump the symbol table and print
-    SymbolTable sym_table = test_lexer.getSymTable();
-    std::cout << "Symbol Table: " << std::endl;
-
     std::cout << std::dec << src_out.getDataInfoSize() << " lines in data segment" << std::endl;
     std::cout << std::dec << src_out.getTextInfoSize() << " lines in text segment" << std::endl;
+
+
+    SymbolTable sym_table = test_lexer.getSymTable();
+    std::cout << "Symbol Table: " << std::endl;
 
     for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
     {
@@ -637,8 +655,24 @@ TEST_F(TestLexer, test_array)
             cur_sym.toString() << std::endl;
     }
 
-    // TODO : Make an expected source output for the assertion check
-    // print the error strings 
+    // Check each line in turn
+    TextInfo expected_line;
+    TextInfo output_line;
+    for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
+    {
+        expected_line = expected_src_out.getText(line);
+        output_line = src_out.getText(line);
+        std::cout << "Checking line " << std::dec << line+1 << "/" << 
+            std::dec << expected_src_out.getTextInfoSize() << std::endl;
+
+        if(expected_line != output_line)
+        {
+            std::cout << "    diff : " << std::endl;
+            std::cout << expected_line.diff(output_line) << std::endl;
+        }
+        ASSERT_EQ(expected_line, output_line);
+    }
+
     std::cout << "Error strings : " << std::endl << std::endl;
     std::cout << src_out.errString() << std::endl;
 }
@@ -655,7 +689,7 @@ SourceInfo get_paren_expected_source_info(void)
     line.line_num        = 4;
     line.addr            = 0x200;
     line.opcode.instr    = LEX_LW;
-    line.opcode.mnemonic = "LW";
+    line.opcode.mnemonic = "lw";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -668,7 +702,7 @@ SourceInfo get_paren_expected_source_info(void)
     line.line_num        = 5;
     line.addr            = 0x201;
     line.opcode.instr    = LEX_LW;
-    line.opcode.mnemonic = "LW";
+    line.opcode.mnemonic = "lw";
     line.val[0]          = 2;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;
@@ -683,7 +717,7 @@ SourceInfo get_paren_expected_source_info(void)
     line.line_num        = 6;
     line.addr            = 0x202;
     line.opcode.instr    = LEX_LW;
-    line.opcode.mnemonic = "LW";
+    line.opcode.mnemonic = "lw";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
     line.val[1]          = 0;

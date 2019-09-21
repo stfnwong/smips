@@ -24,6 +24,7 @@ typedef enum TokenType
     SYM_DIRECTIVE,
     SYM_CHAR,
     SYM_STRING,
+    SYM_SYSCALL,
     // register types
     SYM_REG_AT,
     SYM_REG_STACK,

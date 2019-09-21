@@ -91,6 +91,10 @@ std::string Token::toString(void) const
             return "CHAR <" + this->val + ">";
         case SYM_STRING:
             return "STRING <" + this->val + ">";
+        case SYM_SYSCALL:
+            return "SYSCALL";
+
+        // Registers
         case SYM_REG_TEMP:
             return "R_TEMP <" + this->val + ">";
         case SYM_REG_SAVED:
@@ -113,6 +117,9 @@ std::string Token::toString(void) const
 }
 
 
+/*
+ * Token (==)
+ */
 bool Token::operator==(const Token& that) const
 {
     if(this->type != that.type)
@@ -125,6 +132,9 @@ bool Token::operator==(const Token& that) const
     return true;
 }
 
+/*
+ * Token (!=)
+ */
 bool Token::operator!=(const Token& that) const
 {
     if(this->type == that.type)

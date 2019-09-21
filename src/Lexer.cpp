@@ -381,6 +381,7 @@ void Lexer::nextToken(void)
     {
         this->cur_token.type = SYM_CHAR;
         this->cur_token.val = token_str[1];
+        // TODO : remove this check - move it to parseChar() or some similarly named function
         // check that there is a closing '''
         if(token_str[2] != '\'')
         {
@@ -394,17 +395,15 @@ void Lexer::nextToken(void)
     // This is a string
     if(token_str[0] == '"')
     {
-        // TODO : debug, remove 
-        std::cout << "[" << __func__ << "] got string token. token_buf = " 
-            << this->token_buf << std::endl;
-
         this->cur_token.type = SYM_STRING; 
         this->cur_token.val = token_str;
         if(this->text_info.error)
         {
             if(this->verbose)
+            {
                 std::cout << "[" << __func__ << "] (line " << this->cur_line << ") " << 
                     this->text_info.errstr << std::endl;
+            }
         }
         goto TOKEN_END;
     }
@@ -465,6 +464,14 @@ void Lexer::nextToken(void)
     // Exhausted all options - assign as label 
     else
     {
+        // check if this is syscall
+        //if(token_str == "syscall")
+        //{
+        //    this->cur_token.type = SYM_SYSCALL;
+        //    this->cur_token.val = token_str;
+        //    goto TOKEN_END;
+        //}
+
         this->cur_token.type = SYM_LABEL;
         this->cur_token.val  = token_str;
     }
@@ -1059,8 +1066,13 @@ void Lexer::parseLine(void)
         // scan in the next token
         this->nextToken(); 
         line_num = this->cur_line;
-
     }
+
+    // Syscalls just go on their own 'line'
+    //if(this->cur_token.type == SYM_SYSCALL)
+    //{
+    //    goto LINE_END;
+    //}
 
     if(this->cur_token.type == SYM_DIRECTIVE)
     {
@@ -1073,9 +1085,7 @@ void Lexer::parseLine(void)
                 directive.toString() << std::endl;
         }
 
-        // Most of the stuff that deals with the data section goes 
-        // in here.
-        //this->dataSeg();        // TODO : In SPIM word is allowed to appear in the text segment.
+        // Check which directive this is
         switch(directive.instr)
         {
             case LEX_ALIGN:
@@ -1093,11 +1103,6 @@ void Lexer::parseLine(void)
                 this->parseByte();
                 break;
 
-            // Global variable segment 
-            case LEX_DATA:
-                this->dataSeg();
-                break;
-
             // Add a number of half-words to the data segment
             case LEX_HALF:
                 this->dataSeg();
@@ -1109,16 +1114,22 @@ void Lexer::parseLine(void)
                 this->parseSpace();
                 break;
 
-            // Text segment
-            case LEX_TEXT:
-                this->textSeg();
-                break;
-
             // data types 
             case LEX_WORD:
                 this->dataSeg();
                 this->parseWord();
                 break;
+
+            // Change segment type
+            // Global variable segment 
+            case LEX_DATA:
+                this->dataSeg();
+                return;
+
+            // Text segment
+            case LEX_TEXT:
+                this->textSeg();
+                return;
 
             default:
                 this->text_info.error = true;
@@ -1238,6 +1249,9 @@ void Lexer::parseLine(void)
                 this->parseMemArgs();
                 break;
 
+            case LEX_SYSCALL:
+                break;
+
             default:
                 this->text_info.error = true;
                 this->text_info.errstr = "Invalid instruction " + this->cur_token.val;
@@ -1261,14 +1275,10 @@ LINE_END:
     }
     else if(this->cur_mode == LEX_DATA_SEG)
     {
+        this->data_addr++;
         this->data_info.line_num = line_num;
         this->data_info.addr     = this->data_addr;
         this->source_info.addData(this->data_info);
-        // TODO : maybe have integer types here instead of doing a string comparison each time
-        if(this->data_info.directive == ".space")
-            this->data_addr += this->data_info.space+1;
-        else if(this->data_info.directive != ".data")
-            this->data_addr++;
     }
     else
     {
