@@ -216,7 +216,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 10;
     line.addr            = 0x205;
     line.opcode.instr    = LEX_SLTU;
-    line.opcode.mnemonic = "SLTU";
+    line.opcode.mnemonic = "sltu";
     line.val[0]         = 3;
     line.type[0]        = SYM_REG_TEMP;
     line.val[1]         = 0;
@@ -224,7 +224,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.val[2]         = 1;
     line.type[2]        = SYM_REG_TEMP;
     line.is_label        = true;
-    line.label           = "TOP";
+    line.label           = "top";
     info.addText(line);
 
     // line 11
@@ -242,7 +242,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.type[2]         = SYM_LITERAL;
     line.val[2]          = 0x20A;
     line.is_symbol       = true;
-    line.symbol          = "DONE";
+    line.symbol          = "done";
     info.addText(line);
 
     // line 12
@@ -284,7 +284,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.opcode.instr    = LEX_J;
     line.opcode.mnemonic = "j";
     line.is_symbol       = true;
-    line.symbol          = "TOP";
+    line.symbol          = "top";
     // 3 arg is also converted literal in this case
     line.type[2]         = SYM_LITERAL;
     line.val[2]          = 0x205;
@@ -295,7 +295,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.line_num        = 16;      
     line.addr            = 0x20A;
     line.is_label        = true;
-    line.label           = "DONE";
+    line.label           = "done";
     info.addText(line);
 
     return info;
@@ -311,10 +311,6 @@ SourceInfo get_array_expected_source_info(void)
     // .data 
     // Starts a new data segment. There isn't any lexer output that 
     // is specifically associated with this line.
-    //data_line.init();
-    //data_line.is_directive = true;
-    //data_line.directive = "data";
-    //info.addData(data_line);
 
     // line 3
     // list: word 3, 0, 1, 2, 6
@@ -343,12 +339,10 @@ SourceInfo get_array_expected_source_info(void)
     data_line.space = 128;
     info.addData(data_line);
     
-    
     // line 9
     // .text
     // Starts a new text segment. There isn't any lexer output that 
     // is specifically associated with this line.
-    
 
     // line 10
     // la $s0, list

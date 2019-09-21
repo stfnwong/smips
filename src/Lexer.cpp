@@ -464,14 +464,6 @@ void Lexer::nextToken(void)
     // Exhausted all options - assign as label 
     else
     {
-        // check if this is syscall
-        //if(token_str == "syscall")
-        //{
-        //    this->cur_token.type = SYM_SYSCALL;
-        //    this->cur_token.val = token_str;
-        //    goto TOKEN_END;
-        //}
-
         this->cur_token.type = SYM_LABEL;
         this->cur_token.val  = token_str;
     }
@@ -1184,8 +1176,6 @@ void Lexer::parseLine(void)
 
             case LEX_BGT:
                 this->parseBranch();
-                //this->parseRegArgs(2);
-                //this->parseLabel();
                 break;
 
             case LEX_BGTZ:
