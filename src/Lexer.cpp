@@ -496,7 +496,7 @@ void Lexer::parseAlign(void)
 void Lexer::parseASCIIZ(void)
 {
     this->data_info.init();
-    this->data_info.directive = ".asciiz";
+    this->data_info.directive = SYM_DIR_ASCIIZ;
     this->data_info.line_num = this->cur_line;
 
     this->nextToken();
@@ -523,7 +523,7 @@ void Lexer::parseASCIIZ(void)
 void Lexer::parseByte(void)
 {
     this->data_info.init();
-    this->data_info.directive = ".byte";
+    this->data_info.directive = SYM_DIR_BYTE;
 
     // there should only be one token after the .byte directive which 
     // must be a character (for numeric input use .word or .half directive)
@@ -556,7 +556,7 @@ void Lexer::parseHalf(void)
     int word_idx = 0;
     uint32_t word;
     this->data_info.init();
-    this->data_info.directive = ".half";
+    this->data_info.directive = SYM_DIR_HALF;
     this->data_info.line_num = this->cur_line;
 
     while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
@@ -604,7 +604,7 @@ void Lexer::parseWord(void)
     uint32_t word;
     int word_idx = 0;
     this->data_info.init();
-    this->data_info.directive = ".word";
+    this->data_info.directive = SYM_DIR_WORD;
     this->data_info.line_num = this->cur_line;
 
     while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
@@ -640,7 +640,7 @@ void Lexer::parseWord(void)
 void Lexer::parseSpace(void)
 {
     this->data_info.init();
-    this->data_info.directive = ".space";
+    this->data_info.directive = SYM_DIR_SPACE;
     this->data_info.line_num = this->cur_line;
 
     // the next token should be a literal indicating how many bytes to reserve
@@ -662,7 +662,6 @@ void Lexer::parseSpace(void)
 /* 
  * Segment Mode directives
  */
-
 
 /*
  * dataSeg()
@@ -921,7 +920,6 @@ void Lexer::parseRegArgs(const int num_args)
             case SYM_REG_ZERO:
             case SYM_REG_GLOBAL:
             case SYM_REG_FRAME:
-                std::cout << "[" << __func__ << "] val[" << argn << "] stoi" << std::endl;
                 if(this->cur_token.offset != "\0")
                     this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
                 else
@@ -929,7 +927,6 @@ void Lexer::parseRegArgs(const int num_args)
                 break;
 
             default:
-                std::cout << "[" << __func__ << "] val[" << argn << "] stoi" << std::endl;
                 this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
                 break;
         }

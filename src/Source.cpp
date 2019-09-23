@@ -400,7 +400,7 @@ DataInfo::DataInfo()
 void DataInfo::init(void)
 {
     this->errstr       = "\0";
-    this->directive    = "\0";
+    this->directive    = SYM_DIR_NONE;
     this->label        = "\0";
     this->line_num     = 0;
     this->addr         = 0;
@@ -408,6 +408,40 @@ void DataInfo::init(void)
     this->error        = false;
     this->is_label     = false;
     this->data.clear();
+}
+
+/*
+ * dirTypeString()
+ */
+std::string DataInfo::dirTypeStr(void) const
+{
+    switch(this->directive)
+    {
+        case SYM_DIR_NONE:
+            return "NONE";
+        case SYM_DIR_ALIGN:
+            return ".align";
+        case SYM_DIR_ASCIIZ:
+            return ".asciiz";
+        case SYM_DIR_BYTE:
+            return ".byte";
+        case SYM_DIR_CHAR:
+            return ".char";
+        case SYM_DIR_GLOBL:
+            return ".globl";
+        case SYM_DIR_HALF:
+            return ".half";
+        case SYM_DIR_MACRO:
+            return ".macro";
+        case SYM_DIR_END_MACRO:
+            return ".end_macro";
+        case SYM_DIR_SPACE:
+            return ".space";
+        case SYM_DIR_WORD:
+            return ".word";
+        default:
+            return "NONE";
+    }
 }
 
 /*
@@ -437,7 +471,7 @@ std::string DataInfo::toString(void) const
     oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
     oss << "   ";
     // directive
-    if(this->directive != "\0")
+    if(this->directive != SYM_DIR_NONE)
         oss << std::left << std::setw(8) << std::setfill(' ') << this->directive;
     else
         oss << std::left << std::setw(7) << std::setfill(' ') << " ";
@@ -608,18 +642,26 @@ bool Symbol::operator!=(const Symbol& that) const
  */
 SymbolTable::SymbolTable() {} 
 
-
+/*
+ * add()
+ */
 void SymbolTable::add(const Symbol& s)
 {
     this->syms.push_back(s);
 }
 
+/*
+ * update()
+ */
 void SymbolTable::update(const unsigned int idx, const Symbol& s)
 {
     if(idx < this->syms.size())
         this->syms[idx] = s;
 }
 
+/*
+ * get()
+ */
 Symbol& SymbolTable::get(const unsigned int idx) 
 {
     if(idx < this->syms.size())
@@ -628,6 +670,9 @@ Symbol& SymbolTable::get(const unsigned int idx)
     return this->null_sym;
 }
 
+/*
+ * getAddr()
+ */
 uint32_t SymbolTable::getAddr(const std::string& label) const
 {
     for(unsigned int idx = 0; idx < this->syms.size(); ++idx)
@@ -639,11 +684,17 @@ uint32_t SymbolTable::getAddr(const std::string& label) const
     return (uint32_t) 0;
 }
 
+/*
+ * size()
+ */
 unsigned int SymbolTable::size(void) const
 {
     return this->syms.size();
 }
 
+/*
+ * init()
+ */
 void SymbolTable::init(void)
 {
     this->syms.clear();
@@ -655,22 +706,45 @@ void SymbolTable::init(void)
  */
 SourceInfo::SourceInfo() {}
 
+/*
+ * addText()
+ */
 void SourceInfo::addText(const TextInfo& l)
 {
     this->text_info.push_back(l);
 }
 
+/*
+ * addData()
+ */
 void SourceInfo::addData(const DataInfo& d)
 {
     this->data_info.push_back(d);
 }
 
+/*
+ * update()
+ */
 void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 {
     if(idx < this->text_info.size())
         this->text_info[idx] = l;
 }
 
+/*
+ * getdata()
+ */
+DataInfo& SourceInfo::getData(const unsigned int idx)
+{
+    if(idx < this->data_info.size())
+        return this->data_info[idx];
+
+    return this->null_data;
+}
+
+/*
+ * getText()
+ */
 TextInfo& SourceInfo::getText(const unsigned int idx)
 {
     if(idx < this->text_info.size())
@@ -679,6 +753,9 @@ TextInfo& SourceInfo::getText(const unsigned int idx)
     return this->null_line;
 }
 
+/*
+ * getLineNum()
+ */
 unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 {
     if(idx < this->text_info.size())
@@ -687,6 +764,9 @@ unsigned int SourceInfo::getLineNum(const unsigned int idx) const
     return 0;
 }
 
+/*
+ * getNumErr()
+ */
 unsigned int SourceInfo::getNumErr(void) const
 {
     unsigned int num_err = 0;
@@ -696,11 +776,17 @@ unsigned int SourceInfo::getNumErr(void) const
     return num_err;
 }
 
+/*
+ * getNumLines()
+ */
 unsigned int SourceInfo::getNumLines(void) const
 {
     return this->text_info.size();
 }
 
+/*
+ * hasError()
+ */
 bool SourceInfo::hasError(void) const
 {
     for(unsigned int idx = 0; idx < this->text_info.size(); ++idx)
@@ -712,18 +798,26 @@ bool SourceInfo::hasError(void) const
     return false;
 }
 
+/*
+ * getTextInfoSize()
+ */
 unsigned int SourceInfo::getTextInfoSize(void) const
 {
     return this->text_info.size();
 }
 
+/*
+ * getDataInfoSize()
+ */
 unsigned int SourceInfo::getDataInfoSize(void) const
 {
     return this->data_info.size();
 }
 
 
-
+/*
+ * toString()
+ */
 std::string SourceInfo::toString(void) const
 {
     std::ostringstream oss;
@@ -737,7 +831,9 @@ std::string SourceInfo::toString(void) const
     return oss.str();
 }
 
-
+/*
+ * errString()
+ */
 std::string SourceInfo::errString(void) const
 {
     std::ostringstream oss;

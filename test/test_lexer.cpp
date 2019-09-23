@@ -317,7 +317,7 @@ SourceInfo get_array_expected_source_info(void)
     data_line.init();
     data_line.addr = 0;
     data_line.label = "list";
-    data_line.directive = ".word";
+    data_line.directive = SYM_DIR_WORD;
     data_line.data = {3, 0, 1, 2, 6};
     info.addData(data_line);
 
@@ -327,7 +327,7 @@ SourceInfo get_array_expected_source_info(void)
     data_line.init();
     data_line.addr = 4;
     data_line.label = "char_arr";
-    data_line.directive = ".asciiz";
+    data_line.directive = SYM_DIR_ASCIIZ;
     data_line.data = {0x68, 0x65, 0x6C, 0x6C, 0x6F};
     info.addData(data_line);
     
@@ -335,7 +335,7 @@ SourceInfo get_array_expected_source_info(void)
     // buffer: .space 128
     data_line.init();
     data_line.label = "buffer";
-    data_line.directive = ".space";
+    data_line.directive = SYM_DIR_SPACE;
     data_line.space = 128;
     info.addData(data_line);
     

@@ -38,12 +38,35 @@ struct Instr
 
 
 /*
+ * DataSeg
+ */
+struct DataSeg
+{
+    uint32_t adr;
+    std::vector<uint32_t> data;
+
+    public:
+        DataSeg();
+        DataSeg(uint32_t adr, const std::vector<uint32_t> d);
+
+        void init(void);
+
+        DataSeg& operator=(const DataSeg& that);
+        bool operator==(const DataSeg& that) const;
+        bool operator!=(const DataSeg& that) const;
+
+        std::string toString(void) const;
+};
+
+
+/*
  * Program
  * Represents a series of Instr objects
  */
 class Program
 {
     private:
+        std::vector <DataSeg> data_segments;
         std::vector <Instr> instructions;
         Instr null_instr;
     // TODO : does it make sense to have a copy constructor for Program objects?
@@ -62,6 +85,11 @@ class Program
          * Adds a new instruction object to the end of the instruction list
          */
         void add(const Instr& i);
+        /*
+         * add()
+         * Adds a new DataSeg object to the end of the data_segments list
+         */
+        void add(const DataSeg& d);
         /*
          * get()
          * Returns the Nth instruction object from the instruction list

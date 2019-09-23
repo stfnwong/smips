@@ -425,8 +425,88 @@ Instr Assembler::assembleText(const TextInfo& line)
             // prove later to be a bad idea
             return Instr(line.addr, 0); // emit a null instruction
     }
-
 }
+
+
+// ===== ASSEMBLE DIRECTIVES ==== 
+DataSeg Assembler::asm_asciiz(const DataInfo& d)
+{
+    //Instr instr;
+
+    //for(unsigned int i = 0; i < d.data.size(); ++i)
+    //{
+    //    instr.init();
+    //    instr.adr = d.addr + i;
+    //    instr.ins = d.data[i];
+
+    //    this->program.add(instr);
+    //}
+}
+
+DataSeg Assembler::asm_char(const DataInfo& d)
+{
+    //Instr instr;
+
+    //instr.adr = d.addr;
+    //instr.ins = d.data[0];
+
+    //this->program.add(instr);
+}
+
+
+/*
+ * assembleData()
+ */
+DataSeg Assembler::assembleData(const DataInfo& data)
+{
+    DataSeg seg;
+
+    switch(data.directive)
+    {
+        case SYM_DIR_NONE:
+            if(this->verbose)
+                std::cout << "[" << __func__ << "] got NONE directive" << std::endl;
+            break;
+
+        case SYM_DIR_ASCIIZ:
+        case SYM_DIR_BYTE:
+        case SYM_DIR_WORD:
+            seg.addr = data.addr;
+            /// TODO : need a type conversion here for bytes...
+            //seg.data = data.data;
+
+        case SYM_DIR_SPACE:
+            seg.addr = data.addr;
+            for(unsigned int i = 0; i < data.space; ++i)
+                seg.data.push_back(0);
+            break;
+
+        default:
+            break;
+    }
+
+    //switch(data.directive)
+    //{
+    //    case SYM_DIR_NONE:
+    //        // no action
+    //        break;
+
+    //    case SYM_DIR_ASCIIZ:
+    //        seg = this->asm_asciiz(data);
+    //        break;
+
+    //    case SYM_DIR_CHAR:
+    //        seg = this->asm_char(data);
+    //        break;
+
+    //    default:
+    //        // no action
+    //        break;
+    //}
+
+    return seg;
+}
+
 
 /*
  * assemble()
@@ -435,7 +515,9 @@ Instr Assembler::assembleText(const TextInfo& line)
 void Assembler::assemble(void)
 {
     TextInfo cur_line;
+    DataInfo cur_data;
     Instr    cur_instr;
+    DataSeg  cur_seg;
 
     if(this->source.getNumLines() == 0)
     {
@@ -445,7 +527,11 @@ void Assembler::assemble(void)
     }
 
     this->program.init();
-    // TODO : assemble the data sections
+    for(unsigned int i = 0; i < this->source.getDataInfoSize(); ++i)
+    {
+        cur_data = this->source.getData(i);
+        cur_seg  = this->assembleData(cur_data);
+    }
 
     // TODO : assemble the text sections
     for(unsigned int i = 0; i < this->source.getTextInfoSize(); ++i)

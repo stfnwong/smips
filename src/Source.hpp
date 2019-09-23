@@ -41,6 +41,22 @@ typedef enum TokenType
 } TokenType;
 
 
+typedef enum DirectiveType
+{
+    SYM_DIR_NONE,
+    SYM_DIR_ALIGN,
+    SYM_DIR_ASCIIZ,
+    SYM_DIR_BYTE,
+    SYM_DIR_CHAR,
+    SYM_DIR_GLOBL,
+    SYM_DIR_HALF,
+    SYM_DIR_MACRO,
+    SYM_DIR_END_MACRO,
+    SYM_DIR_SPACE,
+    SYM_DIR_WORD,
+} DirectiveType;
+
+
 /*
  * Token
  * Represents a single token from the source stream.
@@ -66,7 +82,6 @@ struct Token
         // assignment
         Token& operator=(const Token& that);
 };
-
 
 
 /*
@@ -115,8 +130,8 @@ struct TextInfo
  */
 struct DataInfo
 {
+    DirectiveType         directive;
     std::string           errstr;
-    std::string           directive;
     std::string           label;
     std::vector <uint8_t> data;
     unsigned int          line_num;
@@ -128,6 +143,7 @@ struct DataInfo
     public:
         DataInfo();
         void init(void);
+        std::string dirTypeStr(void) const;
         std::string toString(void) const;
 
         DataInfo& operator=(const DataInfo& that);
