@@ -143,7 +143,7 @@ struct DataInfo
     public:
         DataInfo();
         void init(void);
-        std::string dirTypeStr(void) const;
+        std::string dirTypeString(void) const;
         std::string toString(void) const;
 
         DataInfo& operator=(const DataInfo& that);

@@ -212,6 +212,29 @@ Instr Assembler::asm_j(const TextInfo& l) const
 }
 
 /*
+ * asm_la()
+ * TODO : this actually has to expand to 2 instructions...
+ */
+Instr Assembler::asm_la(const TextInfo& l) const
+{
+    Instr instr;
+
+    return instr;
+}
+
+
+/*
+ * asm_li()
+ * TODO : this actually has to expand to 2 instructions...
+ */
+Instr Assembler::asm_li(const TextInfo& l) const
+{
+    Instr instr;
+
+    return instr;
+}
+
+/*
  * asm_lw()
  * I-format
  * lw $t, OFFSET($s)
@@ -378,6 +401,16 @@ Instr Assembler::assembleText(const TextInfo& line)
             return this->asm_j(line);
             break;
 
+        // TODO : here we need to be able to insert two (or perhaps 3)
+        // instructions at a time.
+        case LEX_LA:
+            return this->asm_la(line);
+            break;
+
+        case LEX_LI:
+            return this->asm_li(line);
+            break;
+
         case LEX_LW:
             return this->asm_lw(line);
             break;
@@ -428,32 +461,6 @@ Instr Assembler::assembleText(const TextInfo& line)
 }
 
 
-// ===== ASSEMBLE DIRECTIVES ==== 
-DataSeg Assembler::asm_asciiz(const DataInfo& d)
-{
-    //Instr instr;
-
-    //for(unsigned int i = 0; i < d.data.size(); ++i)
-    //{
-    //    instr.init();
-    //    instr.adr = d.addr + i;
-    //    instr.ins = d.data[i];
-
-    //    this->program.add(instr);
-    //}
-}
-
-DataSeg Assembler::asm_char(const DataInfo& d)
-{
-    //Instr instr;
-
-    //instr.adr = d.addr;
-    //instr.ins = d.data[0];
-
-    //this->program.add(instr);
-}
-
-
 /*
  * assembleData()
  */
@@ -471,12 +478,11 @@ DataSeg Assembler::assembleData(const DataInfo& data)
         case SYM_DIR_ASCIIZ:
         case SYM_DIR_BYTE:
         case SYM_DIR_WORD:
-            seg.addr = data.addr;
-            /// TODO : need a type conversion here for bytes...
-            //seg.data = data.data;
+            seg.adr = data.addr;
+            seg.data = data.data;
 
         case SYM_DIR_SPACE:
-            seg.addr = data.addr;
+            seg.adr = data.addr;
             for(unsigned int i = 0; i < data.space; ++i)
                 seg.data.push_back(0);
             break;
@@ -484,25 +490,6 @@ DataSeg Assembler::assembleData(const DataInfo& data)
         default:
             break;
     }
-
-    //switch(data.directive)
-    //{
-    //    case SYM_DIR_NONE:
-    //        // no action
-    //        break;
-
-    //    case SYM_DIR_ASCIIZ:
-    //        seg = this->asm_asciiz(data);
-    //        break;
-
-    //    case SYM_DIR_CHAR:
-    //        seg = this->asm_char(data);
-    //        break;
-
-    //    default:
-    //        // no action
-    //        break;
-    //}
 
     return seg;
 }
@@ -531,6 +518,7 @@ void Assembler::assemble(void)
     {
         cur_data = this->source.getData(i);
         cur_seg  = this->assembleData(cur_data);
+        this->program.add(cur_seg);
     }
 
     // TODO : assemble the text sections

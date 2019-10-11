@@ -94,7 +94,7 @@ DataSeg::DataSeg()
     this->adr = 0;
 }
 
-DataSeg::DataSeg(uint32_t adr, const std::vector<uint32_t> d)
+DataSeg::DataSeg(uint32_t adr, const std::vector<uint8_t> d)
 {
     this->adr = adr;
     this->data = d;
@@ -194,14 +194,6 @@ void Program::add(const Instr& i)
 void Program::add(const DataSeg& d)
 {
     this->data_segments.push_back(d);
-    //Instr instr;
-    //for(unsigned int i = 0; i < d.data.size(); ++d)
-    //{
-    //    instr.init();
-    //    instr.adr = d.adr + i;
-    //    instr.ins = d.data[i];
-    //    this->instructions.push_back(instr);
-    //}
 }
 
 Instr& Program::get(const unsigned int idx) 

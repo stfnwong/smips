@@ -56,12 +56,12 @@ class Assembler
 
     // data region assembly
     private:
-        DataSeg asm_asciiz(const DataInfo& d);
-        DataSeg asm_byte(const DataInfo& d);
-        DataSeg asm_char(const DataInfo& d);
-        DataSeg asm_half(const DataInfo& d);
-        DataSeg asm_space(const DataInfo& d);
-        DataSeg asm_word(const DataInfo& d);
+        //DataSeg asm_asciiz(const DataInfo& d);
+        //DataSeg asm_byte(const DataInfo& d);
+        //DataSeg asm_char(const DataInfo& d);
+        //DataSeg asm_half(const DataInfo& d);
+        //DataSeg asm_space(const DataInfo& d);
+        //DataSeg asm_word(const DataInfo& d);
 
     // text region/instruction assembly
     private:
@@ -71,6 +71,8 @@ class Assembler
         Instr asm_beq(const TextInfo& l) const;
         Instr asm_bne(const TextInfo& l) const;
         Instr asm_j(const TextInfo& l) const;
+        Instr asm_la(const  TextInfo& l) const;
+        Instr asm_li(const TextInfo& l) const;
         Instr asm_lw(const TextInfo& l) const;
         Instr asm_mult(const TextInfo& l) const;
         Instr asm_or(const TextInfo& l) const;

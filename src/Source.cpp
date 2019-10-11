@@ -413,7 +413,7 @@ void DataInfo::init(void)
 /*
  * dirTypeString()
  */
-std::string DataInfo::dirTypeStr(void) const
+std::string DataInfo::dirTypeString(void) const
 {
     switch(this->directive)
     {
@@ -472,7 +472,7 @@ std::string DataInfo::toString(void) const
     oss << "   ";
     // directive
     if(this->directive != SYM_DIR_NONE)
-        oss << std::left << std::setw(8) << std::setfill(' ') << this->directive;
+        oss << std::left << std::setw(8) << std::setfill(' ') << this->dirTypeString();
     else
         oss << std::left << std::setw(7) << std::setfill(' ') << " ";
     oss << " ";

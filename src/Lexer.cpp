@@ -1057,12 +1057,6 @@ void Lexer::parseLine(void)
         line_num = this->cur_line;
     }
 
-    // Syscalls just go on their own 'line'
-    //if(this->cur_token.type == SYM_SYSCALL)
-    //{
-    //    goto LINE_END;
-    //}
-
     if(this->cur_token.type == SYM_DIRECTIVE)
     {
         // Look up directive string in directive table

@@ -43,11 +43,11 @@ struct Instr
 struct DataSeg
 {
     uint32_t adr;
-    std::vector<uint32_t> data;
+    std::vector<uint8_t> data;
 
     public:
         DataSeg();
-        DataSeg(uint32_t adr, const std::vector<uint32_t> d);
+        DataSeg(uint32_t adr, const std::vector<uint8_t> d);
 
         void init(void);
 

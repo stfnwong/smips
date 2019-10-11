@@ -212,6 +212,24 @@ Program get_array_expected_program(void)
 {
     Program prog;
     Instr   instr;
+    DataSeg data;
+
+
+    // ---- Data Section ---- //
+    
+    // ---- Text Section ---- //
+    
+    // la $s0, list
+    // NOTE: <la $s0, list> expands to
+    // lui $at, list
+    // ori $s0, $at, displ
+    instr.init();
+    instr.adr = 0x200;
+
+    // li $t0, 0
+    // NOTE; <li $t0, 0> translates to
+    // lui $at, 0
+    // ori $t0, $at, 0
 
 
     return prog;
