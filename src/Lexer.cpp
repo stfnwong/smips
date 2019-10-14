@@ -801,15 +801,22 @@ void Lexer::parseBranch(void)
         }
     }
 
-    // Finally, there should be one label token at the end
+    // Finally, there should be one label or constant token at the end
     this->nextToken();
-    if(this->cur_token.type != SYM_LABEL)
+    if(this->cur_token.type == SYM_LABEL)
+    {
+        this->text_info.is_symbol = true;
+        this->text_info.symbol    = this->cur_token.val;
+    }
+    else if(cur_token.type == SYM_LITERAL)
+    {
+        this->text_info.val[2] = std::stoi(this->cur_token.val, nullptr, 10);
+    }
+    else
     {
         error = true;
         goto BRANCH_END;
     }
-    this->text_info.is_symbol = true;
-    this->text_info.symbol    = this->cur_token.val;
 
 BRANCH_END:
     if(error)
@@ -1351,7 +1358,12 @@ void Lexer::advanceAddrs(int start_idx, int offset)
         cur_ti.addr += offset;
         this->source_info.update(idx, cur_ti);
 
-        // TODO : get out of this loop early if 
+        // TODO : get out of this loop early if there are "too many" iterations 
+        //if(idx > 100)
+        //{
+        //    std::cout << "[" << __func__ << "] hit 100 iters" << std::endl;
+        //    break;
+        //}
     }
 }
 
@@ -1387,6 +1399,7 @@ void Lexer::expandPsuedo(void)
                     
                     // slt $at, $t, $s
                     ti.init();
+                    ti = cur_text;
                     ti.opcode.instr = LEX_SLT;
                     ti.opcode.mnemonic = "slt";
                     ti.addr     = cur_text.addr;
@@ -1394,10 +1407,10 @@ void Lexer::expandPsuedo(void)
                     ti.type[0]  = SYM_REG_AT;
                     ti.type[1]  = SYM_REG_TEMP;
                     ti.type[2]  = SYM_REG_SAVED;
-                    ti.val[0]   = 32;            // TODO : where should AT be?
+                    ti.val[0]   = 0;            // TODO : where should AT be?
                     ti.val[1]   = cur_text.val[1];
                     ti.val[2]   = cur_text.val[0];
-                    this->source_info.insert(idx, ti);
+                    this->source_info.update(idx, ti);
                     
                     // bne $at, $zero, C
                     ti.init();
@@ -1412,7 +1425,7 @@ void Lexer::expandPsuedo(void)
                     ti.val[2]  = cur_text.val[2];
                     
                     this->source_info.insert(idx+1, ti);
-                    this->advanceAddrs(idx+1, 2);
+                    this->advanceAddrs(idx+2, 2);
                 }
                 
                 break;

@@ -625,6 +625,8 @@ TEST_F(TestLexer, test_array)
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(true);
+    // for this test, just leave the psuedo instructions in place
+    test_lexer.setExpandPsuedo(false);          
     test_lexer.loadFile(this->test_array_file);
     test_lexer.lex();
 
@@ -790,10 +792,10 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.opcode.mnemonic = "slt";
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_AT;
-    line.val[1]          = 0;
-    line.type[1]         = SYM_REG_SAVED;
-    line.val[2]          = 1;
-    line.type[2]         = SYM_REG_TEMP;
+    line.val[1]          = 1;
+    line.type[1]         = SYM_REG_TEMP;
+    line.val[2]          = 0;
+    line.type[2]         = SYM_REG_SAVED;
     info.addText(line);
 
     // bne $at, $zero, 8
@@ -857,6 +859,10 @@ TEST_F(TestLexer, test_psuedo_instr)
         }
         ASSERT_EQ(expected_line, output_line);
     }
+
+    // Also check that we have the corect number of text and data segments 
+    ASSERT_EQ(0, src_out.getDataInfoSize());
+    ASSERT_EQ(2, src_out.getTextInfoSize());
 }
 
 

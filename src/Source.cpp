@@ -227,6 +227,8 @@ std::string TextInfo::toString(void) const
     {
         if(this->type[i] == SYM_REG_TEMP)
             oss << "t" << this->val[i] << " ";
+        else if(this->type[i] == SYM_REG_AT)
+            oss << "at" << this->val[i] << " ";     // TODO : what do the values for $at look like?
         else if(this->type[i] == SYM_REG_SAVED)
             oss << "s" << this->val[i] << " ";
         else if(this->type[i] == SYM_REG_ARG)
