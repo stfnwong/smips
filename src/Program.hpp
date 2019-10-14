@@ -36,13 +36,15 @@ struct Instr
         std::string toString(void) const;
 };
 
+// NOTE: There are a number of 'psuedo instructions' that need to be expanded, probably by the Lexer
+
 
 /*
  * DataSeg
  */
 struct DataSeg
 {
-    uint32_t adr;
+    uint32_t adr;           // start address, we work out offsets from here
     std::vector<uint8_t> data;
 
     public:

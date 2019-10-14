@@ -15,6 +15,20 @@
 #include "Source.hpp"
 
 
+class TestLexer : public ::testing::Test
+{
+    virtual void SetUp() {}
+    virtual void TearDown() {}
+
+    public:
+        std::string test_mult_add_file = "asm/mult_add.asm";
+        std::string test_for_loop_file = "asm/for_loop.asm";
+        std::string test_array_file = "asm/array.asm";
+        std::string test_paren_file = "asm/paren.asm";
+        std::string test_psuedo_file = "asm/psuedo.asm";
+};
+
+
 // TODO : adjust starting address later 
 SourceInfo get_mult_add_expected_source_info(void)
 {
@@ -500,17 +514,6 @@ SourceInfo get_array_expected_source_info(void)
 }
 
 
-class TestLexer : public ::testing::Test
-{
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-
-    public:
-        std::string test_mult_add_file = "asm/mult_add.asm";
-        std::string test_for_loop_file = "asm/for_loop.asm";
-        std::string test_array_file = "asm/array.asm";
-        std::string test_paren_file = "asm/paren.asm";
-};
 
 
 /*
@@ -671,7 +674,9 @@ TEST_F(TestLexer, test_array)
     std::cout << src_out.errString() << std::endl;
 }
 
-
+/*
+ * Paren expansion expected program
+ */
 SourceInfo get_paren_expected_source_info(void)
 {
     SourceInfo info;
@@ -762,7 +767,96 @@ TEST_F(TestLexer, test_paren_parse)
         }
         ASSERT_EQ(expected_line, output_line);
     }
+}
 
+
+/*
+ * Psuedo instruction expansion
+ */
+SourceInfo get_psuedo_instr_source_info(void)
+{
+    SourceInfo info;
+    TextInfo   line;
+
+    // line 4
+    // bgt $s0, $t1 8
+    //
+    // we expect this to generate two instructions, 
+    // slt $at, $t1, $s0
+    line.init();
+    line.line_num        = 4;
+    line.addr            = 0x200;
+    line.opcode.instr    = LEX_SLT;
+    line.opcode.mnemonic = "slt";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_SAVED;
+    line.val[2]          = 1;
+    line.type[2]         = SYM_REG_TEMP;
+    info.addText(line);
+
+    // bne $at, $zero, 8
+    line.init();
+    line.line_num        = 4;
+    line.addr            = 0x201;
+    line.opcode.instr    = LEX_BNE;
+    line.opcode.mnemonic = "bne";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_ZERO;
+    line.val[2]          = 8;
+    line.type[2]         = SYM_LITERAL;
+    info.addText(line);
+
+    return info;
+}
+
+
+/*
+ * Psuedo instruction expansion test
+ */
+TEST_F(TestLexer, test_psuedo_instr)
+{
+    Lexer test_lexer;
+    SourceInfo src_out;
+    SourceInfo expected_src_out;
+
+    test_lexer.setVerbose(true);
+    test_lexer.loadFile(this->test_psuedo_file);
+    test_lexer.lex();
+
+    // get the source info
+    expected_src_out = get_psuedo_instr_source_info();
+    std::cout << "Expected output :" << std::endl;
+    std::cout << expected_src_out.toString() << std::endl << std::endl;
+
+    src_out = test_lexer.getSourceInfo();
+    std::cout << "Lexer output : " << std::endl;
+    std::cout << src_out.toString() << std::endl;
+
+    // Check each line in turn
+    TextInfo expected_line;
+    TextInfo output_line;
+
+    std::cout << src_out.getTextInfoSize() << " lines in output text segment" << std::endl;
+    std::cout << src_out.getDataInfoSize() << " lines in output data segment" << std::endl;
+
+    for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
+    {
+        expected_line = expected_src_out.getText(line);
+        output_line = src_out.getText(line);
+        std::cout << "Checking line " << std::dec << line+1 << "/" << 
+            std::dec << expected_src_out.getTextInfoSize() << std::endl;
+
+        if(expected_line != output_line)
+        {
+            std::cout << "    diff : " << std::endl;
+            std::cout << expected_line.diff(output_line) << std::endl;
+        }
+        ASSERT_EQ(expected_line, output_line);
+    }
 }
 
 

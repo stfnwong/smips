@@ -116,6 +116,8 @@ uint32_t Assembler::asm_i_instr(const TextInfo& l, const int n) const
     return instr;
 }
 
+// TODO : put psuedo instructions here?
+
 // ==== Instruction Assembly ==== //
 
 /*

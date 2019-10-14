@@ -26,7 +26,7 @@ typedef enum TokenType
     SYM_STRING,
     SYM_SYSCALL,
     // register types
-    SYM_REG_AT,
+    SYM_REG_AT,     // assembler temporary
     SYM_REG_STACK,
     SYM_REG_FRAME,
     SYM_REG_TEMP,
@@ -208,6 +208,7 @@ class SourceInfo
         void         addText(const TextInfo& l);
         void         addData(const DataInfo& d);
         void         update(const unsigned int idx, const TextInfo& l);
+        void         insert(const unsigned int idx, const TextInfo& l);
         DataInfo&    getData(const unsigned int idx);
         TextInfo&    getText(const unsigned int idx);
         unsigned int getLineNum(const unsigned int idx) const;

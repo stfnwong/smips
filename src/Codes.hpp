@@ -33,7 +33,9 @@ typedef enum instr_code
     // jumps
     LEX_J, LEX_JAL, LEX_JALR, LEX_JR,
     // branches
-    LEX_BEQ, LEX_BGT, LEX_BGTZ, LEX_BLEZ, LEX_BNE,
+    LEX_BEQ, LEX_BLEZ, LEX_BNE, LEX_BGTZ,
+    // branch psuedo instructions 
+    LEX_BGT, LEX_BLT, LEX_BGE, LEX_BLE, 
     // syscall
     LEX_SYSCALL     // not strictly an instruction
 } instr_code;
@@ -129,6 +131,16 @@ const Opcode lex_directive_codes[] = {
     Opcode(LEX_SPACE,     ".space"),
     Opcode(LEX_TEXT,      ".text"),
     Opcode(LEX_WORD,      ".word")
+};
+
+// Psuedo Ops
+const Opcode lex_psuedo_ops[] = {
+    Opcode(LEX_BLT,   "blt"),
+    Opcode(LEX_BGT,   "bgt"),
+    Opcode(LEX_BGE,   "bge"),
+    Opcode(LEX_BLE,   "ble"),
+    Opcode(LEX_LA,    "la"),
+    Opcode(LEX_LI,    "li"),
 };
 
 

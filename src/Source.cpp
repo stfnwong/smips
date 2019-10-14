@@ -95,6 +95,8 @@ std::string Token::toString(void) const
             return "SYSCALL";
 
         // Registers
+        case SYM_REG_AT:
+            return "AT <" + this->val + ">";
         case SYM_REG_TEMP:
             return "R_TEMP <" + this->val + ">";
         case SYM_REG_SAVED:
@@ -729,6 +731,14 @@ void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 {
     if(idx < this->text_info.size())
         this->text_info[idx] = l;
+}
+
+/*
+ * insert()
+ */
+void SourceInfo::insert(const unsigned int idx, const TextInfo& l)
+{
+    this->text_info.insert(this->text_info.begin() + idx, l);
 }
 
 /*

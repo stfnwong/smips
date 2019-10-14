@@ -24,15 +24,18 @@ Lexer::Lexer()
     this->line_buf_size  = 512;
     void nextLine(void);
     this->verbose        = false;
+    this->expand_psuedo  = true;
     this->cur_char       = '\0';
     this->cur_line       = 0;
     this->cur_pos        = 0;
     this->text_addr      = 0;
     this->data_addr      = 0;
+    this->start_addr     = 0x200;
     this->cur_mode       = LEX_TEXT_SEG;
     // create token buffer
     this->alloc_mem();
     this->init_instr_table();
+    this->init_psuedo_op_table();
     this->init_directive_code_table();
 }
 
@@ -49,6 +52,15 @@ void Lexer::init_instr_table(void)
 {
     for(const Opcode& code : lex_instr_codes)
         this->instr_code_table.add(code);
+}
+
+/*
+ * init_psuedo_op_table()
+ */
+void Lexer::init_psuedo_op_table(void)
+{
+    for(const Opcode& code : lex_psuedo_ops)
+        this->psuedo_op_table.add(code);
 }
 
 /*
@@ -1320,6 +1332,117 @@ void Lexer::resolveLabels(void)
     }
 }
 
+
+/*
+ * advanceAddrs()
+ */
+void Lexer::advanceAddrs(int start_idx, int offset)
+{
+    TextInfo cur_ti;
+
+    std::cout << "[" << __func__ << "] " << 
+        this->source_info.getTextInfoSize() << " lines in text segment" << std::endl;
+
+    for(unsigned int idx = start_idx; idx < this->source_info.getTextInfoSize(); ++idx)
+    {
+        // TODO: debug (remove)
+        std::cout << "[" << __func__ << "] updating address for index " << idx << std::endl;
+        cur_ti = this->source_info.getText(idx);
+        cur_ti.addr += offset;
+        this->source_info.update(idx, cur_ti);
+
+        // TODO : get out of this loop early if 
+    }
+}
+
+/*
+ * expandPsuedo()
+ * Iterate over the SourceInfo and expand any psuedo instructions 
+ * into 'real' instructions.
+ */
+void Lexer::expandPsuedo(void)
+{
+    Opcode cur_opcode;
+    TextInfo cur_text;
+    TextInfo ti;
+
+    std::cout << "[" << __func__ << "] this->source_info text section contains " 
+        << this->source_info.getTextInfoSize() << " lines" << std::endl;
+
+    // TODO : what about all addresses? If we are inserting more values 
+    // then we will need to adjust all adresses that follow an 
+    // insert.
+    for(unsigned int idx = 0; idx < this->source_info.getTextInfoSize(); ++idx)
+    {
+        cur_text = this->source_info.getText(idx);
+        cur_opcode = this->psuedo_op_table.get(cur_text.opcode.instr);
+
+        switch(cur_opcode.instr)
+        {
+            case LEX_BGT:
+                {
+                    if(this->verbose)
+                        std::cout << "[" << __func__ << "] expanding LEX_BGT:" << std::endl;
+                    // Input is [bgt $s, $t, C]
+                    
+                    // slt $at, $t, $s
+                    ti.init();
+                    ti.opcode.instr = LEX_SLT;
+                    ti.opcode.mnemonic = "slt";
+                    ti.addr     = cur_text.addr;
+                    ti.line_num = cur_text.line_num;
+                    ti.type[0]  = SYM_REG_AT;
+                    ti.type[1]  = SYM_REG_TEMP;
+                    ti.type[2]  = SYM_REG_SAVED;
+                    ti.val[0]   = 32;            // TODO : where should AT be?
+                    ti.val[1]   = cur_text.val[1];
+                    ti.val[2]   = cur_text.val[0];
+                    this->source_info.insert(idx, ti);
+                    
+                    // bne $at, $zero, C
+                    ti.init();
+                    ti.opcode.instr = LEX_BNE;
+                    ti.opcode.mnemonic = "bne";
+                    ti.addr     = cur_text.addr + 1;
+                    ti.line_num = cur_text.line_num;
+                    ti.type[0]  = SYM_REG_AT;
+                    ti.type[1]  = SYM_REG_ZERO;
+                    ti.type[2]  = SYM_LITERAL;
+                    //ti.val[0]  = cur_text.val[0]; // TODO: same here, what is val for $at
+                    ti.val[2]  = cur_text.val[2];
+                    
+                    this->source_info.insert(idx+1, ti);
+                    this->advanceAddrs(idx+1, 2);
+                }
+                
+                break;
+
+            case LEX_BLT:
+                std::cout << "[" << __func__ << "] would expand LEX_BLT here" << std::endl;
+                break;
+
+            case LEX_LA:
+                {
+                    // la $t, A 
+                    //
+                    // lui $t, A_hi
+                    // ori $t, A_lo
+                    //ti.init();
+                    std::cout << "[" << __func__ << "] would expand LEX_LA here" << std::endl;
+                }
+                break;
+
+            case LEX_LI:
+                std::cout << "[" << __func__ << "] would expand LEX_LI here" << std::endl;
+                break;
+
+            default:
+                // nothing to do here, skip
+                break;
+        }
+    }
+}
+
 /*
  * lex()
  * Lex the current source file
@@ -1328,7 +1451,7 @@ void Lexer::lex(void)
 {
     this->cur_line = 1;
     this->cur_pos = 0;
-    this->text_addr = 0x200;     // TODO : proper address init..
+    this->text_addr = this->start_addr;     // TODO : proper address init..
 
     while(!this->exhausted())
     {
@@ -1348,8 +1471,13 @@ void Lexer::lex(void)
         this->parseLine();
         // add the current line info to the overall source info....
     }
+
+    if(this->expand_psuedo)
+        this->expandPsuedo();
+
     // Resolve symbols
     this->resolveLabels();
+
 }
 
 /*
@@ -1391,6 +1519,11 @@ bool Lexer::getVerbose(void) const
     return this->verbose;
 }
 
+bool Lexer::getExpandPsuedo(void) const
+{
+    return this->expand_psuedo;
+}
+
 const SourceInfo& Lexer::getSourceInfo(void) const
 {
     return this->source_info;
@@ -1401,8 +1534,23 @@ const SymbolTable& Lexer::getSymTable(void) const
     return this->sym_table;
 }
 
+int Lexer::getStartAddr(void) const
+{
+    return this->start_addr;
+}
+
 // ==== SETTERS ===== //
 void Lexer::setVerbose(const bool v)
 {
     this->verbose = v;
+}
+
+void Lexer::setExpandPsuedo(const bool v)
+{
+    this->expand_psuedo = v;
+}
+
+void Lexer::setStartAddr(int a)
+{
+    this->start_addr = a;
 }
