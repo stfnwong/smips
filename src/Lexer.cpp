@@ -923,6 +923,12 @@ void Lexer::parseRegArgs(const int num_args)
             else
                 this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
             this->text_info.type[argn] = SYM_LITERAL;
+
+            // adjust upper values 
+            if(this->text_info.upper)
+            {
+                this->text_info.val[argn] = (this->text_info.val[argn] << 16);
+            }
         }
         else
         {
@@ -1217,6 +1223,12 @@ void Lexer::parseLine(void)
                 this->parseRegArgs(2);
                 break;
 
+            case LEX_LUI:
+                this->text_info.is_imm = true;
+                this->text_info.upper = true;
+                this->parseRegArgs(2);
+                break;
+
             case LEX_MULT:
                 this->parseRegArgs(3);
                 break;
@@ -1381,9 +1393,7 @@ void Lexer::expandPsuedo(void)
     std::cout << "[" << __func__ << "] this->source_info text section contains " 
         << this->source_info.getTextInfoSize() << " lines" << std::endl;
 
-    // TODO : what about all addresses? If we are inserting more values 
-    // then we will need to adjust all adresses that follow an 
-    // insert.
+    // Iterate over all instructions in text segment and expand if appropriate
     for(unsigned int idx = 0; idx < this->source_info.getTextInfoSize(); ++idx)
     {
         cur_text = this->source_info.getText(idx);
@@ -1393,10 +1403,7 @@ void Lexer::expandPsuedo(void)
         {
             case LEX_BGT:
                 {
-                    if(this->verbose)
-                        std::cout << "[" << __func__ << "] expanding LEX_BGT:" << std::endl;
                     // Input is [bgt $s, $t, C]
-                    
                     // slt $at, $t, $s
                     ti.init();
                     ti = cur_text;
@@ -1425,7 +1432,7 @@ void Lexer::expandPsuedo(void)
                     ti.val[2]  = cur_text.val[2];
                     
                     this->source_info.insert(idx+1, ti);
-                    this->advanceAddrs(idx+2, 2);
+                    this->advanceAddrs(idx+2, 1);
                 }
                 
                 break;
@@ -1436,17 +1443,102 @@ void Lexer::expandPsuedo(void)
 
             case LEX_LA:
                 {
+                    std::cout << "[" << __func__ << "] expanding LEX_LA" << std::endl;
+                    std::cout << cur_text.toString() << std::endl;
+
                     // la $t, A 
                     //
                     // lui $t, A_hi
-                    // ori $t, A_lo
-                    //ti.init();
-                    std::cout << "[" << __func__ << "] would expand LEX_LA here" << std::endl;
+                    // ori $t, $t, A_lo
+                    ti.init();
+                    ti.opcode.instr    = LEX_LUI;
+                    ti.opcode.mnemonic = "lui";
+                    ti.addr     = cur_text.addr;
+                    ti.line_num = cur_text.line_num;
+                    ti.type[0]  = cur_text.type[0];
+                    ti.val[0]   = cur_text.val[0];
+                    ti.type[1]  = SYM_LITERAL;
+                    ti.val[1]   = cur_text.val[1] & 0xFFFF0000;
+                    ti.is_imm   = true;
+                    ti.upper    = true;
+
+                    this->source_info.update(idx, ti);
+    
+                    ti.init();
+                    ti.opcode.instr    = LEX_ORI;
+                    ti.opcode.mnemonic = "ori";
+                    ti.addr     = cur_text.addr + 1;
+                    ti.line_num = cur_text.line_num;
+                    ti.type[0]  = cur_text.type[0];
+                    ti.val[0]   = cur_text.val[0];
+                    ti.type[1]  = cur_text.type[0];
+                    ti.val[1]   = cur_text.val[0];
+                    ti.type[2]  = SYM_LITERAL;
+                    ti.val[2]   = cur_text.val[1] & 0x0000FFFF;
+                    ti.is_imm   = true;
+
+                    this->source_info.insert(idx+1, ti);
+                    this->advanceAddrs(idx+2, 1);
                 }
                 break;
 
             case LEX_LI:
-                std::cout << "[" << __func__ << "] would expand LEX_LI here" << std::endl;
+                ti.init();
+                // 32-bit immediate (2 instrs)
+                if(cur_text.val[1] > ((1 << 16)-1))
+                {
+                    std::cout << "[" << __func__ << "] resolving 32-bit li -> ori" << std::endl;
+                    std::cout << cur_text.toString() << std::endl;
+
+                    ti.opcode.instr    = LEX_LUI;
+                    ti.opcode.mnemonic = "lui";
+                    ti.addr     = cur_text.addr;
+                    ti.line_num = cur_text.line_num;
+                    ti.type[0]  = cur_text.type[0];
+                    ti.val[0]   = cur_text.val[0];
+                    ti.type[1]  = SYM_LITERAL;
+                    ti.val[1]   = cur_text.val[1] & 0xFFFF0000;
+                    ti.is_imm   = true;
+                    ti.upper    = true;
+
+                    this->source_info.update(idx, ti);
+
+                    ti.init();
+                    ti.opcode.instr    = LEX_ORI;
+                    ti.opcode.mnemonic = "ori";
+                    ti.addr     = cur_text.addr + 1;
+                    ti.line_num = cur_text.line_num;
+                    ti.type[0]  = cur_text.type[0];
+                    ti.val[0]   = cur_text.val[0];
+                    ti.type[1]  = cur_text.type[0];
+                    ti.val[1]   = cur_text.val[0];
+                    ti.type[2]  = SYM_LITERAL;
+                    ti.val[2]   = cur_text.val[1] & 0x0000FFFF;
+                    ti.is_imm   = true;
+
+                    this->source_info.insert(idx+1, ti);
+                    this->advanceAddrs(idx+2, 1);
+                }
+                // 16-bit immediate (1 instr)
+                else
+                {
+                    std::cout << "[" << __func__ << "] resolving 16-bit li -> ori with src addr "
+                        << std::hex << cur_text.addr << std::endl;
+                    std::cout << cur_text.toString() << std::endl;
+
+                    ti.opcode.instr = LEX_ORI;
+                    ti.opcode.mnemonic = "ori";
+                    ti.addr     = cur_text.addr;
+                    ti.line_num = cur_text.line_num;
+                    ti.type[0]  = cur_text.type[0];
+                    ti.val[0]   = cur_text.val[0];
+                    ti.type[1]  = SYM_REG_ZERO;
+                    ti.type[2]  = SYM_LITERAL;
+                    ti.val[2]   = cur_text.val[1];
+                    ti.is_imm   = true;
+
+                    this->source_info.update(idx, ti);
+                }
                 break;
 
             default:

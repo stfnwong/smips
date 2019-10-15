@@ -797,7 +797,6 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.val[2]          = 0;
     line.type[2]         = SYM_REG_SAVED;
     info.addText(line);
-
     // bne $at, $zero, 8
     line.init();
     line.line_num        = 4;
@@ -811,6 +810,82 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.val[2]          = 8;
     line.type[2]         = SYM_LITERAL;
     info.addText(line);
+
+    // li $t2, 5
+    // 16-bit immediate, therefore we can transform to just ori
+    line.init();
+    line.line_num        = 5;
+    line.addr            = 0x202;
+    line.opcode.instr    = LEX_ORI;
+    line.opcode.mnemonic = "ori";
+    line.val[0]          = 2;
+    line.type[0]         = SYM_REG_TEMP;
+    line.type[1]         = SYM_REG_ZERO;
+    line.val[2]          = 5;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
+
+    // li $t1, 75000
+    // 32-bit immedaite, therefore we need two instructions
+    // lui $t0,  7500 & (0xFFFF0000)
+    line.init();
+    line.line_num        = 6;
+    line.addr            = 0x203;
+    line.opcode.instr    = LEX_LUI;
+    line.opcode.mnemonic = "lui";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_TEMP;
+    line.val[1]          = 75000 & (0xFFFF0000);
+    line.type[1]         = SYM_LITERAL;
+    line.is_imm          = true;
+    line.upper           = true;
+    info.addText(line);
+
+    // ori $t0, $t0, 7500 & (0x0000FFFF)
+    line.init();
+    line.line_num        = 6;
+    line.addr            = 0x204;
+    line.opcode.instr    = LEX_ORI;
+    line.opcode.mnemonic = "ori";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_TEMP;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_TEMP;
+    line.val[2]          = 75000 & (0x0000FFFF);
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
+
+    // la $t1, 5000
+    // lui $t1, 5000 & (0xFFFF0000)
+    //line.init();
+    //line.line_num        = 7;
+    //line.addr            = 0x205;
+    //line.opcode.instr    = LEX_LUI;
+    //line.opcode.mnemonic = "lui";
+    //line.val[0]          = 1;
+    //line.type[0]         = SYM_REG_TEMP;
+    //line.val[1]          = 5000 & 0xFFFF0000;
+    //line.type[1]         = SYM_LITERAL;
+    //line.upper           = true;
+    //line.is_imm          = true;
+    //info.addText(line);
+
+    //// ori  $t1, $t1, 5000 & (0x0000FFFF)
+    //line.init();
+    //line.line_num        = 7;
+    //line.addr            = 0x206;
+    //line.opcode.instr    = LEX_ORI;
+    //line.opcode.mnemonic = "ori";
+    //line.val[0]          = 1;
+    //line.type[0]         = SYM_REG_TEMP;
+    //line.val[1]          = 1;
+    //line.type[1]         = SYM_REG_TEMP;
+    //line.val[2]          = 5000 & 0x0000FFFF;
+    //line.type[2]         = SYM_LITERAL;
+    //line.is_imm          = true;
+    //info.addText(line);
 
     return info;
 }
@@ -862,7 +937,7 @@ TEST_F(TestLexer, test_psuedo_instr)
 
     // Also check that we have the corect number of text and data segments 
     ASSERT_EQ(0, src_out.getDataInfoSize());
-    ASSERT_EQ(2, src_out.getTextInfoSize());
+    ASSERT_EQ(5, src_out.getTextInfoSize());
 }
 
 

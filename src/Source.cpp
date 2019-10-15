@@ -182,6 +182,7 @@ void TextInfo::init(void)
     this->is_symbol    = false;
     this->is_directive = false;
     this->is_imm       = false;
+    this->upper        = false;
     this->opcode.init();
 
     for(int i = 0; i < 3; ++i)
@@ -255,10 +256,18 @@ std::string TextInfo::toString(void) const
     // literal (if applicable)
     if(this->is_symbol)
         oss << "0x" << std::hex << std::setw(8) << this->val[2];
-    else if(this->is_imm)
-        oss << "0x" << std::hex << std::setw(8) << this->val[2];
+    //else if(this->is_imm)
+    //    oss << "0x" << std::hex << std::setw(8) << this->val[2];
+    else if(!this->is_imm && (this->type[1] == SYM_LITERAL))
+        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
     else if(!this->is_imm && (this->type[2] == SYM_LITERAL))
-        oss << "   +" << std::left << std::hex << std::setw(4) << std::setfill(' ') << this->val[2] << "  ";
+        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[2] << "  ";
+    else if(this->is_imm && this->upper)
+        oss << "U 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
+    else if(this->is_imm && (this->type[1] == SYM_LITERAL))
+        oss << "0x" << std::hex << std::setw(8) << this->val[1];
+    else if(this->is_imm && (this->type[2] == SYM_LITERAL))
+        oss << "0x" << std::hex << std::setw(8) << this->val[2];
     else
         oss << "          ";
     // spacing chars
@@ -297,6 +306,8 @@ bool TextInfo::operator==(const TextInfo& that) const
     if(this->is_symbol != that.is_symbol)
         return false;
     if(this->is_imm != that.is_imm)
+        return false;
+    if(this->upper != that.upper)
         return false;
     if(this->opcode != that.opcode)
         return false;
@@ -367,6 +378,11 @@ std::string TextInfo::diff(const TextInfo& that) const
     if(this->is_imm != that.is_imm)
     {
         oss << "is_imm does not match" << std::endl;
+        num_err += 1;
+    }
+    if(this->upper != that.upper)
+    {
+        oss << "upper does not match" << std::endl;
         num_err += 1;
     }
     if(this->opcode != that.opcode)

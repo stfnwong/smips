@@ -27,7 +27,7 @@ typedef enum instr_code
     LEX_SLT, LEX_SLTU, LEX_SLTI, LEX_SLTIU,
     // load
     LEX_LB, LEX_LBU, LEX_LH, LEX_LHU, 
-    LEX_LW, LEX_LI, LEX_LA,
+    LEX_LW, LEX_LI, LEX_LA, LEX_LUI,
     // store
     LEX_SB, LEX_SH, LEX_SW, 
     // jumps
@@ -96,6 +96,7 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_LW,    "lw"),
     Opcode(LEX_LI,    "li"),
 	Opcode(LEX_LA,    "la"),
+    Opcode(LEX_LUI,   "lui"),
     // store
     Opcode(LEX_SH,    "sh"),
     Opcode(LEX_SW,    "sw"),
