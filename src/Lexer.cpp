@@ -1577,12 +1577,15 @@ void Lexer::lex(void)
         // add the current line info to the overall source info....
     }
 
-    if(this->expand_psuedo)
-        this->expandPsuedo();
-
     // Resolve symbols
     this->resolveLabels();
 
+    if(this->expand_psuedo)
+    {
+        this->expandPsuedo();
+        // Resolve symbols in new locationsc
+        this->resolveLabels();
+    }
 }
 
 /*

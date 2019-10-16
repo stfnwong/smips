@@ -857,35 +857,35 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.is_imm          = true;
     info.addText(line);
 
-    // la $t1, 5000
-    // lui $t1, 5000 & (0xFFFF0000)
-    //line.init();
-    //line.line_num        = 7;
-    //line.addr            = 0x205;
-    //line.opcode.instr    = LEX_LUI;
-    //line.opcode.mnemonic = "lui";
-    //line.val[0]          = 1;
-    //line.type[0]         = SYM_REG_TEMP;
-    //line.val[1]          = 5000 & 0xFFFF0000;
-    //line.type[1]         = SYM_LITERAL;
-    //line.upper           = true;
-    //line.is_imm          = true;
-    //info.addText(line);
+    // la $t1, arr
+    // lui $t1, 0x207 & (0xFFFF0000)
+    line.init();
+    line.line_num        = 7;
+    line.addr            = 0x205;
+    line.opcode.instr    = LEX_LUI;
+    line.opcode.mnemonic = "lui";
+    line.val[0]          = 1;
+    line.type[0]         = SYM_REG_TEMP;
+    line.val[1]          = 0x207 & 0xFFFF0000;
+    line.type[1]         = SYM_LITERAL;
+    line.upper           = true;
+    line.is_imm          = true;
+    info.addText(line);
 
-    //// ori  $t1, $t1, 5000 & (0x0000FFFF)
-    //line.init();
-    //line.line_num        = 7;
-    //line.addr            = 0x206;
-    //line.opcode.instr    = LEX_ORI;
-    //line.opcode.mnemonic = "ori";
-    //line.val[0]          = 1;
-    //line.type[0]         = SYM_REG_TEMP;
-    //line.val[1]          = 1;
-    //line.type[1]         = SYM_REG_TEMP;
-    //line.val[2]          = 5000 & 0x0000FFFF;
-    //line.type[2]         = SYM_LITERAL;
-    //line.is_imm          = true;
-    //info.addText(line);
+    // ori  $t1, $t1, 0x207 & (0x0000FFFF)
+    line.init();
+    line.line_num        = 7;
+    line.addr            = 0x206;
+    line.opcode.instr    = LEX_ORI;
+    line.opcode.mnemonic = "ori";
+    line.val[0]          = 1;
+    line.type[0]         = SYM_REG_TEMP;
+    line.val[1]          = 1;
+    line.type[1]         = SYM_REG_TEMP;
+    line.val[2]          = 0x207 & 0x0000FFFF;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
 
     return info;
 }
