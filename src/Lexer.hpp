@@ -126,6 +126,9 @@ class Lexer
         TokenType getRegType(const char& reg_char) const;
 
     private:
+        // psuedo instruction expansion
+
+    private:
         // update instruction addresses when expanding psuedo ops
         void  advanceAddrs(int start_idx, int offset);
 

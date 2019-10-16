@@ -515,7 +515,6 @@ SourceInfo get_array_expected_source_info(void)
 
 
 
-
 /*
  * Test mult_add example
  */
@@ -526,8 +525,6 @@ TEST_F(TestLexer, test_lex_mult_add)
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(false);
-    // TODO : setting expand psuedo here should have no effect, but
-    // last sw instruction gets duplicated.
     test_lexer.setExpandPsuedo(true);
     test_lexer.loadFile(this->test_mult_add_file);
     test_lexer.lex();
@@ -782,6 +779,7 @@ SourceInfo get_psuedo_instr_source_info(void)
 {
     SourceInfo info;
     TextInfo   line;
+    DataInfo   data_line;
 
     // line 4
     // bgt $s0, $t1 8
@@ -873,6 +871,8 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.type[1]         = SYM_LITERAL;
     line.upper           = true;
     line.is_imm          = true;
+    line.is_symbol       = true;
+    line.symbol          = "arr";
     info.addText(line);
 
     // ori  $t1, $t1, 0x207 & (0x0000FFFF)
@@ -888,7 +888,18 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.val[2]          = 0x207 & 0x0000FFFF;
     line.type[2]         = SYM_LITERAL;
     line.is_imm          = true;
+    line.is_symbol       = true;
+    line.symbol          = "arr";
     info.addText(line);
+
+    // arr: .word 3
+    data_line.init();
+    data_line.line_num  = 9;
+    data_line.addr      = 0x207;
+    data_line.label     = "arr";
+    data_line.directive = SYM_DIR_WORD;
+    data_line.data      = {3};
+    info.addData(data_line);
 
     return info;
 }
@@ -939,8 +950,8 @@ TEST_F(TestLexer, test_psuedo_instr)
     }
 
     // Also check that we have the corect number of text and data segments 
-    ASSERT_EQ(0, src_out.getDataInfoSize());
-    ASSERT_EQ(5, src_out.getTextInfoSize());
+    ASSERT_EQ(1, src_out.getDataInfoSize());
+    ASSERT_EQ(7, src_out.getTextInfoSize());
 }
 
 

@@ -1330,7 +1330,9 @@ void Lexer::resolveLabels(void)
         }
     }
 
-    for(idx = 0; idx < this->source_info.getNumLines(); ++idx)
+    // TODO : add special routine for half-word labels (eg LEX_LA)
+    // since we need to resolve label and then split literal
+    for(idx = 0; idx < this->source_info.getTextInfoSize(); ++idx)
     {
         line = this->source_info.getText(idx);
         if(line.is_symbol)
@@ -1340,11 +1342,25 @@ void Lexer::resolveLabels(void)
                 std::cout << "[" << __func__ << "] checking address for symbol <" <<
                     line.symbol << ">" << std::endl;
             }
+
             label_addr = this->sym_table.getAddr(line.symbol);
+
             if(label_addr > 0)
             {
-                line.type[2] = SYM_LITERAL;
-                line.val[2] = label_addr;
+                // TODO  : looks like all the exceptions go here
+                if(line.opcode.instr == LEX_LUI)
+                {
+                    line.type[1] = SYM_LITERAL;
+                    if(line.upper)
+                        line.val[1] = (label_addr & 0xFFFF0000);
+                    else
+                        line.val[1] = label_addr;
+                }
+                else
+                {
+                    line.type[2] = SYM_LITERAL;
+                    line.val[2] = label_addr;
+                }
                 this->source_info.update(idx, line);
 
                 if(this->verbose)
@@ -1420,7 +1436,6 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]  = SYM_REG_AT;
                 ti.type[1]  = SYM_REG_ZERO;
                 ti.type[2]  = SYM_LITERAL;
-                //ti.val[0]  = this->text_info.val[0]; // TODO: same here, what is val for $at
                 ti.val[2]  = this->text_info.val[2];
                 
                 this->source_info.addText(ti);
@@ -1430,7 +1445,38 @@ void Lexer::expandPsuedo(void)
             break;
 
         case LEX_BLT:
-            std::cout << "[" << __func__ << "] would expand LEX_BLT here" << std::endl;
+            {
+                // Input is [bgt $s, $t, C]
+                // slt $at, $t, $s
+                ti.init();
+                //ti = this->text_info;
+                ti.opcode.instr = LEX_SLT;
+                ti.opcode.mnemonic = "slt";
+                ti.addr     = this->text_info.addr;
+                ti.line_num = this->text_info.line_num;
+                ti.type[0]  = SYM_REG_AT;
+                ti.type[1]  = SYM_REG_SAVED;
+                ti.type[2]  = SYM_REG_TEMP;
+                ti.val[0]   = 0;            // TODO : where should AT be?
+                ti.val[1]   = this->text_info.val[1];
+                ti.val[2]   = this->text_info.val[2];
+
+                this->source_info.addText(ti);
+                
+                // bne $at, $zero, C
+                ti.init();
+                ti.opcode.instr = LEX_BNE;
+                ti.opcode.mnemonic = "bne";
+                ti.addr     = this->text_info.addr + 1;
+                ti.line_num = this->text_info.line_num;
+                ti.type[0]  = SYM_REG_AT;
+                ti.type[1]  = SYM_REG_ZERO;
+                ti.type[2]  = SYM_LITERAL;
+                ti.val[2]  = this->text_info.val[2];
+                
+                this->source_info.addText(ti);
+            }
+            this->text_addr += 2;
             break;
 
         case LEX_LA:
@@ -1438,6 +1484,7 @@ void Lexer::expandPsuedo(void)
                 std::cout << "[" << __func__ << "] expanding LEX_LA" << std::endl;
                 std::cout << this->text_info.toString() << std::endl;
 
+                // TODO : how to resolve the label here...?
                 // la $t, A 
                 //
                 // lui $t, A_hi
@@ -1445,29 +1492,33 @@ void Lexer::expandPsuedo(void)
                 ti.init();
                 ti.opcode.instr    = LEX_LUI;
                 ti.opcode.mnemonic = "lui";
-                ti.addr     = this->text_info.addr;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = this->text_info.type[0];
-                ti.val[0]   = this->text_info.val[0];
-                ti.type[1]  = SYM_LITERAL;
-                ti.val[1]   = this->text_info.val[1] & 0xFFFF0000;
-                ti.is_imm   = true;
-                ti.upper    = true;
+                ti.addr      = this->text_info.addr;
+                ti.line_num  = this->text_info.line_num;
+                ti.type[0]   = this->text_info.type[0];
+                ti.val[0]    = this->text_info.val[0];
+                ti.type[1]   = SYM_LITERAL;
+                ti.val[1]    = this->text_info.val[1] & 0xFFFF0000;
+                ti.is_imm    = true;
+                ti.upper     = true;
+                ti.is_symbol = true;
+                ti.symbol    = this->text_info.symbol;
 
                 this->source_info.addText(ti);
 
                 ti.init();
                 ti.opcode.instr    = LEX_ORI;
                 ti.opcode.mnemonic = "ori";
-                ti.addr     = this->text_info.addr + 1;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = this->text_info.type[0];
-                ti.val[0]   = this->text_info.val[0];
-                ti.type[1]  = this->text_info.type[0];
-                ti.val[1]   = this->text_info.val[0];
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[2]   = this->text_info.val[1] & 0x0000FFFF;
-                ti.is_imm   = true;
+                ti.addr      = this->text_info.addr + 1;
+                ti.line_num  = this->text_info.line_num;
+                ti.type[0]   = this->text_info.type[0];
+                ti.val[0]    = this->text_info.val[0];
+                ti.type[1]   = this->text_info.type[0];
+                ti.val[1]    = this->text_info.val[0];
+                ti.type[2]   = SYM_LITERAL;
+                ti.val[2]    = this->text_info.val[1] & 0x0000FFFF;
+                ti.is_imm    = true;
+                ti.is_symbol = true;
+                ti.symbol    = this->text_info.symbol;
 
                 this->source_info.addText(ti);
             }
@@ -1571,7 +1622,6 @@ void Lexer::lex(void)
             continue;
         }
         this->parseLine();
-        // add the current line info to the overall source info....
     }
 
     // Resolve symbols
