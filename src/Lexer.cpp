@@ -1388,11 +1388,7 @@ void Lexer::advanceAddrs(int start_idx, int offset)
 void Lexer::expandPsuedo(void)
 {
     Opcode cur_opcode;
-    //TextInfo this->text_info;
     TextInfo ti;
-
-    std::cout << "[" << __func__ << "] this->source_info text section contains " 
-        << this->source_info.getTextInfoSize() << " lines" << std::endl;
 
     switch(this->text_info.opcode.instr)
     {
@@ -1414,7 +1410,6 @@ void Lexer::expandPsuedo(void)
                 ti.val[2]   = this->text_info.val[0];
 
                 this->source_info.addText(ti);
-                //this->source_info.update(idx, ti);
                 
                 // bne $at, $zero, C
                 ti.init();
@@ -1429,8 +1424,6 @@ void Lexer::expandPsuedo(void)
                 ti.val[2]  = this->text_info.val[2];
                 
                 this->source_info.addText(ti);
-                //this->source_info.insert(idx+1, ti);
-                //this->advanceAddrs(idx+2, 1);
             }
             this->text_addr += 2;
             
@@ -1462,7 +1455,6 @@ void Lexer::expandPsuedo(void)
                 ti.upper    = true;
 
                 this->source_info.addText(ti);
-                //this->source_info.update(idx, ti);
 
                 ti.init();
                 ti.opcode.instr    = LEX_ORI;
@@ -1478,8 +1470,6 @@ void Lexer::expandPsuedo(void)
                 ti.is_imm   = true;
 
                 this->source_info.addText(ti);
-                //this->source_info.insert(idx+1, ti);
-                //this->advanceAddrs(idx+2, 1);
             }
             this->text_addr += 2;
             break;
@@ -1586,13 +1576,6 @@ void Lexer::lex(void)
 
     // Resolve symbols
     this->resolveLabels();
-
-    if(this->expand_psuedo)
-    {
-        this->expandPsuedo();
-        // Resolve symbols in new locationsc
-        this->resolveLabels();
-    }
 }
 
 /*
