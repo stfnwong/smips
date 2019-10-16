@@ -205,6 +205,37 @@ Program get_for_loop_expected_program(void)
 }
 
 
+/*
+ * Expected assembly output for array.asm
+ */
+Program get_array_expected_program(void)
+{
+    Program prog;
+    Instr   instr;
+    DataSeg data;
+
+
+    // ---- Data Section ---- //
+    
+    // ---- Text Section ---- //
+    
+    // la $s0, list
+    // NOTE: <la $s0, list> expands to
+    // lui $at, list
+    // ori $s0, $at, displ
+    instr.init();
+    instr.adr = 0x200;
+
+    // li $t0, 0
+    // NOTE; <li $t0, 0> translates to
+    // lui $at, 0
+    // ori $t0, $at, 0
+
+
+    return prog;
+}
+
+
 class TestAssembler : public ::testing::Test
 {
     virtual void SetUp() {}
@@ -213,6 +244,7 @@ class TestAssembler : public ::testing::Test
     public:
         std::string test_mult_add_file = "asm/mult_add.asm";
         std::string test_for_loop_file = "asm/for_loop.asm";
+        std::string test_array_file = "asm/array.asm";
 };
 
 
@@ -314,6 +346,34 @@ TEST_F(TestAssembler, test_for_loop)
         std::cout << "[OK]" << std::endl;
     }
     std::cout << prog_out.toString() << std::endl;
+}
+
+
+/*
+ * Array and data segment test
+ */
+TEST_F(TestAssembler, test_array)
+{
+    Lexer      lexer;
+    Assembler  test_asm;
+    SourceInfo src_out;
+    Program    prog_out;
+    Program    prog_exp;
+
+    test_asm.setVerbose(true);
+    // get some source info for this program
+    lexer.setVerbose(false);
+    lexer.loadFile(this->test_array_file);
+    lexer.lex();
+
+    // add source info to assembler
+    src_out = lexer.getSourceInfo();
+    test_asm.loadSource(src_out);
+    test_asm.assemble();
+
+    // expected program
+    prog_exp =  get_array_expected_program();
+
 }
 
 

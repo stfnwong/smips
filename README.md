@@ -2,7 +2,11 @@
 MIPS emulator and binary tools 
 
 ## Features
-- So far almost none - at the moment development of the assembler, disassembler, and maybe a debugger is still incomplete. The actual chip emulation of a MIPS pipeline will only be implemented after that 
+- Just the assembler
+
+## Planned features 
+- The actual emulation.
+- An RTL verison with simulations, etc.
 
 ## TODOS
 - Finish binary tools

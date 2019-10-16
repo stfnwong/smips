@@ -12,6 +12,8 @@
 #include <sstream>
 
 
+// Instr
+
 Instr::Instr()
 {
     this->init();
@@ -24,12 +26,19 @@ Instr::Instr(const uint32_t adr, const uint32_t ins)
 }
 
 // TODO : I suppose that there should also be a move constructor here
+/*
+ * copy ctor
+ */
 Instr::Instr(const Instr& that)
 {
     this->adr = that.adr;
     this->ins = that.ins;
 }
 
+
+/*
+ * ==
+ */
 bool Instr::operator==(const Instr& that) const
 {
     if(this->adr != that.adr)
@@ -40,6 +49,9 @@ bool Instr::operator==(const Instr& that) const
     return true;
 }
 
+/*
+ * !=
+ */
 bool Instr::operator!=(const Instr& that) const
 {
     if(this->adr == that.adr)
@@ -76,17 +88,112 @@ std::string Instr::toString(void) const
 }
 
 
+// DataSeg
+DataSeg::DataSeg()
+{
+    this->adr = 0;
+}
+
+DataSeg::DataSeg(uint32_t adr, const std::vector<uint8_t> d)
+{
+    this->adr = adr;
+    this->data = d;
+}
+
+/*
+ * assignment
+ */
+DataSeg& DataSeg::operator=(const DataSeg& that)
+{
+    if(*this != that)
+    {
+        this->data.clear();
+        this->adr  = that.adr;
+        this->data = that.data;
+        //for(unsigned int i = 0; i < that.data.size(); ++i)
+        //    this->data.push_back(that.data[i]);
+    }
+
+    return *this;
+}
+
+/*
+ * ==
+ */
+bool DataSeg::operator==(const DataSeg& that) const
+{
+    if(this->adr != that.adr)
+        return false;
+    if(this->data.size() != that.data.size())
+        return false;
+
+    for(unsigned int i = 0; i < this->data.size(); ++i)
+    {
+        if(this->data[i] != that.data[i])
+            return false;
+    }
+
+    return true;
+}
+
+
+/*
+ * !=
+ */
+bool DataSeg::operator!=(const DataSeg& that) const
+{
+    return !(*this == that);
+}
+
+/*
+ * toString()
+ */
+std::string DataSeg::toString(void) const
+{
+    std::ostringstream oss;
+
+    // address
+    oss << this->data.size() << " words starting at ";
+    oss << "[0x" << std::hex << std::setw(8) << std::setfill('0')
+        << this->adr << "]  " << std::endl;
+    for(unsigned int i = 0; i < this->data.size(); ++i)
+    {
+        oss << std::hex << this->data[i] << " ";
+    }
+    oss << std::endl;
+
+    return oss.str();
+}
+
+
+
 // ======== PROGRAM ======== //
 Program::Program() {} 
 
+/*
+ * init()
+ */
 void Program::init(void)
 {
     this->instructions.clear();
 }
 
+/*
+ * add()
+ * Add an Instr
+ */
 void Program::add(const Instr& i)
 {
     this->instructions.push_back(i);
+}
+
+/*
+ * add()
+ * Add a DataSeg
+ */
+void Program::add(const DataSeg& d)
+{
+    this->data_segments.push_back(d);
 }
 
 Instr& Program::get(const unsigned int idx) 
@@ -140,6 +247,7 @@ int Program::save(const std::string& filename)
         return -1;
     }
 
+    // write instruction segment
     N = (uint32_t) this->instructions.size();
     outfile.write(reinterpret_cast<char*>(&N), sizeof(uint32_t));
 

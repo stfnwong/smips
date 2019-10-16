@@ -26,6 +26,12 @@ class Lexer
         OpcodeTable instr_code_table;
         void init_instr_table(void);
 
+    // Psuedo instruction table
+    private:
+        OpcodeTable psuedo_op_table;
+        void init_psuedo_op_table(void);
+
+    // Assembler directives 
     private:
         OpcodeTable directive_code_table;
         void init_directive_code_table(void);
@@ -36,7 +42,9 @@ class Lexer
         int   line_buf_size;
         char* token_buf;
         char* line_buf;
+        int   start_addr;
         bool  verbose;
+        bool  expand_psuedo;
 
     private:
         void  alloc_mem(void);
@@ -53,13 +61,14 @@ class Lexer
         std::string  filename;
         SourceInfo   source_info;
         SymbolTable  sym_table;
-        unsigned int cur_addr;
+        unsigned int text_addr;
+        unsigned int data_addr;
 
     // Segments 
     private:
         TextInfo     text_info;
         DataInfo     data_info;
-        LexMode      cur_mode;
+        LexMode      cur_mode;          // whether to place the current instruction in text or data seg
 
     // Motion through source file
     private:
@@ -76,10 +85,16 @@ class Lexer
     private:
         Token cur_token;
         void scanToken(void);
-        void scanString(void);
 		// extra token handling functions
-		Token extractLiteral(const std::string& token, unsigned int start_offset, unsigned int& end_offset);
-        Token extractReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset);
+		Token extractLiteral(
+				const std::string& token, 
+				unsigned int start_offset, 
+				unsigned int& end_offset);
+        Token extractReg(
+				const std::string& token, 
+				unsigned int start_offset, 
+				unsigned int& end_offset);
+
         void nextToken(void);
 
     // Assembler directives
@@ -106,8 +121,16 @@ class Lexer
         void parseMemArgs(void);
         void parseRegArgs(const int num);
         void parseJump(void);
+		void parseLabel(void);
         void parseLine(void);
         TokenType getRegType(const char& reg_char) const;
+
+    private:
+        // psuedo instruction expansion
+
+    private:
+        // update instruction addresses when expanding psuedo ops
+        void  advanceAddrs(int start_idx, int offset);
 
     // disable copy construction, assignment
     private:
@@ -118,14 +141,19 @@ class Lexer
         Lexer();
         ~Lexer();
 
+        void  expandPsuedo(void);
         void  lex(void);
         int   loadFile(const std::string& filename);
         // getters 
         bool  getVerbose(void) const;
+        bool  getExpandPsuedo(void) const;
         const SourceInfo& getSourceInfo(void) const;
         const SymbolTable& getSymTable(void) const;
+        int   getStartAddr(void) const;
         // setters 
         void  setVerbose(const bool v);
+        void  setExpandPsuedo(const bool v);
+        void  setStartAddr(int a);
 
 };
 

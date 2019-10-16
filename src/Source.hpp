@@ -24,8 +24,9 @@ typedef enum TokenType
     SYM_DIRECTIVE,
     SYM_CHAR,
     SYM_STRING,
+    SYM_SYSCALL,
     // register types
-    SYM_REG_AT,
+    SYM_REG_AT,     // assembler temporary
     SYM_REG_STACK,
     SYM_REG_FRAME,
     SYM_REG_TEMP,
@@ -38,6 +39,22 @@ typedef enum TokenType
     SYM_REG_NUM,        // register that has just a number
     SYM_REG_GLOBAL,     // for the $GP register
 } TokenType;
+
+
+typedef enum DirectiveType
+{
+    SYM_DIR_NONE,
+    SYM_DIR_ALIGN,
+    SYM_DIR_ASCIIZ,
+    SYM_DIR_BYTE,
+    SYM_DIR_CHAR,
+    SYM_DIR_GLOBL,
+    SYM_DIR_HALF,
+    SYM_DIR_MACRO,
+    SYM_DIR_END_MACRO,
+    SYM_DIR_SPACE,
+    SYM_DIR_WORD,
+} DirectiveType;
 
 
 /*
@@ -53,6 +70,7 @@ struct Token
     public:
         Token();
         Token(const TokenType& t, const std::string& v);
+        void init(void);
         bool isReg(void) const;
         bool isOffset(void) const;
         std::string toString(void) const;
@@ -61,10 +79,9 @@ struct Token
         bool operator==(const Token& that) const;
         bool operator!=(const Token& that) const;
 
-		// assignment
-		Token& operator=(const Token& that);
+        // assignment
+        Token& operator=(const Token& that);
 };
-
 
 
 /*
@@ -84,6 +101,7 @@ struct TextInfo
     bool         is_directive;
     bool         is_imm;
     bool         is_symbol;
+    bool         upper;
     int          val[3];
     TokenType    type[3];      // record of types for each register
     Opcode       opcode;
@@ -108,26 +126,30 @@ struct TextInfo
  * DataInfo
  * Information for a directive in the assembly source which contains memory 
  * information (eg: .text, .word, and so on). This object forms a kind of intermediate
- * representation for assembly lines that will appear in the data section of the 
- * output binary.
+ * representation for assembly lines that will ultimately be placed in the data section
+ * of the output binary.
  */
 struct DataInfo
 {
+    DirectiveType         directive;
     std::string           errstr;
-	std::string           directive;
+    std::string           label;
     std::vector <uint8_t> data;
     unsigned int          line_num;
     unsigned int          addr;
     unsigned int          space;
-	bool                  is_directive;
+    bool                  is_label;
     bool                  error;
 
     public:
         DataInfo();
         void init(void);
+        std::string dirTypeString(void) const;
         std::string toString(void) const;
 
+        DataInfo& operator=(const DataInfo& that);
         bool operator==(const DataInfo& that) const;
+        bool operator!=(const DataInfo& that) const;
 
         // Insert a new byte into the data section
         void addByte(const uint8_t byte);
@@ -187,6 +209,7 @@ class SourceInfo
         void         addText(const TextInfo& l);
         void         addData(const DataInfo& d);
         void         update(const unsigned int idx, const TextInfo& l);
+        void         insert(const unsigned int idx, const TextInfo& l);
         DataInfo&    getData(const unsigned int idx);
         TextInfo&    getText(const unsigned int idx);
         unsigned int getLineNum(const unsigned int idx) const;
@@ -198,6 +221,7 @@ class SourceInfo
         unsigned int getDataInfoSize(void) const;
 
         std::string  toString(void) const;
+        std::string  errString(void) const;
 };
 
 #endif /*__SOURCE_HPP*/

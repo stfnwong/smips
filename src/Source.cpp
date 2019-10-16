@@ -25,15 +25,20 @@
  */
 Token::Token()
 {
-    this->type   = SYM_NONE;
-    this->val    = "\0";
-    this->offset = "\0";
+    this->init();
 }
 
 Token::Token(const TokenType& t, const std::string& v)
 {
     this->type = t;
     this->val = v;
+}
+
+void Token::init(void)
+{
+    this->type   = SYM_NONE;
+    this->val    = "\0";
+    this->offset = "\0";
 }
 
 bool Token::isReg(void) const
@@ -74,10 +79,24 @@ std::string Token::toString(void) const
             return "NONE <" + this->val + ">";
         case SYM_EOF:
             return "EOF <" + this->val + ">";
+        case SYM_LABEL:
+            return "LABEL <" + this->val + ">";
         case SYM_INSTR:
             return "INSTR <" + this->val + ">";
         case SYM_LITERAL:
             return "LITERAL <" + this->val + ">";
+        case SYM_DIRECTIVE:
+            return "DIRECTIVE <" + this->val + ">";
+        case SYM_CHAR:
+            return "CHAR <" + this->val + ">";
+        case SYM_STRING:
+            return "STRING <" + this->val + ">";
+        case SYM_SYSCALL:
+            return "SYSCALL";
+
+        // Registers
+        case SYM_REG_AT:
+            return "AT <" + this->val + ">";
         case SYM_REG_TEMP:
             return "R_TEMP <" + this->val + ">";
         case SYM_REG_SAVED:
@@ -100,6 +119,9 @@ std::string Token::toString(void) const
 }
 
 
+/*
+ * Token (==)
+ */
 bool Token::operator==(const Token& that) const
 {
     if(this->type != that.type)
@@ -112,6 +134,9 @@ bool Token::operator==(const Token& that) const
     return true;
 }
 
+/*
+ * Token (!=)
+ */
 bool Token::operator!=(const Token& that) const
 {
     if(this->type == that.type)
@@ -127,14 +152,14 @@ bool Token::operator!=(const Token& that) const
 // assignment 
 Token& Token::operator=(const Token& that)
 {
-	if(this != &that)
-	{
-		this->type   = that.type;
-		this->val    = that.val;
-		this->offset = that.offset;
-	}
+    if(this != &that)
+    {
+        this->type   = that.type;
+        this->val    = that.val;
+        this->offset = that.offset;
+    }
 
-	return *this;
+    return *this;
 }
 
 /*
@@ -157,6 +182,7 @@ void TextInfo::init(void)
     this->is_symbol    = false;
     this->is_directive = false;
     this->is_imm       = false;
+    this->upper        = false;
     this->opcode.init();
 
     for(int i = 0; i < 3; ++i)
@@ -202,6 +228,8 @@ std::string TextInfo::toString(void) const
     {
         if(this->type[i] == SYM_REG_TEMP)
             oss << "t" << this->val[i] << " ";
+        else if(this->type[i] == SYM_REG_AT)
+            oss << "at" << this->val[i] << " ";     // TODO : what do the values for $at look like?
         else if(this->type[i] == SYM_REG_SAVED)
             oss << "s" << this->val[i] << " ";
         else if(this->type[i] == SYM_REG_ARG)
@@ -228,10 +256,18 @@ std::string TextInfo::toString(void) const
     // literal (if applicable)
     if(this->is_symbol)
         oss << "0x" << std::hex << std::setw(8) << this->val[2];
-    else if(this->is_imm)
-        oss << "0x" << std::hex << std::setw(8) << this->val[2];
+    //else if(this->is_imm)
+    //    oss << "0x" << std::hex << std::setw(8) << this->val[2];
+    else if(!this->is_imm && (this->type[1] == SYM_LITERAL))
+        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
     else if(!this->is_imm && (this->type[2] == SYM_LITERAL))
-        oss << "   +" << std::left << std::hex << std::setw(4) << std::setfill(' ') << this->val[2] << "  ";
+        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[2] << "  ";
+    else if(this->is_imm && this->upper)
+        oss << "U 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
+    else if(this->is_imm && (this->type[1] == SYM_LITERAL))
+        oss << "0x" << std::hex << std::setw(8) << this->val[1];
+    else if(this->is_imm && (this->type[2] == SYM_LITERAL))
+        oss << "0x" << std::hex << std::setw(8) << this->val[2];
     else
         oss << "          ";
     // spacing chars
@@ -270,6 +306,8 @@ bool TextInfo::operator==(const TextInfo& that) const
     if(this->is_symbol != that.is_symbol)
         return false;
     if(this->is_imm != that.is_imm)
+        return false;
+    if(this->upper != that.upper)
         return false;
     if(this->opcode != that.opcode)
         return false;
@@ -342,6 +380,11 @@ std::string TextInfo::diff(const TextInfo& that) const
         oss << "is_imm does not match" << std::endl;
         num_err += 1;
     }
+    if(this->upper != that.upper)
+    {
+        oss << "upper does not match" << std::endl;
+        num_err += 1;
+    }
     if(this->opcode != that.opcode)
     {
         oss << "opcode [" << this->opcode.toString() << 
@@ -377,13 +420,48 @@ DataInfo::DataInfo()
 void DataInfo::init(void)
 {
     this->errstr       = "\0";
-	this->directive    = "\0";
+    this->directive    = SYM_DIR_NONE;
+    this->label        = "\0";
     this->line_num     = 0;
     this->addr         = 0;
     this->space        = 0;
     this->error        = false;
-	this->is_directive = false;
+    this->is_label     = false;
     this->data.clear();
+}
+
+/*
+ * dirTypeString()
+ */
+std::string DataInfo::dirTypeString(void) const
+{
+    switch(this->directive)
+    {
+        case SYM_DIR_NONE:
+            return "NONE";
+        case SYM_DIR_ALIGN:
+            return ".align";
+        case SYM_DIR_ASCIIZ:
+            return ".asciiz";
+        case SYM_DIR_BYTE:
+            return ".byte";
+        case SYM_DIR_CHAR:
+            return ".char";
+        case SYM_DIR_GLOBL:
+            return ".globl";
+        case SYM_DIR_HALF:
+            return ".half";
+        case SYM_DIR_MACRO:
+            return ".macro";
+        case SYM_DIR_END_MACRO:
+            return ".end_macro";
+        case SYM_DIR_SPACE:
+            return ".space";
+        case SYM_DIR_WORD:
+            return ".word";
+        default:
+            return "NONE";
+    }
 }
 
 /*
@@ -395,9 +473,52 @@ std::string DataInfo::toString(void) const
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    oss << "Line  Type   Addr  Mnemonic   Opcode   Arguments   literal   error" << std::endl;
+    // extend to the right as needed
+    oss << "Line  Type   Addr  Directive  Label    Error Data                    " << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
+    oss << "[";
+    if(this->is_label)
+        oss << "l";
+    else
+        oss << ".";
+    if(this->space > 0)
+        oss << "s";
+    else
+        oss << ".";
+
+    oss << "] ";
+    oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
+    oss << "   ";
+    // directive
+    if(this->directive != SYM_DIR_NONE)
+        oss << std::left << std::setw(8) << std::setfill(' ') << this->dirTypeString();
+    else
+        oss << std::left << std::setw(7) << std::setfill(' ') << " ";
+    oss << " ";
+    // label
+    if(this->label != "\0")
+        oss << std::left << std::setw(10) << std::setfill(' ') << this->label;
+    else
+        oss << std::left << std::setw(9) << std::setfill(' ') << " ";
+
+    if(this->error)
+        oss << "  YES  ";
+    else
+        oss << "  NO   ";
+    if(this->space > 0)
+    {
+        oss << std::dec << std::setw(4) << this->space 
+            << " bytes";
+    }
+    else
+    {
+        for(unsigned int i = 0; i < this->data.size(); ++i)
+        {
+            oss << "$" << std::right << std::hex  << std::setfill('0') 
+                << unsigned(this->data[i]) << ",";
+        }
+    }
     oss << std::endl;
     
     return oss.str();
@@ -416,6 +537,10 @@ bool DataInfo::operator==(const DataInfo& that) const
         return false;
     if(this->error != that.error)
         return false;
+    if(this->label != that.label)
+        return false;
+    if(this->is_label != that.is_label)
+        return false;
 
     if(this->data.size() != that.data.size())
         return false;
@@ -431,6 +556,36 @@ bool DataInfo::operator==(const DataInfo& that) const
 
     return true;
 }
+
+/*
+ * !=
+ */
+bool DataInfo::operator!=(const DataInfo& that) const
+{
+    return !(*this == that);
+}
+
+/*
+ * =
+ */
+DataInfo& DataInfo::operator=(const DataInfo& that)
+{
+    if(this != &that)
+    {
+        this->errstr = that.errstr;
+        this->directive = that.directive;
+        this->label = that.label;
+        this->data = that.data;
+        this->line_num = that.line_num;
+        this->addr = that.addr;
+        this->space = that.space;
+        this->is_label = that.is_label;
+        this->error = that.error;
+    }
+
+    return *this;
+}
+
 
 /*
  * addBytes
@@ -507,18 +662,26 @@ bool Symbol::operator!=(const Symbol& that) const
  */
 SymbolTable::SymbolTable() {} 
 
-
+/*
+ * add()
+ */
 void SymbolTable::add(const Symbol& s)
 {
     this->syms.push_back(s);
 }
 
+/*
+ * update()
+ */
 void SymbolTable::update(const unsigned int idx, const Symbol& s)
 {
     if(idx < this->syms.size())
         this->syms[idx] = s;
 }
 
+/*
+ * get()
+ */
 Symbol& SymbolTable::get(const unsigned int idx) 
 {
     if(idx < this->syms.size())
@@ -527,6 +690,9 @@ Symbol& SymbolTable::get(const unsigned int idx)
     return this->null_sym;
 }
 
+/*
+ * getAddr()
+ */
 uint32_t SymbolTable::getAddr(const std::string& label) const
 {
     for(unsigned int idx = 0; idx < this->syms.size(); ++idx)
@@ -538,11 +704,17 @@ uint32_t SymbolTable::getAddr(const std::string& label) const
     return (uint32_t) 0;
 }
 
+/*
+ * size()
+ */
 unsigned int SymbolTable::size(void) const
 {
     return this->syms.size();
 }
 
+/*
+ * init()
+ */
 void SymbolTable::init(void)
 {
     this->syms.clear();
@@ -554,22 +726,53 @@ void SymbolTable::init(void)
  */
 SourceInfo::SourceInfo() {}
 
+/*
+ * addText()
+ */
 void SourceInfo::addText(const TextInfo& l)
 {
     this->text_info.push_back(l);
 }
 
+/*
+ * addData()
+ */
 void SourceInfo::addData(const DataInfo& d)
 {
     this->data_info.push_back(d);
 }
 
+/*
+ * update()
+ */
 void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 {
     if(idx < this->text_info.size())
         this->text_info[idx] = l;
 }
 
+/*
+ * insert()
+ */
+void SourceInfo::insert(const unsigned int idx, const TextInfo& l)
+{
+    this->text_info.insert(this->text_info.begin() + idx, l);
+}
+
+/*
+ * getdata()
+ */
+DataInfo& SourceInfo::getData(const unsigned int idx)
+{
+    if(idx < this->data_info.size())
+        return this->data_info[idx];
+
+    return this->null_data;
+}
+
+/*
+ * getText()
+ */
 TextInfo& SourceInfo::getText(const unsigned int idx)
 {
     if(idx < this->text_info.size())
@@ -578,6 +781,9 @@ TextInfo& SourceInfo::getText(const unsigned int idx)
     return this->null_line;
 }
 
+/*
+ * getLineNum()
+ */
 unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 {
     if(idx < this->text_info.size())
@@ -586,6 +792,9 @@ unsigned int SourceInfo::getLineNum(const unsigned int idx) const
     return 0;
 }
 
+/*
+ * getNumErr()
+ */
 unsigned int SourceInfo::getNumErr(void) const
 {
     unsigned int num_err = 0;
@@ -595,11 +804,17 @@ unsigned int SourceInfo::getNumErr(void) const
     return num_err;
 }
 
+/*
+ * getNumLines()
+ */
 unsigned int SourceInfo::getNumLines(void) const
 {
     return this->text_info.size();
 }
 
+/*
+ * hasError()
+ */
 bool SourceInfo::hasError(void) const
 {
     for(unsigned int idx = 0; idx < this->text_info.size(); ++idx)
@@ -611,18 +826,26 @@ bool SourceInfo::hasError(void) const
     return false;
 }
 
+/*
+ * getTextInfoSize()
+ */
 unsigned int SourceInfo::getTextInfoSize(void) const
 {
     return this->text_info.size();
 }
 
+/*
+ * getDataInfoSize()
+ */
 unsigned int SourceInfo::getDataInfoSize(void) const
 {
     return this->data_info.size();
 }
 
 
-
+/*
+ * toString()
+ */
 std::string SourceInfo::toString(void) const
 {
     std::ostringstream oss;
@@ -634,4 +857,38 @@ std::string SourceInfo::toString(void) const
         oss << this->text_info[l].toString();
 
     return oss.str();
+}
+
+/*
+ * errString()
+ */
+std::string SourceInfo::errString(void) const
+{
+    std::ostringstream oss;
+    for(unsigned int l = 0; l < this->data_info.size(); ++l)
+    {
+        if(this->data_info[l].error)
+        {
+            oss << "[line " << this->data_info[l].line_num << "] ";
+            oss << this->data_info[l].errstr;
+            oss << std::endl;
+        }
+    }
+
+    oss << std::endl;
+
+    // Text infos
+    for(unsigned int l = 0; l < this->text_info.size(); ++l)
+    {
+        if(this->text_info[l].error)
+        {
+            oss << "[line " << this->text_info[l].line_num << "] ";
+            oss << this->text_info[l].errstr;
+            oss << std::endl;
+        }
+    }
+
+    return oss.str();
+
+
 }

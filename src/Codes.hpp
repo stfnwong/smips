@@ -27,13 +27,17 @@ typedef enum instr_code
     LEX_SLT, LEX_SLTU, LEX_SLTI, LEX_SLTIU,
     // load
     LEX_LB, LEX_LBU, LEX_LH, LEX_LHU, 
-    LEX_LW, LEX_LI, LEX_LA,
+    LEX_LW, LEX_LI, LEX_LA, LEX_LUI,
     // store
     LEX_SB, LEX_SH, LEX_SW, 
     // jumps
     LEX_J, LEX_JAL, LEX_JALR, LEX_JR,
     // branches
-    LEX_BEQ, LEX_BGT, LEX_BGTZ, LEX_BLEZ, LEX_BNE
+    LEX_BEQ, LEX_BLEZ, LEX_BNE, LEX_BGTZ,
+    // branch psuedo instructions 
+    LEX_BGT, LEX_BLT, LEX_BGE, LEX_BLE, 
+    // syscall
+    LEX_SYSCALL     // not strictly an instruction
 } instr_code;
 
 
@@ -57,80 +61,87 @@ typedef enum directive_code
 } directive_code;
 
 
-// TODO : are syscalls really that different that they need 
-// their own special datatype (the answer may be yes)
-typedef enum sys_code
-{
-    LEX_SYSCALL
-} sys_code;
 
 // MIPS Opcode list 
 const Opcode lex_instr_codes[] = {
     Opcode(LEX_NULL,  "\0"),
     // arith / logic
-    Opcode(LEX_ADD,   "ADD"),
-    Opcode(LEX_ADDU,  "ADDU"),
-    Opcode(LEX_ADDI,  "ADDI"),
-    Opcode(LEX_ADDIU, "ADDIU"),
-    Opcode(LEX_AND,   "AND"),
-    Opcode(LEX_ANDI,  "ANDI"),
-    Opcode(LEX_DIV,   "DIV"),
-    Opcode(LEX_DIVU,  "DIVU"),
-    Opcode(LEX_MULT,  "MULT"),
-    Opcode(LEX_MULTU, "MULTU"),
-    Opcode(LEX_NOR,   "NOR"),
-    Opcode(LEX_OR,    "OR"),
-    Opcode(LEX_ORI,   "ORI"),
-    Opcode(LEX_SLL,   "SLL"),
-    Opcode(LEX_SLLV,  "SLLV"),
-    Opcode(LEX_SRL,   "SRL"),
-    Opcode(LEX_SRV,   "SRV"),
+    Opcode(LEX_ADD,   "add"),
+    Opcode(LEX_ADDU,  "addu"),
+    Opcode(LEX_ADDI,  "addi"),
+    Opcode(LEX_ADDIU, "addiU"),
+    Opcode(LEX_AND,   "and"),
+    Opcode(LEX_ANDI,  "andi"),
+    Opcode(LEX_DIV,   "div"),
+    Opcode(LEX_DIVU,  "divu"),
+    Opcode(LEX_MULT,  "mult"),
+    Opcode(LEX_MULTU, "multU"),
+    Opcode(LEX_NOR,   "nor"),
+    Opcode(LEX_OR,    "or"),
+    Opcode(LEX_ORI,   "ori"),
+    Opcode(LEX_SLL,   "sll"),
+    Opcode(LEX_SLLV,  "sllv"),
+    Opcode(LEX_SRL,   "srl"),
+    Opcode(LEX_SRV,   "srv"),
     // comparison
-    Opcode(LEX_SLT,   "SLT"),
-    Opcode(LEX_SLTU,  "SLTU"),
-    Opcode(LEX_SLTI,  "SLTI"),
-    Opcode(LEX_SLTIU, "SLTIU"),
+    Opcode(LEX_SLT,   "slt"),
+    Opcode(LEX_SLTU,  "sltu"),
+    Opcode(LEX_SLTI,  "slti"),
+    Opcode(LEX_SLTIU, "sltiu"),
     // loads 
-    Opcode(LEX_LB,    "LB"),
-    Opcode(LEX_LBU,   "LBU"),
-    Opcode(LEX_LH,    "LH"),
-    Opcode(LEX_LHU,   "LHU"),
-    Opcode(LEX_LW,    "LW"),
-    Opcode(LEX_LI,    "LI"),
-	Opcode(LEX_LA,    "LA"),
+    Opcode(LEX_LB,    "lb"),
+    Opcode(LEX_LBU,   "lbu"),
+    Opcode(LEX_LH,    "lh"),
+    Opcode(LEX_LHU,   "lhu"),
+    Opcode(LEX_LW,    "lw"),
+    Opcode(LEX_LI,    "li"),
+	Opcode(LEX_LA,    "la"),
+    Opcode(LEX_LUI,   "lui"),
     // store
-    Opcode(LEX_SH,    "SH"),
-    Opcode(LEX_SW,    "SW"),
+    Opcode(LEX_SH,    "sh"),
+    Opcode(LEX_SW,    "sw"),
     // jump
-    Opcode(LEX_J,     "J"),
-    Opcode(LEX_JAL,   "JAL"),
-    Opcode(LEX_JALR,  "JALR"),
-    Opcode(LEX_JR,    "JR"),
+    Opcode(LEX_J,     "j"),
+    Opcode(LEX_JAL,   "jal"),
+    Opcode(LEX_JALR,  "jalr"),
+    Opcode(LEX_JR,    "jr"),
     // branch
-    Opcode(LEX_BEQ,   "BEQ"),
-	Opcode(LEX_BGT,   "BGT"),
-    Opcode(LEX_BGTZ,  "BGTZ"),
-    Opcode(LEX_BLEZ,  "BLEZ"),
-    Opcode(LEX_BNE,   "BNE"),
+    Opcode(LEX_BEQ,   "beq"),
+	Opcode(LEX_BGT,   "bgt"),
+    Opcode(LEX_BGTZ,  "bgtz"),
+    Opcode(LEX_BLEZ,  "blez"),
+    Opcode(LEX_BNE,   "bne"),
+    // syscall
+    Opcode(LEX_SYSCALL, "syscall"),
 };
 
 
 // Assembly directives
 const Opcode lex_directive_codes[] = {
-    Opcode(LEX_ALIGN,     ".ALIGN"),
-    Opcode(LEX_ASCIIZ,    ".ASCIIZ"),
-    Opcode(LEX_BYTE,      ".BYTE"),
-    Opcode(LEX_DATA,      ".DATA"),
-    Opcode(LEX_DOUBLE,    ".DOUBLE"),
-    Opcode(LEX_END_MACRO, ".END_MACRO"),
-    Opcode(LEX_FLOAT,     ".FLOAT"),
-    Opcode(LEX_GLOBAL,    ".GLOBAL"),
-    Opcode(LEX_HALF,      ".HALF"),
-    Opcode(LEX_INCLUDE,   ".INCLUDE"),
-    Opcode(LEX_MACRO,     ".MACRO"),
-    Opcode(LEX_SPACE,     ".SPACE"),
-    Opcode(LEX_TEXT,      ".TEXT"),
-    Opcode(LEX_WORD,      ".WORD")
+    Opcode(LEX_ALIGN,     ".align"),
+    Opcode(LEX_ASCIIZ,    ".asciiz"),
+    Opcode(LEX_BYTE,      ".byte"),
+    Opcode(LEX_DATA,      ".data"),
+    Opcode(LEX_DOUBLE,    ".double"),
+    Opcode(LEX_END_MACRO, ".end_macro"),
+    Opcode(LEX_FLOAT,     ".float"),
+    Opcode(LEX_GLOBAL,    ".global"),
+    Opcode(LEX_HALF,      ".half"),
+    Opcode(LEX_INCLUDE,   ".include"),
+    Opcode(LEX_MACRO,     ".macro"),
+    Opcode(LEX_SPACE,     ".space"),
+    Opcode(LEX_TEXT,      ".text"),
+    Opcode(LEX_WORD,      ".word")
+};
+
+// Psuedo Ops
+const Opcode lex_psuedo_ops[] = {
+    Opcode(LEX_BLT,   "blt"),
+    Opcode(LEX_BGT,   "bgt"),
+    Opcode(LEX_BGE,   "bge"),
+    Opcode(LEX_BLE,   "ble"),
+    Opcode(LEX_LA,    "la"),
+    Opcode(LEX_LI,    "li"),
 };
 
 

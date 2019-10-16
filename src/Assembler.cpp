@@ -116,6 +116,8 @@ uint32_t Assembler::asm_i_instr(const TextInfo& l, const int n) const
     return instr;
 }
 
+// TODO : put psuedo instructions here?
+
 // ==== Instruction Assembly ==== //
 
 /*
@@ -208,6 +210,29 @@ Instr Assembler::asm_j(const TextInfo& l) const
     instr.ins = 0x02 << this->j_instr_op_offset;
     instr.ins = instr.ins | l.val[2];
     instr.adr = l.addr;
+    return instr;
+}
+
+/*
+ * asm_la()
+ * TODO : this actually has to expand to 2 instructions...
+ */
+Instr Assembler::asm_la(const TextInfo& l) const
+{
+    Instr instr;
+
+    return instr;
+}
+
+
+/*
+ * asm_li()
+ * TODO : this actually has to expand to 2 instructions...
+ */
+Instr Assembler::asm_li(const TextInfo& l) const
+{
+    Instr instr;
+
     return instr;
 }
 
@@ -378,6 +403,16 @@ Instr Assembler::assembleText(const TextInfo& line)
             return this->asm_j(line);
             break;
 
+        // TODO : here we need to be able to insert two (or perhaps 3)
+        // instructions at a time.
+        case LEX_LA:
+            return this->asm_la(line);
+            break;
+
+        case LEX_LI:
+            return this->asm_li(line);
+            break;
+
         case LEX_LW:
             return this->asm_lw(line);
             break;
@@ -425,8 +460,42 @@ Instr Assembler::assembleText(const TextInfo& line)
             // prove later to be a bad idea
             return Instr(line.addr, 0); // emit a null instruction
     }
-
 }
+
+
+/*
+ * assembleData()
+ */
+DataSeg Assembler::assembleData(const DataInfo& data)
+{
+    DataSeg seg;
+
+    switch(data.directive)
+    {
+        case SYM_DIR_NONE:
+            if(this->verbose)
+                std::cout << "[" << __func__ << "] got NONE directive" << std::endl;
+            break;
+
+        case SYM_DIR_ASCIIZ:
+        case SYM_DIR_BYTE:
+        case SYM_DIR_WORD:
+            seg.adr = data.addr;
+            seg.data = data.data;
+
+        case SYM_DIR_SPACE:
+            seg.adr = data.addr;
+            for(unsigned int i = 0; i < data.space; ++i)
+                seg.data.push_back(0);
+            break;
+
+        default:
+            break;
+    }
+
+    return seg;
+}
+
 
 /*
  * assemble()
@@ -435,7 +504,9 @@ Instr Assembler::assembleText(const TextInfo& line)
 void Assembler::assemble(void)
 {
     TextInfo cur_line;
+    DataInfo cur_data;
     Instr    cur_instr;
+    DataSeg  cur_seg;
 
     if(this->source.getNumLines() == 0)
     {
@@ -445,7 +516,12 @@ void Assembler::assemble(void)
     }
 
     this->program.init();
-    // TODO : assemble the data sections
+    for(unsigned int i = 0; i < this->source.getDataInfoSize(); ++i)
+    {
+        cur_data = this->source.getData(i);
+        cur_seg  = this->assembleData(cur_data);
+        this->program.add(cur_seg);
+    }
 
     // TODO : assemble the text sections
     for(unsigned int i = 0; i < this->source.getTextInfoSize(); ++i)
