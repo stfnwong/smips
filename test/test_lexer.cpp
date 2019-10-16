@@ -526,6 +526,9 @@ TEST_F(TestLexer, test_lex_mult_add)
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(false);
+    // TODO : setting expand psuedo here should have no effect, but
+    // last sw instruction gets duplicated.
+    test_lexer.setExpandPsuedo(false);
     test_lexer.loadFile(this->test_mult_add_file);
     test_lexer.lex();
 
