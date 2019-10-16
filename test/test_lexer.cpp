@@ -893,12 +893,15 @@ SourceInfo get_psuedo_instr_source_info(void)
     info.addText(line);
 
     // arr: .word 3
+    // TODO: actual label address should be 0x02 (which needs to change
+    // to fit memory map)
     data_line.init();
     data_line.line_num  = 9;
     data_line.addr      = 0x207;
     data_line.label     = "arr";
     data_line.directive = SYM_DIR_WORD;
     data_line.data      = {3};
+    data_line.is_label  = true;
     info.addData(data_line);
 
     return info;

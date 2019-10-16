@@ -173,7 +173,7 @@ bool Lexer::isComment(void) const
 /*
  * getRegType()
  */
-// TODO : what to do about $ra, $sp, etc?
+// TODO : what to do about $ra, $sp, $at etc?
 TokenType Lexer::getRegType(const char& reg_char) const
 {
     switch(reg_char)
@@ -208,7 +208,6 @@ TokenType Lexer::getRegType(const char& reg_char) const
         default:
             return SYM_NONE;
     }
-
     // in case we somehow fall through
     return SYM_NONE;
 }
@@ -242,8 +241,6 @@ void Lexer::scanToken(void)
         if(this->cur_char == ':')       // end of label
             break;
 
-        // TODO : don't use toupper here if its a string...
-        //this->token_buf[idx] = toupper(this->cur_char);
         this->token_buf[idx] = this->cur_char;
         this->advance();
         idx++;
@@ -1330,8 +1327,6 @@ void Lexer::resolveLabels(void)
         }
     }
 
-    // TODO : add special routine for half-word labels (eg LEX_LA)
-    // since we need to resolve label and then split literal
     for(idx = 0; idx < this->source_info.getTextInfoSize(); ++idx)
     {
         line = this->source_info.getText(idx);
@@ -1383,13 +1378,8 @@ void Lexer::advanceAddrs(int start_idx, int offset)
 {
     TextInfo cur_ti;
 
-    std::cout << "[" << __func__ << "] " << 
-        this->source_info.getTextInfoSize() << " lines in text segment" << std::endl;
-
     for(unsigned int idx = start_idx; idx < this->source_info.getTextInfoSize(); ++idx)
     {
-        // TODO: debug (remove)
-        std::cout << "[" << __func__ << "] updating address for index " << idx << std::endl;
         cur_ti = this->source_info.getText(idx);
         cur_ti.addr += offset;
         this->source_info.update(idx, cur_ti);
@@ -1481,10 +1471,6 @@ void Lexer::expandPsuedo(void)
 
         case LEX_LA:
             {
-                std::cout << "[" << __func__ << "] expanding LEX_LA" << std::endl;
-                std::cout << this->text_info.toString() << std::endl;
-
-                // TODO : how to resolve the label here...?
                 // la $t, A 
                 //
                 // lui $t, A_hi
@@ -1530,9 +1516,6 @@ void Lexer::expandPsuedo(void)
             // 32-bit immediate (2 instrs)
             if(this->text_info.val[1] > ((1 << 16)-1))
             {
-                std::cout << "[" << __func__ << "] resolving 32-bit li -> ori" << std::endl;
-                std::cout << this->text_info.toString() << std::endl;
-
                 ti.opcode.instr    = LEX_LUI;
                 ti.opcode.mnemonic = "lui";
                 ti.addr     = this->text_info.addr;
@@ -1545,7 +1528,6 @@ void Lexer::expandPsuedo(void)
                 ti.upper    = true;
 
                 this->source_info.addText(ti);
-                //this->source_info.update(idx, ti);
 
                 ti.init();
                 ti.opcode.instr    = LEX_ORI;
@@ -1561,17 +1543,11 @@ void Lexer::expandPsuedo(void)
                 ti.is_imm   = true;
 
                 this->source_info.addText(ti);
-                //this->source_info.insert(idx+1, ti);
-                //this->advanceAddrs(idx+2, 1);
                 this->text_addr += 2;
             }
             // 16-bit immediate (1 instr)
             else
             {
-                std::cout << "[" << __func__ << "] resolving 16-bit li -> ori with src addr "
-                    << std::hex << this->text_info.addr << std::endl;
-                std::cout << this->text_info.toString() << std::endl;
-
                 ti.opcode.instr = LEX_ORI;
                 ti.opcode.mnemonic = "ori";
                 ti.addr     = this->text_info.addr;
@@ -1584,7 +1560,6 @@ void Lexer::expandPsuedo(void)
                 ti.is_imm   = true;
 
                 this->source_info.addText(ti);
-                //this->source_info.update(idx, ti);
                 this->text_addr += 1;
             }
             break;
