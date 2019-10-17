@@ -42,7 +42,8 @@ class Lexer
         int   line_buf_size;
         char* token_buf;
         char* line_buf;
-        int   start_addr;
+        int   text_start_addr;
+        int   data_start_addr;
         bool  verbose;
         bool  expand_psuedo;
 
@@ -149,11 +150,13 @@ class Lexer
         bool  getExpandPsuedo(void) const;
         const SourceInfo& getSourceInfo(void) const;
         const SymbolTable& getSymTable(void) const;
-        int   getStartAddr(void) const;
+        int   getTextStartAddr(void) const;
+        int   getDataStartAddr(void) const;
         // setters 
         void  setVerbose(const bool v);
         void  setExpandPsuedo(const bool v);
-        void  setStartAddr(int a);
+        void  setTextStartAddr(int a);
+        void  setDataStartAddr(int a);
 
 };
 

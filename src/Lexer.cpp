@@ -20,18 +20,19 @@
 
 Lexer::Lexer()
 {
-    this->token_buf_size = 512;
-    this->line_buf_size  = 512;
+    this->token_buf_size  = 512;
+    this->line_buf_size   = 512;
     void nextLine(void);
-    this->verbose        = false;
-    this->expand_psuedo  = true;
-    this->cur_char       = '\0';
-    this->cur_line       = 0;
-    this->cur_pos        = 0;
-    this->text_addr      = 0;
-    this->data_addr      = 0;
-    this->start_addr     = 0x200;
-    this->cur_mode       = LEX_TEXT_SEG;
+    this->verbose         = false;
+    this->expand_psuedo   = true;
+    this->cur_char        = '\0';
+    this->cur_line        = 0;
+    this->cur_pos         = 0;
+    this->text_addr       = 0;
+    this->data_addr       = 0;
+    this->text_start_addr = 0x00400000;
+    this->data_start_addr = 0x10000000;
+    this->cur_mode        = LEX_TEXT_SEG;
     // create token buffer
     this->alloc_mem();
     this->init_instr_table();
@@ -1351,6 +1352,13 @@ void Lexer::resolveLabels(void)
                     else
                         line.val[1] = label_addr;
                 }
+                else if(line.opcode.instr == LEX_ORI)
+                {
+                    if(line.lower)
+                        line.val[2] = (label_addr & 0x0000FFFF);
+                    else
+                        line.val[2] = label_addr;
+                }
                 else
                 {
                     line.type[2] = SYM_LITERAL;
@@ -1475,6 +1483,11 @@ void Lexer::expandPsuedo(void)
                 //
                 // lui $t, A_hi
                 // ori $t, $t, A_lo
+
+                std::cout << "[" << __func__ << "] expanding LEX_LA" << std::endl;
+                std::cout << this->text_info.toString() << std::endl;
+
+                // Note that literals get resolved from symbols later
                 ti.init();
                 ti.opcode.instr    = LEX_LUI;
                 ti.opcode.mnemonic = "lui";
@@ -1483,7 +1496,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]   = this->text_info.type[0];
                 ti.val[0]    = this->text_info.val[0];
                 ti.type[1]   = SYM_LITERAL;
-                ti.val[1]    = this->text_info.val[1] & 0xFFFF0000;
+                ti.val[1]    = this->text_info.val[1];
+                //ti.val[1]    = this->text_info.val[1] & 0xFFFF0000;
                 ti.is_imm    = true;
                 ti.upper     = true;
                 ti.is_symbol = true;
@@ -1501,9 +1515,11 @@ void Lexer::expandPsuedo(void)
                 ti.type[1]   = this->text_info.type[0];
                 ti.val[1]    = this->text_info.val[0];
                 ti.type[2]   = SYM_LITERAL;
-                ti.val[2]    = this->text_info.val[1] & 0x0000FFFF;
+                ti.val[2]    = this->text_info.val[1];
+                //ti.val[2]    = this->text_info.val[1] & 0x0000FFFF;
                 ti.is_imm    = true;
                 ti.is_symbol = true;
+                ti.lower     = true;
                 ti.symbol    = this->text_info.symbol;
 
                 this->source_info.addText(ti);
@@ -1579,7 +1595,8 @@ void Lexer::lex(void)
 {
     this->cur_line = 1;
     this->cur_pos = 0;
-    this->text_addr = this->start_addr;     // TODO : proper address init..
+    this->text_addr = this->text_start_addr;     // TODO : proper address init..
+    this->data_addr = this->data_start_addr;
 
     while(!this->exhausted())
     {
@@ -1589,7 +1606,6 @@ void Lexer::lex(void)
             this->advance();
             continue;
         }
-
         // eat comments 
         if(this->isComment())
         {
@@ -1598,7 +1614,6 @@ void Lexer::lex(void)
         }
         this->parseLine();
     }
-
     // Resolve symbols
     this->resolveLabels();
 }
@@ -1657,9 +1672,14 @@ const SymbolTable& Lexer::getSymTable(void) const
     return this->sym_table;
 }
 
-int Lexer::getStartAddr(void) const
+int Lexer::getTextStartAddr(void) const
 {
-    return this->start_addr;
+    return this->text_start_addr;
+}
+
+int Lexer::getDataStartAddr(void) const
+{
+    return this->data_start_addr;
 }
 
 // ==== SETTERS ===== //
@@ -1673,7 +1693,12 @@ void Lexer::setExpandPsuedo(const bool v)
     this->expand_psuedo = v;
 }
 
-void Lexer::setStartAddr(int a)
+void Lexer::setTextStartAddr(int a)
 {
-    this->start_addr = a;
+    this->text_start_addr = a;
+}
+
+void Lexer::setDataStartAddr(int a)
+{
+    this->data_start_addr = a;
 }

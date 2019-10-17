@@ -102,6 +102,7 @@ struct TextInfo
     bool         is_imm;
     bool         is_symbol;
     bool         upper;
+    bool         lower;
     int          val[3];
     TokenType    type[3];      // record of types for each register
     Opcode       opcode;
