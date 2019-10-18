@@ -83,6 +83,17 @@ void Lexer::alloc_mem(void)
     this->line_buf = new char[this->line_buf_size];
 }
 
+// Memory position
+void Lexer::incrTextAddr(void)
+{
+    this->text_addr += 4;
+}
+
+void Lexer::incrDataAddr(void)
+{
+    this->data_addr += 1;
+}
+
 
 // ======== MOTION THROUGH SOURCE ======== //
 /*
@@ -554,7 +565,8 @@ void Lexer::parseByte(void)
         if(byte > 255)
             byte = 255;
         this->data_info.addByte(uint8_t(byte));
-        this->data_addr++;
+        this->incrDataAddr();
+        //this->data_addr++;
     }
 }
 
@@ -601,7 +613,8 @@ void Lexer::parseHalf(void)
 
         this->data_info.addByte(word);
         word_idx++;
-        this->data_addr++;
+        this->incrDataAddr();
+        //this->data_addr++;
     }
 }
 
@@ -638,7 +651,8 @@ void Lexer::parseWord(void)
         word = std::stoi(this->cur_token.val);
         this->data_info.addByte(word);
         word_idx++;
-        this->data_addr++;
+        this->incrDataAddr();
+        //this->data_addr++;
     }
 }
 
@@ -1288,12 +1302,13 @@ LINE_END:
         else
         {
             this->source_info.addText(this->text_info);
-            this->text_addr++;
+            this->incrTextAddr();
         }
     }
     else if(this->cur_mode == LEX_DATA_SEG)
     {
-        this->data_addr++;
+        //this->data_addr++;
+        this->incrDataAddr();
         this->data_info.line_num = line_num;
         this->data_info.addr     = this->data_addr;
         this->source_info.addData(this->data_info);
@@ -1335,8 +1350,7 @@ void Lexer::resolveLabels(void)
         {
             if(this->verbose)
             {
-                std::cout << "[" << __func__ << "] checking address for symbol <" <<
-                    line.symbol << ">" << std::endl;
+                std::cout << "[" << __func__ << "] checking address for symbol <" << line.symbol << ">" << std::endl;
             }
 
             label_addr = this->sym_table.getAddr(line.symbol);
@@ -1359,6 +1373,10 @@ void Lexer::resolveLabels(void)
                     else
                         line.val[2] = label_addr;
                 }
+                //else if(line.opcode.instr == LEX_J)
+                //{
+                //    line.val[0] = label_addr << 2;
+                //}
                 else
                 {
                     line.type[2] = SYM_LITERAL;
@@ -1368,10 +1386,12 @@ void Lexer::resolveLabels(void)
 
                 if(this->verbose)
                 {
-                    std::cout << "[" << __func__ << "] updated symbol " <<
-                        line.symbol << " on line " << line.line_num << 
-                        " with address 0x" << std::hex << std::setw(8) << 
-                        line.addr << std::endl;
+                    std::cout << "[" << __func__ << "] updated symbol <" <<
+                        line.symbol << "> on line " << std::dec << 
+                        line.line_num << " [0x" << std::hex << 
+                        std::setfill('0') << std::setw(8) << 
+                        line.addr << "] to value [0x" << 
+                        std::hex << label_addr << "]" << std::endl;
                 }
             }
         }
@@ -1411,7 +1431,6 @@ void Lexer::expandPsuedo(void)
                 // Input is [bgt $s, $t, C]
                 // slt $at, $t, $s
                 ti.init();
-                ti = this->text_info;
                 ti.opcode.instr = LEX_SLT;
                 ti.opcode.mnemonic = "slt";
                 ti.addr     = this->text_info.addr;
@@ -1429,16 +1448,21 @@ void Lexer::expandPsuedo(void)
                 ti.init();
                 ti.opcode.instr = LEX_BNE;
                 ti.opcode.mnemonic = "bne";
-                ti.addr     = this->text_info.addr + 1;
+                ti.addr     = this->text_info.addr + 4;
                 ti.line_num = this->text_info.line_num;
                 ti.type[0]  = SYM_REG_AT;
                 ti.type[1]  = SYM_REG_ZERO;
                 ti.type[2]  = SYM_LITERAL;
-                ti.val[2]  = this->text_info.val[2];
+                ti.val[2]   = this->text_info.val[2];
+                ti.symbol   = this->text_info.symbol;
+                ti.is_symbol = this->text_info.is_symbol;
+                ti.label    = this->text_info.label;
+                ti.is_label = this->text_info.is_label;
                 
                 this->source_info.addText(ti);
             }
-            this->text_addr += 2;
+            this->incrTextAddr();
+            this->incrTextAddr();
             
             break;
 
@@ -1447,7 +1471,6 @@ void Lexer::expandPsuedo(void)
                 // Input is [bgt $s, $t, C]
                 // slt $at, $t, $s
                 ti.init();
-                //ti = this->text_info;
                 ti.opcode.instr = LEX_SLT;
                 ti.opcode.mnemonic = "slt";
                 ti.addr     = this->text_info.addr;
@@ -1465,7 +1488,7 @@ void Lexer::expandPsuedo(void)
                 ti.init();
                 ti.opcode.instr = LEX_BNE;
                 ti.opcode.mnemonic = "bne";
-                ti.addr     = this->text_info.addr + 1;
+                ti.addr     = this->text_info.addr + 4;
                 ti.line_num = this->text_info.line_num;
                 ti.type[0]  = SYM_REG_AT;
                 ti.type[1]  = SYM_REG_ZERO;
@@ -1474,7 +1497,8 @@ void Lexer::expandPsuedo(void)
                 
                 this->source_info.addText(ti);
             }
-            this->text_addr += 2;
+            this->incrTextAddr();
+            this->incrTextAddr();
             break;
 
         case LEX_LA:
@@ -1508,7 +1532,7 @@ void Lexer::expandPsuedo(void)
                 ti.init();
                 ti.opcode.instr    = LEX_ORI;
                 ti.opcode.mnemonic = "ori";
-                ti.addr      = this->text_info.addr + 1;
+                ti.addr      = this->text_info.addr + 4;
                 ti.line_num  = this->text_info.line_num;
                 ti.type[0]   = this->text_info.type[0];
                 ti.val[0]    = this->text_info.val[0];
@@ -1524,7 +1548,8 @@ void Lexer::expandPsuedo(void)
 
                 this->source_info.addText(ti);
             }
-            this->text_addr += 2;
+            this->incrTextAddr();
+            this->incrTextAddr();
             break;
 
         case LEX_LI:
@@ -1548,7 +1573,7 @@ void Lexer::expandPsuedo(void)
                 ti.init();
                 ti.opcode.instr    = LEX_ORI;
                 ti.opcode.mnemonic = "ori";
-                ti.addr     = this->text_info.addr + 1;
+                ti.addr     = this->text_info.addr + 4;
                 ti.line_num = this->text_info.line_num;
                 ti.type[0]  = this->text_info.type[0];
                 ti.val[0]   = this->text_info.val[0];
@@ -1559,7 +1584,8 @@ void Lexer::expandPsuedo(void)
                 ti.is_imm   = true;
 
                 this->source_info.addText(ti);
-                this->text_addr += 2;
+                this->incrTextAddr();
+                this->incrTextAddr();
             }
             // 16-bit immediate (1 instr)
             else
@@ -1576,13 +1602,13 @@ void Lexer::expandPsuedo(void)
                 ti.is_imm   = true;
 
                 this->source_info.addText(ti);
-                this->text_addr += 1;
+                this->incrTextAddr();
             }
             break;
 
         default:
             this->source_info.addText(this->text_info);
-            this->text_addr += 1;
+            this->incrTextAddr();
             break;
     }
 }

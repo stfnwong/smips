@@ -64,6 +64,9 @@ class Lexer
         SymbolTable  sym_table;
         unsigned int text_addr;
         unsigned int data_addr;
+        void incrTextAddr(void);
+        void incrDataAddr(void);
+
 
     // Segments 
     private:
@@ -73,8 +76,8 @@ class Lexer
 
     // Motion through source file
     private:
-        bool exhausted(void) const;
         void advance(void);
+        bool exhausted(void) const;
         void skipWhitespace(void);
         void skipComment(void);
         void skipSeperators(void);

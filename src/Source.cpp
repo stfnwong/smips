@@ -203,7 +203,7 @@ std::string TextInfo::toString(void) const
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    oss << "Line  Type   Addr  Mnemonic   Opcode   Arguments   literal   error" << std::endl;
+    oss << "Line  Type   Addr      Mnemonic   Opcode   Arguments   literal   error" << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
@@ -220,8 +220,8 @@ std::string TextInfo::toString(void) const
     else
         oss << ".";
     oss << "] ";
-    oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
-    oss << std::left << std::setw(12) << std::setfill(' ') << this->opcode.mnemonic;
+    oss << std::right << "0x" << std::hex << std::setw(8) << std::setfill('0') << this->addr << " ";
+    oss << std::left << std::setw(11) << std::setfill(' ') << this->opcode.mnemonic;
     oss << "0x" << std::right << std::hex << std::setw(4) << std::setfill('0') << this->opcode.instr << "  ";
 
     // Insert arg/register chars
@@ -263,7 +263,7 @@ std::string TextInfo::toString(void) const
     else if(!this->is_imm && (this->type[1] == SYM_LITERAL))
         oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
     else if(!this->is_imm && (this->type[2] == SYM_LITERAL))
-        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[2] << "  ";
+        oss << " +" << std::left << std::dec << std::setw(8) << std::setfill(' ') << this->val[2] << "  ";
     else if(this->is_imm && this->upper)
         oss << "U 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
     else if(this->is_imm && this->lower)
@@ -485,7 +485,7 @@ std::string DataInfo::toString(void) const
 
     oss << "---------------------------------------------------------------------" << std::endl;
     // extend to the right as needed
-    oss << "Line  Type   Addr  Directive  Label    Error Data                    " << std::endl;
+    oss << "Line  Type   Addr      Directive  Label    Error  Data                    " << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
@@ -499,7 +499,7 @@ std::string DataInfo::toString(void) const
         oss << ".";
 
     oss << "] ";
-    oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
+    oss << std::right << "0x" << std::hex << std::setw(8) << std::setfill('0') << this->addr << " ";
     oss << "   ";
     // directive
     if(this->directive != SYM_DIR_NONE)
