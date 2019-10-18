@@ -71,8 +71,12 @@ class Program
         std::vector <DataSeg> data_segments;
         std::vector <Instr> instructions;
         Instr null_instr;
+        DataSeg null_data;
+
     // TODO : does it make sense to have a copy constructor for Program objects?
     private:
+        //Program(const Program& that) = delete;
+        Program operator==(const Program& that) = delete;
 
     public:
         Program();
@@ -93,10 +97,16 @@ class Program
          */
         void add(const DataSeg& d);
         /*
-         * get()
+         * getInstr()
          * Returns the Nth instruction object from the instruction list
          */
-        Instr& get(const unsigned int idx);
+        Instr& getInstr(const unsigned int idx);
+
+        /*
+         * getData()
+         * Returns the Nth DataSeg object from the instruction list
+         */
+        DataSeg& getData(const unsigned int idx);
         /*
          * writeMem()
          * Write a word directly to a specific memory location

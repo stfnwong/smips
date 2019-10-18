@@ -37,7 +37,7 @@ Program get_mult_add_expected_program(void)
     Instr instr;
 
     // LW $t0, 4($gp)
-    instr.adr = 0x200;
+    instr.adr = 0x00400000;
     instr.ins = 35 << i_instr_op_offset;  // I-format opcode
     instr.ins = instr.ins | (8  << i_instr_rt_offset);
     instr.ins = instr.ins | (28 << i_instr_rs_offset);
@@ -46,7 +46,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // MULT $t0, $t0, $t0
-    instr.adr = 0x201;
+    instr.adr = 0x00400001;
     instr.ins = 0x18;
     instr.ins = instr.ins | (8 << r_instr_rs_offset);
     instr.ins = instr.ins | (8 << r_instr_rt_offset);
@@ -55,7 +55,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // LW $t1, 4($gp)
-    instr.adr = 0x202;
+    instr.adr = 0x00400002;
     instr.ins = 35 << i_instr_op_offset;
     instr.ins = instr.ins | (9 << i_instr_rt_offset);
     instr.ins = instr.ins | (28 << i_instr_rs_offset);
@@ -64,7 +64,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // ORI $t2, $zero, 3
-    instr.adr = 0x203;
+    instr.adr = 0x00400003;
     instr.ins = 0x0C << i_instr_op_offset;
     instr.ins = instr.ins | (10 << i_instr_rt_offset);
     instr.ins = instr.ins | (0  << i_instr_rs_offset);
@@ -73,7 +73,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // MULT $t1, $t1, $t2
-    instr.adr = 0x204;
+    instr.adr = 0x00400004;
     instr.ins = 0x18;
     instr.ins = instr.ins | (9  << r_instr_rd_offset);
     instr.ins = instr.ins | (9  << r_instr_rs_offset);
@@ -82,7 +82,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // ADD $t2, $t0, $t1
-    instr.adr = 0x205;
+    instr.adr = 0x00400005;
     instr.ins = 0x20;
     instr.ins = instr.ins | (10 << r_instr_rd_offset);
     instr.ins = instr.ins | (8  << r_instr_rs_offset);
@@ -91,7 +91,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // SW $t2, 0($gp) 
-    instr.adr = 0x206;
+    instr.adr = 0x00400006;
     instr.ins = 0x2B << i_instr_op_offset;
     instr.ins = instr.ins | (10 << i_instr_rt_offset);
     instr.ins = instr.ins | (28 << i_instr_rs_offset);
@@ -110,7 +110,7 @@ Program get_for_loop_expected_program(void)
     Instr   instr;
 
     // ADD $t0, $gp, $zero
-    instr.adr = 0x200;
+    instr.adr = 0x00400000;
     instr.ins = 0x20;
     instr.ins = instr.ins | (8 << r_instr_rd_offset);
     instr.ins = instr.ins | (28 << r_instr_rs_offset);
@@ -119,7 +119,7 @@ Program get_for_loop_expected_program(void)
 
     instr.init();
     // LW $t1, 4($gp)
-    instr.adr = 0x201;
+    instr.adr = 0x00400001;
     instr.ins = 35 << i_instr_op_offset;  // I-format opcode
     instr.ins = instr.ins | (9  << i_instr_rt_offset);
     instr.ins = instr.ins | (28 << i_instr_rs_offset);
@@ -128,7 +128,7 @@ Program get_for_loop_expected_program(void)
 
     instr.init();
     // SLL $t1, $t1, 2
-    instr.adr = 0x202;
+    instr.adr = 0x00400002;
     instr.ins = 0x0;
     instr.ins = instr.ins | (9 << r_instr_rd_offset);
     instr.ins = instr.ins | (9 << r_instr_rs_offset);
@@ -137,7 +137,7 @@ Program get_for_loop_expected_program(void)
 
     instr.init();
     // ADD $t1, $t1, $gp
-    instr.adr = 0x203;
+    instr.adr = 0x00400003;
     instr.ins = 0x20;
     instr.ins = instr.ins | (9 << r_instr_rd_offset);
     instr.ins = instr.ins | (9 << r_instr_rs_offset);
@@ -146,7 +146,7 @@ Program get_for_loop_expected_program(void)
 
     instr.init();
     // ORI $t2, $zero, 256
-    instr.adr = 0x204;
+    instr.adr = 0x00400004;
     instr.ins = 0x0C << i_instr_op_offset;
     instr.ins = instr.ins | (10 << i_instr_rt_offset);
     instr.ins = instr.ins | (0 << i_instr_rs_offset);
@@ -155,7 +155,7 @@ Program get_for_loop_expected_program(void)
 
     instr.init();
     // TOP : SLTU $t3, $t0, $t1
-    instr.adr = 0x205;
+    instr.adr = 0x00400005;
     instr.ins = 43;
     instr.ins = instr.ins | (11 << r_instr_rd_offset);
     instr.ins = instr.ins | (8 << r_instr_rs_offset);
@@ -164,16 +164,16 @@ Program get_for_loop_expected_program(void)
 
     instr.init();
     // BEQ $t3, $zero, DONE
-    instr.adr = 0x206;
+    instr.adr = 0x00400006;
     instr.ins = 0x4 << i_instr_op_offset;
     instr.ins = instr.ins | (11 << i_instr_rt_offset);
     instr.ins = instr.ins | (0 << i_instr_rs_offset);
-    instr.ins = instr.ins | 0x20A;
+    instr.ins = instr.ins | (0x004000A & 0x0000FFFF);  // TODO : these all need to change because PC will increment by 4 (bytes)
     prog.add(instr);
 
     instr.init();
     // SW $t2 28($t0)
-    instr.adr = 0x207;
+    instr.adr = 0x00400007;
     instr.ins = 0x2B << i_instr_op_offset;
     instr.ins = instr.ins | (10 << i_instr_rt_offset);
     instr.ins = instr.ins | (8 << i_instr_rs_offset);
@@ -182,7 +182,7 @@ Program get_for_loop_expected_program(void)
 
     instr.init();
     // ADDI $t0, $t0, 4
-    instr.adr = 0x208;
+    instr.adr = 0x00400008;
     instr.ins = 0x08 << i_instr_op_offset;
     instr.ins = instr.ins | (8 << i_instr_rs_offset);
     instr.ins = instr.ins | (8 << i_instr_rt_offset);
@@ -191,14 +191,14 @@ Program get_for_loop_expected_program(void)
 
     instr.init();
     // J TOP 
-    instr.adr = 0x209;
+    instr.adr = 0x00400009;
     instr.ins = 0x02 << j_instr_op_offset;
-    instr.ins = instr.ins | 0x205;
+    instr.ins = instr.ins | 0x00400005;
     prog.add(instr);
     
     instr.init();
     // DONE (dummy instruction)
-    instr.adr = 0x20A;
+    instr.adr = 0x0040000A;
     prog.add(instr);
 
     return prog;
@@ -224,7 +224,7 @@ Program get_array_expected_program(void)
     // lui $at, list
     // ori $s0, $at, displ
     instr.init();
-    instr.adr = 0x200;
+    instr.adr = 0x00400000;
 
     // li $t0, 0
     // NOTE; <li $t0, 0> translates to
@@ -282,10 +282,12 @@ TEST_F(TestAssembler, test_asm_mult_add)
 
     Instr instr_exp;
     Instr instr_out;
+
+    std::cout << "\t           Address    Data   " << instr_exp.toString() << std::endl;
     for(unsigned int ins = 0; ins < prog_out.size(); ++ins)
     {
-        instr_exp = prog_exp.get(ins);
-        instr_out = prog_out.get(ins);
+        instr_exp = prog_exp.getInstr(ins);
+        instr_out = prog_out.getInstr(ins);
         std::cout << "Checking instruction [" << ins+1 << 
             "/" << prog_out.size() << "]" << std::endl; 
         
@@ -332,13 +334,17 @@ TEST_F(TestAssembler, test_for_loop)
 
     Instr instr_exp;
     Instr instr_out;
+
+    std::cout << "\t           Address    Data   " << instr_exp.toString() << std::endl;
     for(unsigned int ins = 0; ins < prog_out.size(); ++ins)
     {
-        instr_exp = prog_exp.get(ins);
-        instr_out = prog_out.get(ins);
+        instr_exp = prog_exp.getInstr(ins);
+        instr_out = prog_out.getInstr(ins);
         std::cout << "Checking instruction [" << ins+1 << 
             "/" << prog_out.size() << "]" << std::endl; 
         
+        std::cout << src_out.getText(ins).toString() << std::endl;
+
         std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
         std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
         
@@ -373,6 +379,11 @@ TEST_F(TestAssembler, test_array)
 
     // expected program
     prog_exp =  get_array_expected_program();
+    // show the resulting program
+    prog_out = test_asm.getProgram();
+    std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
+    std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
+    ASSERT_EQ(prog_exp.size(), prog_out.size());
 
 }
 

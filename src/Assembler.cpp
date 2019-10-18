@@ -176,7 +176,7 @@ Instr Assembler::asm_beq(const TextInfo& l) const
     
     instr.ins = 0x04 << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[2]);
+    instr.ins = instr.ins | (l.val[2] & 0x0000FFFF);    // be explicit about masking out upper bits
     instr.adr = l.addr;
     return instr;
 }
@@ -212,28 +212,6 @@ Instr Assembler::asm_j(const TextInfo& l) const
     return instr;
 }
 
-/*
- * asm_la()
- * TODO : this actually has to expand to 2 instructions...
- */
-Instr Assembler::asm_la(const TextInfo& l) const
-{
-    Instr instr;
-
-    return instr;
-}
-
-
-/*
- * asm_li()
- * TODO : this actually has to expand to 2 instructions...
- */
-Instr Assembler::asm_li(const TextInfo& l) const
-{
-    Instr instr;
-
-    return instr;
-}
 
 /*
  * asm_lw()
@@ -247,6 +225,22 @@ Instr Assembler::asm_lw(const TextInfo& l) const
     instr.ins = 0x23 << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
     instr.ins = instr.ins | (l.val[2]);        // insert immediate
+    instr.adr = l.addr;
+    return instr;
+}
+
+/*
+ * asm_lui()
+ * I-format
+ * lui $t, imm
+ */
+Instr Assembler::asm_lui(const TextInfo& l) const
+{
+    Instr instr;
+
+    instr.ins = 0x0F << this->i_instr_op_offset;
+    instr.ins = instr.ins | this->asm_i_instr(l, 1);
+    instr.ins = instr.ins | ((l.val[1] & 0xFFFF0000) << 16);
     instr.adr = l.addr;
     return instr;
 }
@@ -303,6 +297,21 @@ Instr Assembler::asm_ori(const TextInfo& l) const
  * sll $d, $t, imm
  */
 Instr Assembler::asm_sll(const TextInfo& l) const
+{
+    Instr instr;
+
+    instr.ins = 0x0;
+    instr.ins = instr.ins | this->asm_r_instr(l, 3);
+    instr.adr = l.addr;
+    return instr;
+}
+
+/*
+ * asm_slt()
+ * R-format
+ * slt $d $s $t
+ */
+Instr Assembler::asm_slt(const TextInfo& l) const
 {
     Instr instr;
 
@@ -402,18 +411,20 @@ Instr Assembler::assembleText(const TextInfo& line)
             return this->asm_j(line);
             break;
 
-        // TODO : here we need to be able to insert two (or perhaps 3)
-        // instructions at a time.
-        case LEX_LA:
-            return this->asm_la(line);
-            break;
+        //case LEX_LA:
+        //    return this->asm_la(line);
+        //    break;
 
-        case LEX_LI:
-            return this->asm_li(line);
-            break;
+        //case LEX_LI:
+        //    return this->asm_li(line);
+        //    break;
 
         case LEX_LW:
             return this->asm_lw(line);
+            break;
+
+        case LEX_LUI:
+            return this->asm_lui(line);
             break;
 
         case LEX_MULT:
@@ -430,6 +441,10 @@ Instr Assembler::assembleText(const TextInfo& line)
 
         case LEX_SLL:
             return this->asm_sll(line);
+            break;
+
+        case LEX_SLT:
+            return this->asm_slt(line);
             break;
 
         case LEX_SLTU:
@@ -461,6 +476,7 @@ Instr Assembler::assembleText(const TextInfo& line)
     }
 }
 
+// ======== DATA SEGMENT ASSEMBLY ======== //
 
 /*
  * assembleData()

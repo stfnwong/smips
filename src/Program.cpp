@@ -196,12 +196,20 @@ void Program::add(const DataSeg& d)
     this->data_segments.push_back(d);
 }
 
-Instr& Program::get(const unsigned int idx) 
+Instr& Program::getInstr(const unsigned int idx) 
 {
     if(idx < this->instructions.size())
         return this->instructions[idx];
 
     return this->null_instr;
+}
+
+DataSeg& Program::getData(const unsigned int idx) 
+{
+    if(idx < this->data_segments.size())
+        return this->data_segments[idx];
+
+    return this->null_data;
 }
 
 void Program::writeMem(const uint32_t addr, const uint32_t val)

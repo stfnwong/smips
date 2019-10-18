@@ -254,6 +254,7 @@ std::string TextInfo::toString(void) const
             oss << "   ";
     }
     oss << "  "; 
+    // TODO : maybe add the 'symbol' first, then print the correct value
     // literal (if applicable)
     if(this->is_symbol)
         oss << "0x" << std::hex << std::setw(8) << this->val[2];

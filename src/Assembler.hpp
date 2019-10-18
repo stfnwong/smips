@@ -71,13 +71,13 @@ class Assembler
         Instr asm_beq(const TextInfo& l) const;
         Instr asm_bne(const TextInfo& l) const;
         Instr asm_j(const TextInfo& l) const;
-        Instr asm_la(const  TextInfo& l) const;
-        Instr asm_li(const TextInfo& l) const;
+        Instr asm_lui(const TextInfo& l) const;
         Instr asm_lw(const TextInfo& l) const;
         Instr asm_mult(const TextInfo& l) const;
         Instr asm_or(const TextInfo& l) const;
         Instr asm_ori(const TextInfo& l) const;
         Instr asm_sll(const TextInfo& l) const;
+        Instr asm_slt(const TextInfo& l) const;
         Instr asm_sltu(const TextInfo& l) const;
         Instr asm_sub(const TextInfo& l) const;
         Instr asm_subu(const TextInfo& l) const;
