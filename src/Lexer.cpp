@@ -1225,15 +1225,15 @@ void Lexer::parseLine(void)
                 this->parseMemArgs();
                 break;
 
-            case LEX_LA:
-                this->parseRegArgs(1);
-                this->parseLabel();
-                break;
+            //case LEX_LA:
+            //    this->parseRegArgs(1);
+            //    this->parseLabel();
+            //    break;
 
-            case LEX_LI:
-                this->text_info.is_imm = true;
-                this->parseRegArgs(2);
-                break;
+            //case LEX_LI:
+            //    this->text_info.is_imm = true;
+            //    this->parseRegArgs(2);
+            //    break;
 
             case LEX_LUI:
                 this->text_info.is_imm = true;
@@ -1521,7 +1521,7 @@ void Lexer::expandPsuedo(void)
                 ti.val[0]    = this->text_info.val[0];
                 ti.type[1]   = SYM_LITERAL;
                 ti.val[1]    = this->text_info.val[1];
-                //ti.val[1]    = this->text_info.val[1] & 0xFFFF0000;
+                //ti.val[1]    = (this->text_info.val[1] & 0xFFFF0000) >> 16;
                 ti.is_imm    = true;
                 ti.upper     = true;
                 ti.is_symbol = true;
@@ -1539,8 +1539,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[1]   = this->text_info.type[0];
                 ti.val[1]    = this->text_info.val[0];
                 ti.type[2]   = SYM_LITERAL;
-                ti.val[2]    = this->text_info.val[1];
-                //ti.val[2]    = this->text_info.val[1] & 0x0000FFFF;
+                //ti.val[2]    = this->text_info.val[1];
+                ti.val[2]    = this->text_info.val[1] & 0x0000FFFF;
                 ti.is_imm    = true;
                 ti.is_symbol = true;
                 ti.lower     = true;

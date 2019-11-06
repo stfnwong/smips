@@ -58,6 +58,7 @@ struct DataSeg
         bool operator!=(const DataSeg& that) const;
 
         std::string toString(void) const;
+        std::string diff(const DataSeg& that) const;
 };
 
 
@@ -101,7 +102,6 @@ class Program
          * Returns the Nth instruction object from the instruction list
          */
         Instr& getInstr(const unsigned int idx);
-
         /*
          * getData()
          * Returns the Nth DataSeg object from the instruction list
@@ -113,6 +113,8 @@ class Program
          */
         void writeMem(const uint32_t addr, const uint32_t val);
         unsigned int size(void) const;
+        unsigned int numDataSeg(void) const;
+        unsigned int dataSize(void) const;
         std::string toString(void) const;
 
         // disk operations

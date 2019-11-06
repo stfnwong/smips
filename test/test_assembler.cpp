@@ -216,21 +216,68 @@ Program get_array_expected_program(void)
 
 
     // ---- Data Section ---- //
+    // list: .word 3, 0, 1, 2, 6
+    data.init();
+    data.adr = 0x10000000;
+    data.data = {0x3, 0x0, 0x1, 0x2, 0x6};
+    prog.add(data);
+    // char_arr: .asciiz "hello"
+    data.init();
+    data.adr = 0x10000000 + 0x5;
+    data.data = {0x68, 0x65, 0x6C, 0x6C, 0x6F};
+    prog.add(data);
+    // buffer: .space 128
+    data.init();
+    data.adr = 0x10000000 + 0x5 + 0x1;
+    for(unsigned int d = 0; d < 128; ++d)
+        data.data.push_back(uint8_t(0));
+    prog.add(data);
+
     
     // ---- Text Section ---- //
     
     // la $s0, list
-    // NOTE: <la $s0, list> expands to
-    // lui $at, list
-    // ori $s0, $at, displ
+    // Exapnds to:
+    //     lui $at, (list & 0xFFFF0000) >> 16
+    //     ori $s0, $at, (list & 0x0000FFFF)
     instr.init();
     instr.adr = 0x00400000;
+    instr.ins = 0xF << i_instr_op_offset;
+    instr.ins = instr.ins | (0 < i_instr_rt_offset);
+    instr.ins = instr.ins | (0x1000);
+    prog.add(instr);
+    instr.init();
+    instr.adr = 0x00400004;
+    instr.ins = 0xD << i_instr_op_offset;
+    instr.ins = instr.ins | (0x10 << i_instr_rt_offset);
+    instr.ins = instr.ins | (0x10 << i_instr_rs_offset);
+    instr.ins = instr.ins | 0x0000;
+    prog.add(instr);
 
     // li $t0, 0
-    // NOTE; <li $t0, 0> translates to
-    // lui $at, 0
-    // ori $t0, $at, 0
+    // Expands to 
+    //     lui $at, 0
+    //     ori $t0, $at, 0
+    instr.init();
+    instr.adr = 0x00400004;
+    instr.ins = 0xF << i_instr_op_offset;
+    instr.ins = instr.ins | (0 < i_instr_rt_offset);
+    instr.ins = instr.ins | (0x0);
+    prog.add(instr);
+    instr.init();
+    instr.adr = 0x00400008;
+    instr.ins = 0xD << i_instr_op_offset;
+    instr.ins = instr.ins | (8 << i_instr_rt_offset);
+    instr.ins = instr.ins | (0 << i_instr_rs_offset);
+    instr.ins = instr.ins | (0x0);
+    prog.add(instr);
 
+    // li $t1, 5
+    // Expands to 
+    //     lui $at, 5
+    //     ori $t1, $at, 5
+    instr.adr = 0x0040000C;
+    instr.ins = 0xF << i_instr_op_offset;
 
     return prog;
 }
@@ -383,8 +430,54 @@ TEST_F(TestAssembler, test_array)
     prog_out = test_asm.getProgram();
     std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
     std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
-    //ASSERT_EQ(prog_exp.size(), prog_out.size());
 
+    std::cout << "Expected " << prog_exp.dataSize() << " bytes in data segment" << std::endl;
+    std::cout << "Output program has " << prog_out.dataSize() << " bytes in data segment" << std::endl;
+
+    // Print data segment
+    for(unsigned int d = 0; d < prog_out.numDataSeg(); ++d)
+    {
+        DataSeg seg = prog_out.getData(d);
+        std::cout << "Seg " << std::setw(3) << std::dec << d << " : ";
+        std::cout << seg.toString() << std::endl;
+    }
+
+    // Check data segment
+    for(unsigned int d = 0; d < prog_out.numDataSeg(); ++d)
+    {
+        DataSeg exp_seg = prog_exp.getData(d);
+        DataSeg out_seg = prog_out.getData(d);
+
+        // Show the diff 
+        std::cout << exp_seg.diff(out_seg) << std::endl;
+
+        std::cout << "Checking Seg " << std::setw(3) << std::dec << d << " : " << std::endl;
+        std::cout << out_seg.toString() << std::endl;
+
+        ASSERT_EQ(exp_seg, out_seg);
+
+    }
+
+    // Check text segment
+    Instr instr_exp;
+    Instr instr_out;
+
+    for(unsigned int ins = 0; ins < prog_out.size(); ++ins)
+    {
+        instr_exp = prog_exp.getInstr(ins);
+        instr_out = prog_out.getInstr(ins);
+        std::cout << "Checking instruction [" << ins+1 << 
+            "/" << prog_out.size() << "]" << std::endl; 
+        
+        std::cout << src_out.getText(ins).toString() << std::endl;
+
+        std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
+        std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        
+        ASSERT_EQ(instr_exp, instr_out);
+    }
+
+    //ASSERT_EQ(prog_exp.size(), prog_out.size());
 }
 
 

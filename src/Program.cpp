@@ -100,6 +100,12 @@ DataSeg::DataSeg(uint32_t adr, const std::vector<uint8_t> d)
     this->data = d;
 }
 
+void DataSeg::init(void)
+{
+    this->adr = 0;
+    this->data.clear();
+}
+
 /*
  * assignment
  */
@@ -136,13 +142,47 @@ bool DataSeg::operator==(const DataSeg& that) const
     return true;
 }
 
-
 /*
  * !=
  */
 bool DataSeg::operator!=(const DataSeg& that) const
 {
     return !(*this == that);
+}
+
+// TODO : diff
+std::string DataSeg::diff(const DataSeg& that) const
+{
+    std::ostringstream oss;
+    int num_err = 0;
+
+    // Address
+    if(this->adr != that.adr)
+    {
+        oss << "adr [" << this->adr << "] does not match [" << that.adr << "]" << std::endl;
+        num_err += 1;
+    }
+
+    // Size of segment vector
+    if(this->data.size() != that.data.size())
+    {
+        oss << "data.size() [" << this->data.size() << "] does not match [" << that.data.size() << "]" << std::endl;
+        num_err += 1;
+    }
+
+    // Segments 
+    for(unsigned int d = 0; d < this->data.size(); ++d)
+    {
+        if(this->data[d] != that.data[d])
+        {
+            oss << "element (" << std::dec << d << ") in segment data [" << 
+                std::hex << this->data[d] << "] does not match [" << 
+                that.data[d] << "]" << std::endl;
+            num_err += 1;
+        }
+    }
+
+    return oss.str();
 }
 
 /*
@@ -158,7 +198,7 @@ std::string DataSeg::toString(void) const
         << this->adr << "]  " << std::endl;
     for(unsigned int i = 0; i < this->data.size(); ++i)
     {
-        oss << std::hex << this->data[i] << " ";
+        oss << std::hex << unsigned(this->data[i]) << " ";
     }
     oss << std::endl;
 
@@ -168,7 +208,10 @@ std::string DataSeg::toString(void) const
 
 
 // ======== PROGRAM ======== //
-Program::Program() {} 
+Program::Program()
+{
+    this->init();
+}
 
 /*
  * init()
@@ -176,6 +219,7 @@ Program::Program() {}
 void Program::init(void)
 {
     this->instructions.clear();
+    this->data_segments.clear();
 }
 
 /*
@@ -196,6 +240,10 @@ void Program::add(const DataSeg& d)
     this->data_segments.push_back(d);
 }
 
+/*
+ * getInstr()
+ * Return the instruction at index idx
+ */
 Instr& Program::getInstr(const unsigned int idx) 
 {
     if(idx < this->instructions.size())
@@ -224,6 +272,23 @@ unsigned int Program::size(void) const
 {
     return this->instructions.size();
 }
+
+unsigned int Program::numDataSeg(void) const
+{
+    return this->data_segments.size();
+}
+
+unsigned int Program::dataSize(void) const
+{
+    unsigned int size = 0;
+    for(unsigned int idx = 0; idx < this->data_segments.size(); ++idx)
+    {
+        size += this->data_segments[idx].data.size();
+    }
+
+    return size;
+}
+
 
 std::string Program::toString(void) const
 {

@@ -192,7 +192,7 @@ Instr Assembler::asm_bne(const TextInfo& l) const
 
     instr.ins = 0x05 << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[2]);
+    instr.ins = instr.ins | (l.val[2] & 0x0000FFFF);
     instr.adr = l.addr;
     return instr;
 }
