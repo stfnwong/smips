@@ -4,11 +4,13 @@
  * Stefan Wong 2019
  */
 
+#define CATCH_CONFIG_MAIN
+#include "catch/catch.hpp"
+
 #include <iostream> 
 #include <iomanip>
 #include <vector>
 #include <string>
-#include <gtest/gtest.h>
 
 // unit(s) under test
 #include "Lexer.hpp"
@@ -27,6 +29,13 @@ const int r_instr_rd_offset = 11;
 const int j_instr_op_offset = 26;
 
 // TODO: when starting address is sorted, update this
+
+
+// Filenames for test 
+const std::string test_mult_add_file = "asm/mult_add.asm";
+const std::string test_for_loop_file = "asm/for_loop.asm";
+const std::string test_array_file    = "asm/array.asm";
+
 
 /*
  * Expected assembly output for mult_add.asm
@@ -235,24 +244,10 @@ Program get_array_expected_program(void)
     return prog;
 }
 
-
-class TestAssembler : public ::testing::Test
-{
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-
-    public:
-        std::string test_mult_add_file = "asm/mult_add.asm";
-        std::string test_for_loop_file = "asm/for_loop.asm";
-        std::string test_array_file = "asm/array.asm";
-};
-
-
-
 /*
  * Test mult_add example
  */
-TEST_F(TestAssembler, test_asm_mult_add)
+TEST_CASE("test_asm_mult_add", "[classic]")
 {
     Lexer      lexer;
     Assembler  test_asm;
@@ -263,7 +258,7 @@ TEST_F(TestAssembler, test_asm_mult_add)
     test_asm.setVerbose(true);
     // get some source info for this program
     lexer.setVerbose(false);
-    lexer.loadFile(this->test_mult_add_file);
+    lexer.loadFile(test_mult_add_file);
     lexer.lex();
 
     // add source info to assembler
@@ -278,7 +273,7 @@ TEST_F(TestAssembler, test_asm_mult_add)
     prog_out = test_asm.getProgram();
     std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
     std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
-    ASSERT_EQ(prog_exp.size(), prog_out.size());
+    REQUIRE(prog_exp.size() == prog_out.size());
 
     Instr instr_exp;
     Instr instr_out;
@@ -291,8 +286,7 @@ TEST_F(TestAssembler, test_asm_mult_add)
         
         std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
         std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
-        
-        ASSERT_EQ(instr_exp, instr_out);
+        REQUIRE(instr_exp == instr_out);
         std::cout << "[OK]" << std::endl;
     }
     std::cout << prog_out.toString() << std::endl;
@@ -302,7 +296,7 @@ TEST_F(TestAssembler, test_asm_mult_add)
 /*
  * Test for_loop example
  */
-TEST_F(TestAssembler, test_for_loop)
+TEST_CASE("test_for_loop", "[classic]")
 {
     Lexer      lexer;
     Assembler  test_asm;
@@ -313,7 +307,7 @@ TEST_F(TestAssembler, test_for_loop)
     test_asm.setVerbose(true);
     // get some source info for this program
     lexer.setVerbose(false);
-    lexer.loadFile(this->test_for_loop_file);
+    lexer.loadFile(test_for_loop_file);
     lexer.lex();
 
     // add source info to assembler
@@ -328,7 +322,7 @@ TEST_F(TestAssembler, test_for_loop)
     prog_out = test_asm.getProgram();
     std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
     std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
-    ASSERT_EQ(prog_exp.size(), prog_out.size());
+    REQUIRE(prog_exp.size() == prog_out.size());
 
     Instr instr_exp;
     Instr instr_out;
@@ -342,7 +336,7 @@ TEST_F(TestAssembler, test_for_loop)
         std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
         std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
         
-        ASSERT_EQ(instr_exp, instr_out);
+        REQUIRE(instr_exp ==instr_out);
         std::cout << "[OK]" << std::endl;
     }
     std::cout << prog_out.toString() << std::endl;
@@ -352,7 +346,7 @@ TEST_F(TestAssembler, test_for_loop)
 /*
  * Array and data segment test
  */
-TEST_F(TestAssembler, test_array)
+TEST_CASE("test_array", "[classic]")
 {
     Lexer      lexer;
     Assembler  test_asm;
@@ -363,7 +357,7 @@ TEST_F(TestAssembler, test_array)
     test_asm.setVerbose(true);
     // get some source info for this program
     lexer.setVerbose(false);
-    lexer.loadFile(this->test_array_file);
+    lexer.loadFile(test_array_file);
     lexer.lex();
 
     // add source info to assembler
@@ -373,12 +367,4 @@ TEST_F(TestAssembler, test_array)
 
     // expected program
     prog_exp =  get_array_expected_program();
-
-}
-
-
-int main(int argc, char *argv[])
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

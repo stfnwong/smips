@@ -53,7 +53,7 @@ $(TEST_OBJECTS): $(OBJ_DIR)/%.o : $(TEST_DIR)/%.cpp
 # ==== TEST TARGETS ==== #
 #TESTS=test_assembler test_lexer test_opcode test_object \
 	  test_elf
-TESTS=test_elf test_opcode
+TESTS=test_elf test_assembler test_opcode
 $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 	$(CXX) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o $(TEST_BIN_DIR)/$@ $(LIBS) $(TEST_LIBS)

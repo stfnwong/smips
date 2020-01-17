@@ -15,7 +15,6 @@
 #include "ELF.hpp"
 
 
-
 TEST_CASE("test_elf_file_header_get_set", "[classic]")
 {
     ELFFileHeader test_header;
