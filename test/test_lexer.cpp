@@ -4,29 +4,24 @@
  * Stefan Wong 2019
  */
 
+#define CATCH_CONFIG_MAIN
+#include "catch/catch.hpp"
+
 #include <iostream> 
 #include <iomanip>
 #include <vector>
 #include <string>
-#include <gtest/gtest.h>
 
 #include "Codes.hpp"
 #include "Lexer.hpp"
 #include "Source.hpp"
 
 
-class TestLexer : public ::testing::Test
-{
-    virtual void SetUp() {}
-    virtual void TearDown() {}
-
-    public:
-        std::string test_mult_add_file = "asm/mult_add.asm";
-        std::string test_for_loop_file = "asm/for_loop.asm";
-        std::string test_array_file = "asm/array.asm";
-        std::string test_paren_file = "asm/paren.asm";
-        std::string test_psuedo_file = "asm/psuedo.asm";
-};
+const std::string test_mult_add_file = "asm/mult_add.asm";
+const std::string test_for_loop_file = "asm/for_loop.asm";
+const std::string test_array_file    = "asm/array.asm";
+const std::string test_paren_file    = "asm/paren.asm";
+const std::string test_psuedo_file   = "asm/psuedo.asm";
 
 
 // TODO : adjust starting address later 
@@ -518,7 +513,7 @@ SourceInfo get_array_expected_source_info(void)
 /*
  * Test mult_add example
  */
-TEST_F(TestLexer, test_lex_mult_add)
+TEST_CASE("test_lex_mult_add", "[classic]")
 {
     Lexer test_lexer;
     SourceInfo src_out;
@@ -526,7 +521,7 @@ TEST_F(TestLexer, test_lex_mult_add)
 
     test_lexer.setVerbose(false);
     test_lexer.setExpandPsuedo(true);
-    test_lexer.loadFile(this->test_mult_add_file);
+    test_lexer.loadFile(test_mult_add_file);
     test_lexer.lex();
 
     // get the source info
@@ -537,7 +532,7 @@ TEST_F(TestLexer, test_lex_mult_add)
     src_out = test_lexer.getSourceInfo();
     std::cout << "Lexer output : " << std::endl;
     std::cout << src_out.toString() << std::endl;
-    ASSERT_EQ(expected_src_out.getTextInfoSize(), src_out.getTextInfoSize());
+    REQUIRE(expected_src_out.getTextInfoSize() == src_out.getTextInfoSize());
 
     // Check each line in turn
     TextInfo expected_line;
@@ -554,7 +549,7 @@ TEST_F(TestLexer, test_lex_mult_add)
             std::cout << std::endl << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
-        ASSERT_EQ(expected_line, output_line);
+        REQUIRE(expected_line == output_line);
         std::cout << "    [OK]" << std::endl;
     }
 }
@@ -563,14 +558,14 @@ TEST_F(TestLexer, test_lex_mult_add)
 /*
  * Test for_loop example
  */
-TEST_F(TestLexer, test_for_loop)
+TEST_CASE("test_for_loop", "[classic]")
 {
     Lexer test_lexer;
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(true);
-    test_lexer.loadFile(this->test_for_loop_file);
+    test_lexer.loadFile(test_for_loop_file);
     test_lexer.lex();
 
     // get the source info
@@ -594,8 +589,6 @@ TEST_F(TestLexer, test_for_loop)
             cur_sym.toString() << std::endl;
     }
 
-    //ASSERT_EQ(expected_src_out.getTextInfoSize(), src_out.getNumLines());
-
     // Check each line in turn
     TextInfo expected_line;
     TextInfo output_line;
@@ -611,14 +604,14 @@ TEST_F(TestLexer, test_for_loop)
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
-        ASSERT_EQ(expected_line, output_line);
+        REQUIRE(expected_line == output_line);
     }
 }
 
 /*
  * Test data_region example (arrays, etc)
  */
-TEST_F(TestLexer, test_array)
+TEST_CASE("test_array", "[classic]")
 {
     Lexer test_lexer;
     SourceInfo src_out;
@@ -627,7 +620,7 @@ TEST_F(TestLexer, test_array)
     test_lexer.setVerbose(true);
     // for this test, just leave the psuedo instructions in place
     test_lexer.setExpandPsuedo(false);          
-    test_lexer.loadFile(this->test_array_file);
+    test_lexer.loadFile(test_array_file);
     test_lexer.lex();
 
     // get the source info
@@ -669,7 +662,7 @@ TEST_F(TestLexer, test_array)
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
-        ASSERT_EQ(expected_line, output_line);
+        REQUIRE(expected_line == output_line);
     }
 
     std::cout << "Error strings : " << std::endl << std::endl;
@@ -731,15 +724,14 @@ SourceInfo get_paren_expected_source_info(void)
 }
 
 
-
-TEST_F(TestLexer, test_paren_parse)
+TEST_CASE("test_paren_parse", "[classic]")
 {
     Lexer test_lexer;
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(true);
-    test_lexer.loadFile(this->test_paren_file);
+    test_lexer.loadFile(test_paren_file);
     test_lexer.lex();
 
     // get the source info
@@ -767,7 +759,7 @@ TEST_F(TestLexer, test_paren_parse)
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
-        ASSERT_EQ(expected_line, output_line);
+        REQUIRE(expected_line == output_line);
     }
 }
 
@@ -911,14 +903,14 @@ SourceInfo get_psuedo_instr_source_info(void)
 /*
  * Psuedo instruction expansion test
  */
-TEST_F(TestLexer, test_psuedo_instr)
+TEST_CASE("test_psuedo_instr", "[classic]")
 {
     Lexer test_lexer;
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(true);
-    test_lexer.loadFile(this->test_psuedo_file);
+    test_lexer.loadFile(test_psuedo_file);
     test_lexer.lex();
 
     // get the source info
@@ -949,17 +941,10 @@ TEST_F(TestLexer, test_psuedo_instr)
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
-        ASSERT_EQ(expected_line, output_line);
+        REQUIRE(expected_line == output_line);
     }
 
     // Also check that we have the corect number of text and data segments 
-    ASSERT_EQ(1, src_out.getDataInfoSize());
-    ASSERT_EQ(7, src_out.getTextInfoSize());
-}
-
-
-int main(int argc, char *argv[])
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    REQUIRE(1 == src_out.getDataInfoSize());
+    REQUIRE(7 == src_out.getTextInfoSize());
 }

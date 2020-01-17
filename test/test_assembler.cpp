@@ -36,7 +36,6 @@ const std::string test_mult_add_file = "asm/mult_add.asm";
 const std::string test_for_loop_file = "asm/for_loop.asm";
 const std::string test_array_file    = "asm/array.asm";
 
-
 /*
  * Expected assembly output for mult_add.asm
  */
