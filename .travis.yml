@@ -2,26 +2,27 @@ dist: trusty
 sudo: false
 language: cpp
 
-# TODO : matrix?
+# Add clang later
 compiler: 
-    - clang
     - gcc
 
-addons:
-    apt:
-        sources:
-            -ubuntu-toolchain-r-test
-        packages:
-            - g++-6
+matrix:
+    include:
+        os: linux
+        addons:
+            apt:
+                sources:
+                    -ubuntu-toolchain-r-test
+                packages:
+                    - g++-6
+        env:
+            MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
-before_script:
-    - mkdir build
-    - cd build
-    - cmake ..
+before_install:
+    - eval "${MATRIX_EVAL}"
 
-# Stuff for gtest. Since Ubuntu doesn't package this anymore we'll do the 
-# old switcheroo and add gtest as a submodule
-#
+# Got rid of gtest, using catch2 now to avoid issue with 
+# Ubuntu's packaging. 
 script:
     - make clean && make all
     - ./bin/test/test_lexer
