@@ -1,5 +1,27 @@
+dist: trusty
+sudo: false
 language: cpp
 
+# TODO : matrix?
 compiler: 
     - clang
     - gcc
+
+addons:
+    apt:
+        sources:
+            -ubuntu-toolchain-r-test
+        packages:
+            - g++-6
+
+before_script:
+    - mkdir build
+    - cd build
+    - cmake ..
+
+# Stuff for gtest. Since Ubuntu doesn't package this anymore we'll do the 
+# old switcheroo and add gtest as a submodule
+#
+script:
+    - make clean && make all
+    - ./bin/test/test_lexer
