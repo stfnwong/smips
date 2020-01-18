@@ -21,7 +21,13 @@ compiler:
 before_install:
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     - sudo apt-get -q update
+    - sudo apt-get remove gcc g++
     - sudo apt-get -y install gcc-7 g++-7
+    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 --slave /usr/bin/g++ g++ /usr/bin/g++-7
+    - sudo update-alternatives --install /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-7 60
+    - sudo update-alternatives --install /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-7 60
+    - sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-gcc x86_64-linux-gnu-gcc /usr/bin/x86_64-linux-gnu-gcc-7 60 --slave /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-7
+
 #   - eval "${MATRIX_EVAL}"
 
 # Got rid of gtest, using catch2 now to avoid issue with 
@@ -29,3 +35,6 @@ before_install:
 script:
     - make clean && make all
     - ./bin/test/test_lexer
+    - ./bin/test/test_assembler
+    - ./bin/test/test_opcode
+    - ./bin/test/test_elf
