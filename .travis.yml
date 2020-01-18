@@ -6,18 +6,6 @@ language: cpp
 compiler: 
     - gcc
 
-#matrix:
-#    include:
-#        os: linux
-#        addons:
-#            apt:
-#                sources:
-#                    -ubuntu-toolchain-r-test
-#                packages:
-#                    - g++-6
-#        env:
-#            MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
-
 before_install:
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     - sudo apt-get -q update
@@ -28,10 +16,8 @@ before_install:
     - sudo update-alternatives --install /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-7 60
     - sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-gcc x86_64-linux-gnu-gcc /usr/bin/x86_64-linux-gnu-gcc-7 60 --slave /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-7
 
-#   - eval "${MATRIX_EVAL}"
-
 # Got rid of gtest, using catch2 now to avoid issue with 
-# Ubuntu's packaging. 
+# Ubuntu's packaging on travis
 script:
     - make clean && make all
     - ./bin/test/test_lexer
