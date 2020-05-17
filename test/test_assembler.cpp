@@ -214,7 +214,6 @@ Program get_array_expected_program(void)
     Instr   instr;
     DataSeg data;
 
-
     // ---- Data Section ---- //
     // list: .word 3, 0, 1, 2, 6
     data.init();
@@ -233,7 +232,6 @@ Program get_array_expected_program(void)
         data.data.push_back(uint8_t(0));
     prog.add(data);
 
-    
     // ---- Text Section ---- //
     
     // la $s0, list
@@ -293,7 +291,6 @@ class TestAssembler : public ::testing::Test
         std::string test_for_loop_file = "asm/for_loop.asm";
         std::string test_array_file = "asm/array.asm";
 };
-
 
 
 /*
@@ -451,11 +448,12 @@ TEST_F(TestAssembler, test_array)
         // Show the diff 
         std::cout << exp_seg.diff(out_seg) << std::endl;
 
-        std::cout << "Checking Seg " << std::setw(3) << std::dec << d << " : " << std::endl;
-        std::cout << out_seg.toString() << std::endl;
+        std::cout << "Checking Seg " << std::setw(3) << std::dec << d << "/" 
+           << prog_out.numDataSeg() << " : " << std::endl;
+        std::cout << "[out]: " << out_seg.toString() << std::endl;
+        std::cout << "[exp]: " << exp_seg.toString() << std::endl;
 
-        ASSERT_EQ(exp_seg, out_seg);
-
+        ASSERT_EQ(exp_seg, out_seg);        // TODO : data segment issue....
     }
 
     // Check text segment

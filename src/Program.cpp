@@ -200,7 +200,6 @@ std::string DataSeg::toString(void) const
     {
         oss << std::hex << unsigned(this->data[i]) << " ";
     }
-    oss << std::endl;
 
     return oss.str();
 }

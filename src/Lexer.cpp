@@ -290,6 +290,9 @@ Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset,
         goto LITERAL_REG_END;
     }
 
+    // 'offset' in this context means that the literal is used  
+    // in the source to indicate a memory offset  (TODO: change name to
+    // mem_offset)?
     offset = token.substr(start_offset, tok_ptr - start_offset);
     out_token        = this->extractReg(token, tok_ptr, end_offset);
     out_token.offset = offset;
@@ -473,6 +476,7 @@ void Lexer::nextToken(void)
         goto TOKEN_END;
     }
 
+    // TODO : we actually do this twice - why not set the instruction type here as well?
     // Check if this matches any instructions 
     op = this->instr_code_table.get(token_str);
           
@@ -516,9 +520,9 @@ void Lexer::parseAlign(void)
  */
 void Lexer::parseASCIIZ(void)
 {
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_ASCIIZ;
     this->data_info.line_num = this->cur_line;
+    this->data_info.addr = this->data_addr;
 
     this->nextToken();
     if(this->cur_token.type == SYM_STRING)
@@ -536,6 +540,9 @@ void Lexer::parseASCIIZ(void)
         if(this->verbose)
             std::cout << "[" << __func__ << "] " << this->data_info.errstr << std::endl;
     }
+
+    std::cout << "[" << __func__ << "] this->data_info : " << std::endl;
+    std::cout << this->data_info.toString() << std::endl;
 }
 
 /*
@@ -543,7 +550,6 @@ void Lexer::parseASCIIZ(void)
  */
 void Lexer::parseByte(void)
 {
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_BYTE;
 
     // there should only be one token after the .byte directive which 
@@ -577,7 +583,6 @@ void Lexer::parseHalf(void)
 {
     int word_idx = 0;
     uint32_t word;
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_HALF;
     this->data_info.line_num = this->cur_line;
 
@@ -612,7 +617,7 @@ void Lexer::parseHalf(void)
         }
 
         this->data_info.addByte(word);
-        word_idx++;
+        word_idx++;         // NOTE: only using this value for debugging... remove in final version
         this->incrDataAddr();
         //this->data_addr++;
     }
@@ -626,10 +631,11 @@ void Lexer::parseWord(void)
 {
     uint32_t word;
     int word_idx = 0;
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_WORD;
     this->data_info.line_num = this->cur_line;
+    this->data_info.addr     = this->data_addr;     // the address should be the start address at this time
 
+    // TODO : in the test case, this should cause the word to go up by 5
     while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
     {
         this->nextToken();
@@ -645,15 +651,19 @@ void Lexer::parseWord(void)
             if(this->verbose)
                 std::cout << "[" << __func__ << "] " << this->data_info.errstr << std::endl;
             break;
-
         }
 
         word = std::stoi(this->cur_token.val);
         this->data_info.addByte(word);
         word_idx++;
         this->incrDataAddr();
-        //this->data_addr++;
     }
+
+    std::cout << "[" << __func__ << "] this->data_info : " << std::endl;
+    std::cout << this->data_info.toString() << std::endl;
+
+    //std::cout << "[" << __func__ << "] after processing words, this->data_addr = " 
+    //    << std::dec << this->data_addr << std::endl;
 }
 
 
@@ -663,7 +673,6 @@ void Lexer::parseWord(void)
  */
 void Lexer::parseSpace(void)
 {
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_SPACE;
     this->data_info.line_num = this->cur_line;
 
@@ -678,6 +687,10 @@ void Lexer::parseSpace(void)
     else
     {
         this->data_info.space = std::stoi(this->cur_token.val);
+        // TODO : Is this the source of our mysterious +6?
+        std::cout << "[" << __func__ << "] adding " << std::dec << 
+            this->data_info.space << " to this->data_addr (" << std::dec 
+            << this->data_addr << ")" << std::endl;
         this->data_addr += this->data_info.space;
     }
 }
@@ -1049,6 +1062,7 @@ void Lexer::parseLine(void)
     unsigned int line_num = 0;
 
     this->text_info.init();
+    this->data_info.init();
     line_num = this->cur_line;
     this->nextToken();          
 
@@ -1202,6 +1216,7 @@ void Lexer::parseLine(void)
                 this->parseBranch();
                 break;
 
+            // psuedo-op
             case LEX_BGT:
                 this->parseBranch();
                 break;
@@ -1225,11 +1240,13 @@ void Lexer::parseLine(void)
                 this->parseMemArgs();
                 break;
 
+            // psuedo-op
             //case LEX_LA:
             //    this->parseRegArgs(1);
             //    this->parseLabel();
             //    break;
 
+            //// psuedo-op
             //case LEX_LI:
             //    this->text_info.is_imm = true;
             //    this->parseRegArgs(2);
@@ -1276,6 +1293,18 @@ void Lexer::parseLine(void)
             case LEX_SYSCALL:
                 break;
 
+            // TODO : breaks tests...
+            //case LEX_LA:
+            //case LEX_LI:
+            //    this->text_info.is_imm = true;
+            //    this->parseRegArgs(2);
+            //    break;
+
+            //case LEX_BLT:
+            //    this->expandPsuedo();
+            //    break;
+
+            // TODO : what happens if we don't expand psuedos (since its optional...)?
             default:
                 this->text_info.error = true;
                 this->text_info.errstr = "Invalid instruction " + this->cur_token.val;
@@ -1295,6 +1324,7 @@ LINE_END:
         this->text_info.line_num = line_num;
         this->text_info.addr     = this->text_addr;
 
+        // TODO : what is the logic here?
         if(this->expand_psuedo)
         {
             this->expandPsuedo();
@@ -1310,7 +1340,8 @@ LINE_END:
         //this->data_addr++;
         this->incrDataAddr();
         this->data_info.line_num = line_num;
-        this->data_info.addr     = this->data_addr;
+        if(this->data_info.addr == 0)
+            this->data_info.addr     = this->data_addr;
         this->source_info.addData(this->data_info);
     }
     else
@@ -1554,6 +1585,7 @@ void Lexer::expandPsuedo(void)
 
         case LEX_LI:
             ti.init();
+            std::cout << "[" << __func__ << "] expanding LEX_LI" << std::endl;
             // 32-bit immediate (2 instrs)
             if(this->text_info.val[1] > ((1 << 16)-1))
             {
@@ -1607,6 +1639,10 @@ void Lexer::expandPsuedo(void)
             break;
 
         default:
+            std::cout << "[" << __func__ << "] got some weird garbage..." << std::endl;
+            std::cout << "[" << __func__ << "] this->text_info :..." 
+                << std::endl << this->text_info.toString() << std::endl;
+            // TODO : lw mnemonic currently depends on these 2 lines
             this->source_info.addText(this->text_info);
             this->incrTextAddr();
             break;

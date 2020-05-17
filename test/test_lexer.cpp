@@ -715,7 +715,7 @@ TEST_F(TestLexer, test_array)
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
-        ASSERT_EQ(expected_line, output_line);
+        ASSERT_EQ(expected_line, output_line);      // TODO : Line 1 diff does not match
     }
 
     std::cout << "Error strings : " << std::endl << std::endl;
@@ -1006,7 +1006,7 @@ TEST_F(TestLexer, test_psuedo_instr)
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
-        ASSERT_EQ(expected_line, output_line);
+        ASSERT_EQ(expected_line, output_line);      // TODO : symbol table error in line 3/7
     }
 
     // Also check that we have the corect number of text and data segments 
