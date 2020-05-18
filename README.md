@@ -1,6 +1,8 @@
 # SMIPS
 MIPS emulator and binary tools 
 
+[![Build Status](https://travis-ci.org/stfnwong/smips.svg?branch=master)](https://travis-ci.org/stfnwong/smips)
+
 ## Features
 - Just the assembler
 

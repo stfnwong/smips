@@ -16,12 +16,11 @@
 #include "Lexer.hpp"
 #include "Source.hpp"
 
-static std::string test_mult_add_file = "asm/mult_add.asm";
-static std::string test_for_loop_file = "asm/for_loop.asm";
-static std::string test_array_file = "asm/array.asm";
-static std::string test_paren_file = "asm/paren.asm";
-static std::string test_psuedo_file = "asm/psuedo.asm";
-
+const std::string test_mult_add_file = "asm/mult_add.asm";
+const std::string test_for_loop_file = "asm/for_loop.asm";
+const std::string test_array_file    = "asm/array.asm";
+const std::string test_paren_file    = "asm/paren.asm";
+const std::string test_psuedo_file   = "asm/psuedo.asm";
 
 
 // TODO : adjust starting address later 
@@ -668,6 +667,8 @@ TEST_CASE("test_array", "[classic]")
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(true);
+    // for this test, just leave the psuedo instructions in place
+    test_lexer.setExpandPsuedo(false);          
     test_lexer.loadFile(test_array_file);
     test_lexer.lex();
 
@@ -770,7 +771,6 @@ SourceInfo get_paren_expected_source_info(void)
 
     return info;
 }
-
 
 
 TEST_CASE("test_paren_parse", "[classic]")
