@@ -120,6 +120,7 @@ class Lexer
 
     private:
         void resolveLabels(void);
+        void parseAddress(void);
         void parseBranch(void);
         void parseBranchZero(void);
         void parseMemArgs(void);

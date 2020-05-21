@@ -87,7 +87,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.val[1]          = 0;
     line.type[1]         = SYM_REG_ZERO;
     line.val[2]          = 3;
-    line.type[3]         = SYM_LITERAL;
+    line.type[2]         = SYM_LITERAL;
     info.addText(line);
 
     // line 5
@@ -102,7 +102,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.val[1]          = 1;
     line.type[1]         = SYM_REG_TEMP;
     line.val[2]          = 2;
-    line.type[3]         = SYM_REG_TEMP;
+    line.type[2]         = SYM_REG_TEMP;
     info.addText(line);
 
     // line 7
@@ -117,7 +117,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     line.val[1]          = 0;
     line.type[1]         = SYM_REG_TEMP;
     line.val[2]          = 1;
-    line.type[3]         = SYM_REG_TEMP;
+    line.type[2]         = SYM_REG_TEMP;
     info.addText(line);
 
     // line 8
@@ -998,6 +998,8 @@ TEST_CASE("test_psuedo_instr", "[classic]")
 
         if(expected_line != output_line)
         {
+            std::cout << "Expected " << std::endl << expected_line.toString() << std::endl;
+            std::cout << "Got " << std::endl << output_line.toString() << std::endl;
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
@@ -1007,4 +1009,5 @@ TEST_CASE("test_psuedo_instr", "[classic]")
     // Also check that we have the corect number of text and data segments 
     REQUIRE(1 == src_out.getDataInfoSize());
     REQUIRE(7 == src_out.getTextInfoSize());
+    std::cout << "All psuedo ops correctly expanded" << std::endl;
 }

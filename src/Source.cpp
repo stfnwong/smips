@@ -409,7 +409,7 @@ std::string TextInfo::diff(const TextInfo& that) const
     {
         if(this->val[i] != that.val[i])
         {
-            oss << "arg " << i << " [" << this->val[i] << 
+            oss << "val " << i << " [" << this->val[i] << 
                 "] does not match [" << that.val[i] << 
                 "]" << std::endl;
             num_err += 1;
@@ -483,6 +483,7 @@ std::string DataInfo::toString(void) const
 {
     std::ostringstream oss;
 
+    // TODO : how to print data segment (in cases where its more than 5 bytes)?
     oss << "---------------------------------------------------------------------" << std::endl;
     // extend to the right as needed
     oss << "Line  Type   Addr      Directive  Label    Error  Data                    " << std::endl;
