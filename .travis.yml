@@ -21,3 +21,7 @@ before_install:
 script:
     - make clean && make all
     - ./test/run_tests.sh
+      #- ./bin/test/test_lexer
+      #- ./bin/test/test_assembler
+      #- ./bin/test/test_opcode
+      #- ./bin/test/test_elf
