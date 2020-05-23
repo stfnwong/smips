@@ -15,3 +15,9 @@ branch_label:
 bgt $s1 $t1 2
 blt $s0 $t0 32
 blt $s0 $t2 64      
+
+; more branch psuedo-ops 
+bge $s1 $t0 4
+ble $s3 $t1 10
+bgtu $s0 $t5 10
+beqz $s2 500

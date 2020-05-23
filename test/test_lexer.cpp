@@ -24,7 +24,9 @@ const std::string test_psuedo_file   = "asm/psuedo.asm";
 
 const bool show_all_output = false;
 
-// TODO : adjust starting address later 
+/*
+ * Generate mult-add SourceInfo
+ */
 SourceInfo get_mult_add_expected_source_info(void)
 {
     SourceInfo info;
@@ -137,6 +139,9 @@ SourceInfo get_mult_add_expected_source_info(void)
     return info;
 }
 
+/*
+ * Generate SourceInfo for for-loop program
+ */
 SourceInfo get_for_loop_expected_source_info(void)
 {
     SourceInfo info;
@@ -572,7 +577,7 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(false);
+    //test_lexer.setVerbose(false);
     test_lexer.loadFile(test_mult_add_file);
     test_lexer.lex();
 
@@ -1047,6 +1052,109 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.is_imm          = true;
     info.addText(line);
 
+    // bge $s1 $t0 4
+    // slt $at $s1 $t0
+    line.init();
+    line.line_num        = 20;
+    line.addr            = 0x00400034;
+    line.opcode.instr    = LEX_SLT;
+    line.opcode.mnemonic = "slt";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 1;
+    line.type[1]         = SYM_REG_SAVED;
+    line.val[2]          = 0;
+    line.type[2]         = SYM_REG_TEMP;
+    info.addText(line);
+    // beq $at $zero 0x4
+    line.init();
+    line.line_num        = 20;
+    line.addr            = 0x00400038;
+    line.opcode.instr    = LEX_BEQ;
+    line.opcode.mnemonic = "beq";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_ZERO;
+    line.val[2]          = 0x4;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
+
+    // ble $s3 $t1 10
+    // slt $at $t1 $s3
+    line.init();
+    line.line_num        = 21;
+    line.addr            = 0x0040003C;
+    line.opcode.instr    = LEX_SLT;
+    line.opcode.mnemonic = "slt";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 3;
+    line.type[1]         = SYM_REG_SAVED;
+    line.val[2]          = 1;
+    line.type[2]         = SYM_REG_TEMP;
+    info.addText(line);
+    // beq $at $zero 0xA
+    line.init();
+    line.line_num        = 21;
+    line.addr            = 0x00400040;
+    line.opcode.instr    = LEX_BEQ;
+    line.opcode.mnemonic = "beq";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_ZERO;
+    line.val[2]          = 0xA;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
+
+    // bgtu $s0 $t5 10
+    // sltu $at $t5 $s0
+    line.init();
+    line.line_num        = 22;
+    line.addr            = 0x00400044;
+    line.opcode.instr    = LEX_SLTU;
+    line.opcode.mnemonic = "sltu";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 5;
+    line.type[1]         = SYM_REG_TEMP;
+    line.val[2]          = 0;
+    line.type[2]         = SYM_REG_SAVED;
+    info.addText(line);
+    // bne $at $zero 0xA
+    line.init();
+    line.line_num        = 22;
+    line.addr            = 0x00400048;
+    line.opcode.instr    = LEX_BNE;
+    line.opcode.mnemonic = "bne";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_ZERO;
+    line.val[2]          = 0xA;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
+
+    // beqz $s2 500
+    // beq $s2 $zero 500
+    line.init();
+    line.line_num        = 23;
+    line.addr            = 0x0040004C;
+    line.opcode.instr    = LEX_BEQ;
+    line.opcode.mnemonic = "beq";
+    line.val[0]          = 2;
+    line.type[0]         = SYM_REG_SAVED;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_ZERO;
+    line.val[2]          = 500;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
+
     // arr: .word 3
     data_line.init();
     data_line.line_num  = 5;
@@ -1122,5 +1230,5 @@ TEST_CASE("test_psuedo_instr", "[classic]")
 
     // Also check that we have the corect number of text and data segments 
     REQUIRE(1 == src_out.getDataInfoSize());
-    REQUIRE(13 == src_out.getTextInfoSize());
+    REQUIRE(20 == src_out.getTextInfoSize());
 }

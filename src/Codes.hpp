@@ -36,6 +36,7 @@ typedef enum instr_code
     LEX_BEQ, LEX_BLEZ, LEX_BNE, LEX_BGTZ,
     // branch psuedo instructions 
     LEX_BGT, LEX_BLT, LEX_BGE, LEX_BLE, 
+    LEX_BGTU, LEX_BEQZ, 
     // syscall
     LEX_SYSCALL     // not strictly an instruction
 } instr_code;
@@ -109,9 +110,14 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_BEQ,   "beq"),
 	Opcode(LEX_BLT,   "blt"),
 	Opcode(LEX_BGT,   "bgt"),
+	Opcode(LEX_BGE,   "bge"),
+	Opcode(LEX_BLE,   "ble"),
+	Opcode(LEX_BGTU,  "bgtu"),
+	Opcode(LEX_BEQZ,  "beqz"),
+	Opcode(LEX_BEQ,   "beq"),
+    Opcode(LEX_BNE,   "bne"),
     Opcode(LEX_BGTZ,  "bgtz"),
     Opcode(LEX_BLEZ,  "blez"),
-    Opcode(LEX_BNE,   "bne"),
     // syscall
     Opcode(LEX_SYSCALL, "syscall"),
 };
