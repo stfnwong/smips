@@ -831,11 +831,13 @@ void Lexer::parseAddress(int num_reg_args)
     this->nextToken();
     if(this->cur_token.type == SYM_LABEL)
     {
+        this->text_info.is_imm = true;
         this->text_info.is_symbol = true;
         this->text_info.symbol    = this->cur_token.val;
     }
     else if(cur_token.type == SYM_LITERAL)
     {
+        this->text_info.is_imm = true;
         this->text_info.val[2] = std::stoi(this->cur_token.val, nullptr, 10);
     }
     else
@@ -1282,19 +1284,24 @@ void Lexer::parseLine(void)
             case LEX_BEQ:
             case LEX_BNE:
                 this->parseAddress(2);
-                //this->parseBranch();
+                break;
+
+            // BGX instructions need to be able to handle symbols as immediate arg
+            case LEX_BGT:
+            case LEX_BLT:
+                this->parseAddress(2);
+                psuedo_op = true;
                 break;
 
             case LEX_BGTZ:
             case LEX_BLEZ:
-                //this->parseBranchZero();
                 this->parseAddress(1);
                 break;
 
             case LEX_J:
             case LEX_JAL:
             case LEX_JALR:
-                this->parseJump();      // this parses a single label (
+                this->parseJump();      // this parses a single label
                 break;
 
             case LEX_JR:
@@ -1358,15 +1365,6 @@ void Lexer::parseLine(void)
                 psuedo_op = true;
                 break;
 
-                // TODO : re-write this with something like parseAddress() which takes a number
-                // of register params (which can be zero) and parses those + one immediate or symbol
-            case LEX_BGT:
-            case LEX_BLT:
-                this->parseAddress(2);
-                //this->text_info.is_imm = true;
-                //this->parseRegArgs(3);
-                psuedo_op = true;
-                break;
 
             default:
                 this->text_info.error = true;
@@ -1542,16 +1540,16 @@ void Lexer::expandPsuedo(void)
                 ti.init();
                 ti.opcode.instr = LEX_SLT;
                 ti.opcode.mnemonic = "slt";
-                ti.addr     = this->text_info.addr;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_TEMP;
-                ti.type[2]  = SYM_REG_SAVED;
-                ti.val[0]   = 0;            // TODO : where should AT be?
-                ti.val[1]   = this->text_info.val[1];
-                ti.val[2]   = this->text_info.val[0];
-                ti.label    = this->text_info.label;
-                ti.is_label = this->text_info.is_label;
+                ti.addr      = this->text_info.addr;
+                ti.line_num  = this->text_info.line_num;
+                ti.type[0]   = SYM_REG_AT;
+                ti.type[1]   = SYM_REG_TEMP;
+                ti.type[2]   = SYM_REG_SAVED;
+                ti.val[0]    = 0;            // TODO : where should AT be?
+                ti.val[1]    = this->text_info.val[1];
+                ti.val[2]    = this->text_info.val[0];
+                ti.label     = this->text_info.label;
+                ti.is_label  = this->text_info.is_label;
 
                 if(this->verbose)
                 {
@@ -1565,14 +1563,15 @@ void Lexer::expandPsuedo(void)
                 ti.init();
                 ti.opcode.instr = LEX_BNE;
                 ti.opcode.mnemonic = "bne";
-                ti.addr     = this->text_info.addr + 4;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_ZERO;
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[2]   = this->text_info.val[2];
-                ti.label    = this->text_info.label;
-                ti.is_label = this->text_info.is_label;
+                ti.addr      = this->text_info.addr + 4;
+                ti.line_num  = this->text_info.line_num;
+                ti.type[0]   = SYM_REG_AT;
+                ti.type[1]   = SYM_REG_ZERO;
+                ti.type[2]   = SYM_LITERAL;
+                ti.val[2]    = this->text_info.val[2];
+                ti.is_imm    = this->text_info.is_imm;
+                ti.symbol    = this->text_info.symbol;
+                ti.is_symbol = this->text_info.is_symbol;
                 
                 if(this->verbose)
                 {
@@ -1606,6 +1605,8 @@ void Lexer::expandPsuedo(void)
                 ti.val[0]   = 0;            // TODO : where should AT be?
                 ti.val[1]   = this->text_info.val[0];
                 ti.val[2]   = this->text_info.val[1];
+                ti.label     = this->text_info.label;
+                ti.is_label  = this->text_info.is_label;
 
                 if(this->verbose)
                 {
@@ -1619,12 +1620,15 @@ void Lexer::expandPsuedo(void)
                 ti.init();
                 ti.opcode.instr = LEX_BNE;
                 ti.opcode.mnemonic = "bne";
-                ti.addr     = this->text_info.addr + 4;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_ZERO;
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[2]  = this->text_info.val[2];
+                ti.addr      = this->text_info.addr + 4;
+                ti.line_num  = this->text_info.line_num;
+                ti.type[0]   = SYM_REG_AT;
+                ti.type[1]   = SYM_REG_ZERO;
+                ti.type[2]   = SYM_LITERAL;
+                ti.val[2]    = this->text_info.val[2];
+                ti.is_imm    = this->text_info.is_imm;
+                ti.symbol    = this->text_info.symbol;
+                ti.is_symbol = this->text_info.is_symbol;
                 
                 if(this->verbose)
                 {
@@ -1643,8 +1647,11 @@ void Lexer::expandPsuedo(void)
                 // lui $t, A_hi
                 // ori $t, $t, A_lo
 
-                std::cout << "[" << __func__ << "] expanding LEX_LA" << std::endl;
-                std::cout << this->text_info.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] expanding LEX_LA" << std::endl;
+                    std::cout << this->text_info.toString() << std::endl;
+                }
 
                 // Note that literals get resolved from symbols later
                 // This means that we actually need to set upper or lower to tell the resolve step 
@@ -1660,7 +1667,6 @@ void Lexer::expandPsuedo(void)
                 ti.val[0]    = this->text_info.val[0];
                 ti.type[1]   = SYM_LITERAL;
                 ti.val[1]    = this->text_info.val[1];
-                //ti.val[1]    = (this->text_info.val[1] & 0xFFFF0000) >> 16;
                 ti.is_imm    = true;
                 ti.upper     = true;   
                 ti.is_symbol = this->text_info.is_symbol;
@@ -1685,7 +1691,6 @@ void Lexer::expandPsuedo(void)
                 ti.val[1]    = this->text_info.val[0];
                 ti.type[2]   = SYM_LITERAL;
                 ti.val[2]    = this->text_info.val[1];
-                //ti.val[2]    = this->text_info.val[1] & 0x0000FFFF;
                 ti.is_imm    = true;
                 ti.is_symbol = true;
                 ti.lower     = true;

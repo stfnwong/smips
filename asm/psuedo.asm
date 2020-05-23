@@ -14,4 +14,4 @@ la $t1 arr      # load from address 'arr'
 branch_label:
 bgt $s1 $t1 2
 blt $s0 $t0 32
-blt $s0 $t2 64      ; TODO : implement 0x40 style parsing
+blt $s0 $t2 64      

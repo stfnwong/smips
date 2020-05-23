@@ -22,6 +22,7 @@ const std::string test_array_file    = "asm/array.asm";
 const std::string test_paren_file    = "asm/paren.asm";
 const std::string test_psuedo_file   = "asm/psuedo.asm";
 
+const bool show_all_output = false;
 
 // TODO : adjust starting address later 
 SourceInfo get_mult_add_expected_source_info(void)
@@ -251,6 +252,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.val[2]          = 0x00400028;
     line.is_symbol       = true;
     line.symbol          = "done";
+    line.is_imm          = true;
     info.addText(line);
 
     // line 12
@@ -309,6 +311,9 @@ SourceInfo get_for_loop_expected_source_info(void)
     return info;
 }
 
+/*
+ * Generate SourceInfo for array program
+ */
 SourceInfo get_array_expected_source_info(void)
 {
     SourceInfo info;
@@ -365,7 +370,7 @@ SourceInfo get_array_expected_source_info(void)
     line.val[0]          = 0;
     line.type[0]         = SYM_REG_SAVED;
     line.type[1]         = SYM_LITERAL;
-    line.val[1]          = 0x10000000 & 0xFFFF0000;
+    line.val[1]          = (0x10000000 & 0xFFFF0000) >> 16;
     line.is_symbol       = true;
     line.is_imm          = true;
     line.upper           = true;
@@ -435,10 +440,12 @@ SourceInfo get_array_expected_source_info(void)
     line.type[0]         = SYM_REG_AT;;
     line.val[1]          = 1;
     line.type[1]          = SYM_REG_TEMP;
-    // the immediate here is the address of end_loop
     line.val[2]          = 0;
     line.type[2]         = SYM_REG_TEMP;
+    line.is_label        = true;
+    line.label           = "loop";
     info.addText(line);
+
     // [bne $at, $zero, end_loop]
     line.init();
     line.line_num        = 15;
@@ -449,11 +456,11 @@ SourceInfo get_array_expected_source_info(void)
     line.type[0]         = SYM_REG_AT;
     line.type[1]         = SYM_REG_ZERO;
     line.type[2]         = SYM_LITERAL;
+    // the immediate here is the address of end_loop
     line.val[2]          = 0x00400030;
     line.is_symbol       = true;
     line.symbol          = "end_loop";
-    line.is_label        = true;
-    line.label           = "loop";
+    line.is_imm          = true;
     info.addText(line);
 
     // line 17
@@ -609,29 +616,33 @@ TEST_CASE("test_for_loop", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    //test_lexer.setVerbose(true);
     test_lexer.loadFile(test_for_loop_file);
     test_lexer.lex();
 
     // get the source info
     expected_src_out = get_for_loop_expected_source_info();
-    std::cout << "Expected output :" << std::endl;
-    std::cout << expected_src_out.toString() << std::endl << std::endl;
-
     src_out = test_lexer.getSourceInfo();
 
-    std::cout << "Lexer output : " << std::endl;
-    std::cout << src_out.toString() << std::endl;
-
-    // before we check each line, dump the symbol table and print
-    SymbolTable sym_table = test_lexer.getSymTable();
-    std::cout << "Symbol Table: " << std::endl;
-
-    for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
+    if(show_all_output)
     {
-        Symbol cur_sym = sym_table.get(sym);
-        std::cout << "     " << sym << " " << 
-            cur_sym.toString() << std::endl;
+        std::cout << "Expected output :" << std::endl;
+        std::cout << expected_src_out.toString() << std::endl << std::endl;
+
+
+        std::cout << "Lexer output : " << std::endl;
+        std::cout << src_out.toString() << std::endl;
+
+        // before we check each line, dump the symbol table and print
+        SymbolTable sym_table = test_lexer.getSymTable();
+        std::cout << "Symbol Table: " << std::endl;
+
+        for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
+        {
+            Symbol cur_sym = sym_table.get(sym);
+            std::cout << "     " << sym << " " << 
+                cur_sym.toString() << std::endl;
+        }
     }
 
     //REQUIRE(expected_src_out.getTextInfoSize() == src_out.getNumLines());
@@ -649,6 +660,8 @@ TEST_CASE("test_for_loop", "[classic]")
 
         if(expected_line != output_line)
         {
+            std::cout << "Expecting :" << std::endl << expected_line.toString() << std::endl;
+            std::cout << "Got :" << std::endl << output_line.toString() << std::endl;
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
@@ -671,26 +684,29 @@ TEST_CASE("test_array", "[classic]")
 
     // get the source info
     expected_src_out = get_array_expected_source_info();
-    std::cout << "Expected output :" << std::endl;
-    std::cout << expected_src_out.toString() << std::endl << std::endl;
-
     src_out = test_lexer.getSourceInfo();
-    std::cout << "Lexer output : " << std::endl;
-    std::cout << src_out.toString() << std::endl;
 
-    // before we check each line, dump the symbol table and print
-    std::cout << std::dec << src_out.getDataInfoSize() << " lines in data segment" << std::endl;
-    std::cout << std::dec << src_out.getTextInfoSize() << " lines in text segment" << std::endl;
-
-
-    SymbolTable sym_table = test_lexer.getSymTable();
-    std::cout << "Symbol Table: " << std::endl;
-
-    for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
+    if(show_all_output)
     {
-        Symbol cur_sym = sym_table.get(sym);
-        std::cout << "     " << sym << " " << 
-            cur_sym.toString() << std::endl;
+        std::cout << "Expected output :" << std::endl;
+        std::cout << expected_src_out.toString() << std::endl << std::endl;
+
+        std::cout << "Lexer output : " << std::endl;
+        std::cout << src_out.toString() << std::endl;
+
+        // before we check each line, dump the symbol table and print
+        std::cout << std::dec << src_out.getDataInfoSize() << " lines in data segment" << std::endl;
+        std::cout << std::dec << src_out.getTextInfoSize() << " lines in text segment" << std::endl;
+
+        SymbolTable sym_table = test_lexer.getSymTable();
+        std::cout << "Symbol Table: " << std::endl;
+
+        for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
+        {
+            Symbol cur_sym = sym_table.get(sym);
+            std::cout << "     " << sym << " " << 
+                cur_sym.toString() << std::endl;
+        }
     }
 
     // Check each line in turn
@@ -710,7 +726,7 @@ TEST_CASE("test_array", "[classic]")
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
-        REQUIRE(expected_line == output_line);      // TODO : Line 1 diff does not match
+        REQUIRE(expected_line == output_line);      
     }
 
     std::cout << "Error strings : " << std::endl << std::endl;
@@ -778,18 +794,22 @@ TEST_CASE("test_paren_parse", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    //test_lexer.setVerbose(true);
     test_lexer.loadFile(test_paren_file);
     test_lexer.lex();
 
     // get the source info
     expected_src_out = get_paren_expected_source_info();
-    std::cout << "Expected output :" << std::endl;
-    std::cout << expected_src_out.toString() << std::endl << std::endl;
-
     src_out = test_lexer.getSourceInfo();
-    std::cout << "Lexer output : " << std::endl;
-    std::cout << src_out.toString() << std::endl;
+
+    if(show_all_output)
+    {
+        std::cout << "Expected output :" << std::endl;
+        std::cout << expected_src_out.toString() << std::endl << std::endl;
+
+        std::cout << "Lexer output : " << std::endl;
+        std::cout << src_out.toString() << std::endl;
+    }
 
     // Check each line in turn
     TextInfo expected_line;
@@ -850,6 +870,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.type[1]         = SYM_REG_ZERO;
     line.val[2]          = 8;
     line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.addText(line);
 
     // li $t2, 5
@@ -951,7 +972,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.label           = "branch_label";
     info.addText(line);
 
-    // bne $at $zero arr (0x10000000)
+    // bne $at $zero 0x2 
     line.init();
     line.line_num        = 15;
     line.addr            = 0x00400020;
@@ -963,8 +984,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.type[1]         = SYM_REG_ZERO;
     line.val[2]          = 0x2;
     line.type[2]         = SYM_LITERAL;
-    line.is_label        = true;
-    line.label           = "branch_label";
+    line.is_imm          = true;
     info.addText(line);
 
     // blt $s0 $t0 0x20
@@ -994,6 +1014,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.type[1]         = SYM_REG_ZERO;
     line.val[2]          = 0x20;
     line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.addText(line);
 
     // blt $s0 $t2 0x40
@@ -1023,6 +1044,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.type[1]         = SYM_REG_ZERO;
     line.val[2]          = 0x40;
     line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
     info.addText(line);
 
     // arr: .word 3
@@ -1048,35 +1070,38 @@ TEST_CASE("test_psuedo_instr", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    //test_lexer.setVerbose(true);
     test_lexer.loadFile(test_psuedo_file);
     test_lexer.lex();
 
     // get the source info
     expected_src_out = get_psuedo_instr_source_info();
-    std::cout << "Expected output :" << std::endl;
-    std::cout << expected_src_out.toString() << std::endl << std::endl;
-
     src_out = test_lexer.getSourceInfo();
-    std::cout << "Lexer output : " << std::endl;
-    std::cout << src_out.toString() << std::endl;
 
+    if(show_all_output)
+    {
+        std::cout << "Expected output :" << std::endl;
+        std::cout << expected_src_out.toString() << std::endl << std::endl;
+
+        std::cout << "Lexer output : " << std::endl;
+        std::cout << src_out.toString() << std::endl;
+
+        SymbolTable sym_table = test_lexer.getSymTable();
+        std::cout << "Symbol Table: " << std::endl;
+
+        for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
+        {
+            Symbol cur_sym = sym_table.get(sym);
+            std::cout << "     " << sym << " " << 
+                cur_sym.toString() << std::endl;
+        }
+    }
     // Check each line in turn
     TextInfo expected_line;
     TextInfo output_line;
 
     std::cout << src_out.getTextInfoSize() << " lines in output text segment" << std::endl;
     std::cout << src_out.getDataInfoSize() << " lines in output data segment" << std::endl;
-
-    SymbolTable sym_table = test_lexer.getSymTable();
-    std::cout << "Symbol Table: " << std::endl;
-
-    for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
-    {
-        Symbol cur_sym = sym_table.get(sym);
-        std::cout << "     " << sym << " " << 
-            cur_sym.toString() << std::endl;
-    }
 
     for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
     {
@@ -1092,11 +1117,10 @@ TEST_CASE("test_psuedo_instr", "[classic]")
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
-        REQUIRE(expected_line == output_line);      // TODO : symbol table error in line 3/7
+        REQUIRE(expected_line == output_line);      
     }
 
     // Also check that we have the corect number of text and data segments 
     REQUIRE(1 == src_out.getDataInfoSize());
     REQUIRE(13 == src_out.getTextInfoSize());
-    std::cout << "All psuedo ops correctly expanded" << std::endl;
 }
