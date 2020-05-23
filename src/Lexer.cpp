@@ -24,7 +24,6 @@ Lexer::Lexer()
     this->line_buf_size   = 512;
     void nextLine(void);
     this->verbose         = false;
-    this->expand_psuedo   = true;
     this->cur_char        = '\0';
     this->cur_line        = 0;
     this->cur_pos         = 0;
@@ -273,6 +272,7 @@ Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset,
     unsigned int tok_ptr;
     std::string offset;
 
+    // TODO : update to handle hex using c-style (0x) prefix
     tok_ptr = start_offset;
     while(std::isdigit(token[tok_ptr]))
         tok_ptr++;
@@ -797,29 +797,34 @@ BRANCH_ZERO_END:
  * parseAddress()
  * Parse arguments to la instruction
  */
-void Lexer::parseAddress(void)
+void Lexer::parseAddress(int num_reg_args)
 {
     bool error = false;
 
-    this->nextToken();
-    if(!this->cur_token.isReg())
+    // TODO : remove this 
+    std::cout << "[" << __func__ << "] parsing " << num_reg_args << " register args" << std::endl;
+    for(int r = 0; r < num_reg_args; ++r)
     {
-        error = true;
-        goto ADDRESS_END;
-    }
-    this->text_info.type[0] = this->cur_token.type;
+        this->nextToken();
+        if(!this->cur_token.isReg())
+        {
+            error = true;
+            goto ADDRESS_END;
+        }
+        this->text_info.type[r] = this->cur_token.type;
 
-    switch(this->cur_token.type)
-    {
-        case SYM_REG_ZERO:
-        case SYM_REG_GLOBAL:
-        case SYM_REG_FRAME:
-            this->text_info.val[0] = 0;
-            break;
+        switch(this->cur_token.type)
+        {
+            case SYM_REG_ZERO:
+            case SYM_REG_GLOBAL:
+            case SYM_REG_FRAME:
+                this->text_info.val[r] = 0;
+                break;
 
-        default:
-            this->text_info.val[0] = std::stoi(this->cur_token.val, nullptr, 10);
-            break;
+            default:
+                this->text_info.val[r] = std::stoi(this->cur_token.val, nullptr, 10);
+                break;
+        }
     }
 
     // Finally, there should be one label or constant token at the end
@@ -1070,7 +1075,7 @@ void Lexer::parseJump(void)
     bool error = false;
 
     this->nextToken();
-    if(this->cur_token.type != SYM_LABEL)
+    if(this->cur_token.type != SYM_LABEL)   // TODO : add support for imm as well..
     {
         error = true;
     }
@@ -1276,18 +1281,20 @@ void Lexer::parseLine(void)
 
             case LEX_BEQ:
             case LEX_BNE:
-                this->parseBranch();
+                this->parseAddress(2);
+                //this->parseBranch();
                 break;
 
             case LEX_BGTZ:
             case LEX_BLEZ:
-                this->parseBranchZero();
+                //this->parseBranchZero();
+                this->parseAddress(1);
                 break;
 
             case LEX_J:
             case LEX_JAL:
             case LEX_JALR:
-                this->parseJump();
+                this->parseJump();      // this parses a single label (
                 break;
 
             case LEX_JR:
@@ -1341,7 +1348,7 @@ void Lexer::parseLine(void)
 
             // psudo-ops 
             case LEX_LA:
-                this->parseAddress();
+                this->parseAddress(1);
                 psuedo_op = true;
                 break;
 
@@ -1351,14 +1358,16 @@ void Lexer::parseLine(void)
                 psuedo_op = true;
                 break;
 
-            case LEX_BLT:
+                // TODO : re-write this with something like parseAddress() which takes a number
+                // of register params (which can be zero) and parses those + one immediate or symbol
             case LEX_BGT:
-                this->text_info.is_imm = true;
-                this->parseRegArgs(3);
+            case LEX_BLT:
+                this->parseAddress(2);
+                //this->text_info.is_imm = true;
+                //this->parseRegArgs(3);
                 psuedo_op = true;
                 break;
 
-            // TODO : what happens if we don't expand psuedos (since its optional...)?
             default:
                 this->text_info.error = true;
                 this->text_info.errstr = "Invalid instruction " + this->cur_token.val;
@@ -1384,7 +1393,6 @@ LINE_END:
         // we add the expanded instructions directly into this->text_info. The expansion looks
         // at the last instruction in this->text_info, and if its one of the psuedo ops then
         // it replaces it with the 'real' ops (ie: it mutates this->text_info behind the scenes).
-        //if(this->expand_psuedo)
         if(psuedo_op)
         {
             std::cout << "[" << __func__ << "] expanding psuedo opcode " << this->text_info.opcode.toString() << std::endl;
@@ -1419,7 +1427,6 @@ LINE_END:
  */
 void Lexer::resolveLabels(void)
 {
-    unsigned int idx;
     uint32_t label_addr;
     TextInfo line;
 
@@ -1436,26 +1443,20 @@ void Lexer::resolveLabels(void)
         }
     }
 
-    for(idx = 0; idx < this->source_info.getTextInfoSize(); ++idx)
+    for(unsigned int idx = 0; idx < this->source_info.getTextInfoSize(); ++idx)
     {
         line = this->source_info.getText(idx);
         if(line.is_symbol)
         {
-            if(this->verbose)
-            {
-                std::cout << "[" << __func__ << "] checking address for symbol <" << line.symbol << ">" << std::endl;
-            }
-
             label_addr = this->sym_table.getAddr(line.symbol);
 
             if(label_addr > 0)
             {
-                // TODO  : looks like all the exceptions go here
                 if(line.opcode.instr == LEX_LUI)
                 {
                     line.type[1] = SYM_LITERAL;
                     if(line.upper)
-                        line.val[1] = (label_addr & 0xFFFF0000);
+                        line.val[1] = (label_addr & 0xFFFF0000) >> 16;
                     else
                         line.val[1] = label_addr;
                 }
@@ -1464,7 +1465,7 @@ void Lexer::resolveLabels(void)
                     if(line.lower)
                         line.val[2] = (label_addr & 0x0000FFFF);
                     else
-                        line.val[2] = label_addr;
+                        line.val[2] = (label_addr & 0xFFFF0000) >> 16;
                 }
                 //else if(line.opcode.instr == LEX_J)
                 //{
@@ -1475,6 +1476,11 @@ void Lexer::resolveLabels(void)
                     line.type[2] = SYM_LITERAL;
                     line.val[2] = label_addr;
                 }
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] updating line " << line.line_num 
+                        << " to be " << std::endl << line.toString() << std::endl;
+                }
                 this->source_info.update(idx, line);
 
                 if(this->verbose)
@@ -1484,7 +1490,8 @@ void Lexer::resolveLabels(void)
                         line.line_num << " [0x" << std::hex << 
                         std::setfill('0') << std::setw(8) << 
                         line.addr << "] to value [0x" << 
-                        std::hex << label_addr << "]" << std::endl;
+                        std::hex << label_addr << "] (opcode " << line.opcode.toString() <<
+                        ")" << std::endl;
                 }
             }
         }
@@ -1524,8 +1531,11 @@ void Lexer::expandPsuedo(void)
             break;
         case LEX_BGT:
             {
-                std::cout << "[" << __func__ << "] expanding LEX_BGT" << std::endl;
-                std::cout << this->text_info.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] expanding LEX_BGT" << std::endl;
+                    std::cout << this->text_info.toString() << std::endl;
+                }
 
                 // Input is [bgt $s, $t, C]
                 // slt $at, $t, $s
@@ -1540,9 +1550,14 @@ void Lexer::expandPsuedo(void)
                 ti.val[0]   = 0;            // TODO : where should AT be?
                 ti.val[1]   = this->text_info.val[1];
                 ti.val[2]   = this->text_info.val[0];
+                ti.label    = this->text_info.label;
+                ti.is_label = this->text_info.is_label;
 
-                std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
-                    << std::endl << ti.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
+                        << std::endl << ti.toString() << std::endl;
+                }
                 this->source_info.addText(ti);
                 this->incrTextAddr();
                 
@@ -1556,13 +1571,14 @@ void Lexer::expandPsuedo(void)
                 ti.type[1]  = SYM_REG_ZERO;
                 ti.type[2]  = SYM_LITERAL;
                 ti.val[2]   = this->text_info.val[2];
-                ti.symbol   = this->text_info.symbol;
-                ti.is_symbol = this->text_info.is_symbol;
                 ti.label    = this->text_info.label;
                 ti.is_label = this->text_info.is_label;
                 
-                std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
-                    << std::endl << ti.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
+                        << std::endl << ti.toString() << std::endl;
+                }
                 this->source_info.addText(ti);
                 this->incrTextAddr();
             }
@@ -1572,9 +1588,12 @@ void Lexer::expandPsuedo(void)
         case LEX_BLT:
             {
                 // Input is [bgt $s, $t, C]
-                // slt $at, $t, $s
-                std::cout << "[" << __func__ << "] expanding LEX_BLT" << std::endl;
-                std::cout << this->text_info.toString() << std::endl;
+                // slt $at, $s, $t
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] expanding LEX_BLT" << std::endl;
+                    std::cout << this->text_info.toString() << std::endl;
+                }
 
                 ti.init();
                 ti.opcode.instr = LEX_SLT;
@@ -1585,11 +1604,14 @@ void Lexer::expandPsuedo(void)
                 ti.type[1]  = SYM_REG_SAVED;
                 ti.type[2]  = SYM_REG_TEMP;
                 ti.val[0]   = 0;            // TODO : where should AT be?
-                ti.val[1]   = this->text_info.val[1];
-                ti.val[2]   = this->text_info.val[2];
+                ti.val[1]   = this->text_info.val[0];
+                ti.val[2]   = this->text_info.val[1];
 
-                std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
-                    << std::endl << ti.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
+                        << std::endl << ti.toString() << std::endl;
+                }
                 this->source_info.addText(ti);
                 this->incrTextAddr();
                 
@@ -1604,8 +1626,11 @@ void Lexer::expandPsuedo(void)
                 ti.type[2]  = SYM_LITERAL;
                 ti.val[2]  = this->text_info.val[2];
                 
-                std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
-                    << std::endl << ti.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
+                        << std::endl << ti.toString() << std::endl;
+                }
                 this->source_info.addText(ti);
                 this->incrTextAddr();
             }
@@ -1622,6 +1647,10 @@ void Lexer::expandPsuedo(void)
                 std::cout << this->text_info.toString() << std::endl;
 
                 // Note that literals get resolved from symbols later
+                // This means that we actually need to set upper or lower to tell the resolve step 
+                // how to shift the value correctly for the assembler stage. That means that here we
+                // just place the entire value in both instructions and let resolveLabels() handle
+                // the details.
                 ti.init();
                 ti.opcode.instr    = LEX_LUI;
                 ti.opcode.mnemonic = "lui";
@@ -1633,12 +1662,15 @@ void Lexer::expandPsuedo(void)
                 ti.val[1]    = this->text_info.val[1];
                 //ti.val[1]    = (this->text_info.val[1] & 0xFFFF0000) >> 16;
                 ti.is_imm    = true;
-                ti.upper     = true;   // TODO : simplify lower/upper
-                ti.is_symbol = true;
+                ti.upper     = true;   
+                ti.is_symbol = this->text_info.is_symbol;
                 ti.symbol    = this->text_info.symbol;
 
-                std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
-                    << std::endl << ti.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
+                        << std::endl << ti.toString() << std::endl;
+                }
                 this->source_info.addText(ti);
                 this->incrTextAddr();
 
@@ -1652,15 +1684,19 @@ void Lexer::expandPsuedo(void)
                 ti.type[1]   = this->text_info.type[0];
                 ti.val[1]    = this->text_info.val[0];
                 ti.type[2]   = SYM_LITERAL;
-                //ti.val[2]    = this->text_info.val[1];
-                ti.val[2]    = this->text_info.val[1] & 0x0000FFFF;
+                ti.val[2]    = this->text_info.val[1];
+                //ti.val[2]    = this->text_info.val[1] & 0x0000FFFF;
                 ti.is_imm    = true;
                 ti.is_symbol = true;
                 ti.lower     = true;
                 ti.symbol    = this->text_info.symbol;
+                ti.is_symbol = this->text_info.is_symbol;
 
-                std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
-                    << std::endl << ti.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
+                        << std::endl << ti.toString() << std::endl;
+                }
                 this->source_info.addText(ti);
                 this->incrTextAddr();
             }
@@ -1668,11 +1704,14 @@ void Lexer::expandPsuedo(void)
 
         case LEX_LI:
             ti.init();
-            std::cout << "[" << __func__ << "] expanding LEX_LI" << std::endl;
-            std::cout << this->text_info.toString() << std::endl;
             // 32-bit immediate (2 instrs)
             if(this->text_info.val[1] > ((1 << 16)-1))
             {
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] expanding LEX_LI (32-bit) " << std::endl;
+                    std::cout << this->text_info.toString() << std::endl;
+                }
                 ti.opcode.instr    = LEX_LUI;
                 ti.opcode.mnemonic = "lui";
                 ti.addr     = this->text_info.addr;
@@ -1684,8 +1723,11 @@ void Lexer::expandPsuedo(void)
                 ti.is_imm   = true;
                 ti.upper    = true;
 
-                std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
-                    << std::endl << ti.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
+                        << std::endl << ti.toString() << std::endl;
+                }
                 this->source_info.addText(ti);
                 this->incrTextAddr();
 
@@ -1701,15 +1743,24 @@ void Lexer::expandPsuedo(void)
                 ti.type[2]  = SYM_LITERAL;
                 ti.val[2]   = this->text_info.val[1] & 0x0000FFFF;
                 ti.is_imm   = true;
+                ti.lower    = true;
 
-                std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
-                    << std::endl << ti.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
+                        << std::endl << ti.toString() << std::endl;
+                }
                 this->source_info.addText(ti);
                 this->incrTextAddr();
             }
             // 16-bit immediate (1 instr)
             else
             {
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] expanding LEX_LI (16-bit) " << std::endl;
+                    std::cout << this->text_info.toString() << std::endl;
+                }
                 ti.opcode.instr = LEX_ORI;
                 ti.opcode.mnemonic = "ori";
                 ti.addr     = this->text_info.addr;
@@ -1718,23 +1769,29 @@ void Lexer::expandPsuedo(void)
                 ti.val[0]   = this->text_info.val[0];
                 ti.type[1]  = SYM_REG_ZERO;
                 ti.type[2]  = SYM_LITERAL;
-                ti.val[2]   = this->text_info.val[1];
+                ti.val[2]   = this->text_info.val[1];       
                 ti.is_imm   = true;
 
-                std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
-                    << std::endl << ti.toString() << std::endl;
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] text_info.val[1] =" << this->text_info.val[1] << std::endl;
+                    std::cout << "[" << __func__ << "] adding " << ti.opcode.toString() 
+                        << std::endl << ti.toString() << std::endl;
+                }
                 this->source_info.addText(ti);
                 this->incrTextAddr();
             }
             break;
 
         default:
-            std::cout << "[" << __func__ << "] got something else..." << std::endl;
-            std::cout << "[" << __func__ << "] this->text_info :..." 
-                << std::endl << this->text_info.toString() << std::endl;
-            // TODO : lw mnemonic currently depends on these 2 lines
-            //this->source_info.addText(this->text_info);
-            //this->incrTextAddr();
+            if(this->verbose)
+            {
+                std::cout << "[" << __func__ << "] got something else..." << std::endl;
+                std::cout << "[" << __func__ << "] this->text_info :..." 
+                    << std::endl << this->text_info.toString() << std::endl;
+            }
+            this->text_info.error = true;
+            this->text_info.errstr = "Unknown psuedo op " + this->text_info.opcode.toString();
             break;
     }
 }
@@ -1809,11 +1866,6 @@ bool Lexer::getVerbose(void) const
     return this->verbose;
 }
 
-bool Lexer::getExpandPsuedo(void) const
-{
-    return this->expand_psuedo;
-}
-
 const SourceInfo& Lexer::getSourceInfo(void) const
 {
     return this->source_info;
@@ -1838,11 +1890,6 @@ int Lexer::getDataStartAddr(void) const
 void Lexer::setVerbose(const bool v)
 {
     this->verbose = v;
-}
-
-void Lexer::setExpandPsuedo(const bool v)
-{
-    this->expand_psuedo = v;
 }
 
 void Lexer::setTextStartAddr(int a)

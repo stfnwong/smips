@@ -101,9 +101,10 @@ struct TextInfo
     bool         is_directive;
     bool         is_imm;
     bool         is_symbol;
+    // NOTE : upper and lower are only required for symbol expansion 
     bool         upper;
     bool         lower;
-    int          val[3];
+    int          val[3];       // value of each register (eg: $t1 has value 1, $s0 has value 0)
     TokenType    type[3];      // record of types for each register
     Opcode       opcode;
 

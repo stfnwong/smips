@@ -170,6 +170,9 @@ TextInfo::TextInfo()
     this->init();
 }
 
+/*
+ * TextInfo::init()
+ */
 void TextInfo::init(void)
 {
     this->label        = "\0";
@@ -193,11 +196,17 @@ void TextInfo::init(void)
     }
 }
 
+/*
+ * TextInfo::hasOp()
+ */
 bool TextInfo::hasOp(void) const
 {
     return (this->opcode.instr == 0) ? true : false;
 }
 
+/*
+ * TextInfo::toString()
+ */
 std::string TextInfo::toString(void) const
 {
     std::ostringstream oss;
@@ -291,6 +300,9 @@ std::string TextInfo::toString(void) const
     return oss.str();
 }
 
+/*
+ * TextInfo::==()
+ */
 bool TextInfo::operator==(const TextInfo& that) const
 {
     if(this->label != that.label)
@@ -327,11 +339,17 @@ bool TextInfo::operator==(const TextInfo& that) const
     return true;
 }
 
+/*
+ * TextInfo::!=()
+ */
 bool TextInfo::operator!=(const TextInfo& that) const
 {
     return !(*this == that);
 }
 
+/*
+ * TextInfo::diff()
+ */
 std::string TextInfo::diff(const TextInfo& that) const
 {
     std::ostringstream oss;
@@ -442,7 +460,7 @@ void DataInfo::init(void)
 }
 
 /*
- * dirTypeString()
+ * DataInfo::dirTypeString()
  */
 std::string DataInfo::dirTypeString(void) const
 {
@@ -476,7 +494,7 @@ std::string DataInfo::dirTypeString(void) const
 }
 
 /*
- * toString()
+ * DataInfo::toString()
  * Convert DataInfo to a std::string
  */
 std::string DataInfo::toString(void) const
@@ -537,7 +555,7 @@ std::string DataInfo::toString(void) const
 }
 
 /*
- * ==
+ * DataInfo::==
  */
 bool DataInfo::operator==(const DataInfo& that) const
 {
@@ -570,7 +588,7 @@ bool DataInfo::operator==(const DataInfo& that) const
 }
 
 /*
- * !=
+ * DataInfo::!=
  */
 bool DataInfo::operator!=(const DataInfo& that) const
 {
@@ -578,7 +596,7 @@ bool DataInfo::operator!=(const DataInfo& that) const
 }
 
 /*
- * =
+ * DataInfo::=
  */
 DataInfo& DataInfo::operator=(const DataInfo& that)
 {
@@ -600,13 +618,16 @@ DataInfo& DataInfo::operator=(const DataInfo& that)
 
 
 /*
- * addBytes
+ * DataInfo::addBytes()
  */
 void DataInfo::addByte(const uint8_t byte)
 {
     this->data.push_back(byte);
 }
 
+/*
+ * DataInfo::addHalf()
+ */
 void DataInfo::addHalf(const uint16_t half)
 {
     uint8_t byte;
@@ -617,6 +638,9 @@ void DataInfo::addHalf(const uint16_t half)
     this->data.push_back(byte);
 }
 
+/*
+ * DataInfo::addWord()
+ */
 void DataInfo::addWord(const uint32_t word)
 {
     uint8_t byte;
@@ -633,7 +657,7 @@ void DataInfo::addWord(const uint32_t word)
 
 
 /*
- * Symbol
+ * Symbol::Symbol
  */
 Symbol::Symbol()
 {
@@ -641,6 +665,9 @@ Symbol::Symbol()
     this->label = "\0";
 }
 
+/*
+ * Symbol::toString()
+ */
 std::string Symbol::toString(void) const
 {
     std::ostringstream oss;
@@ -651,6 +678,9 @@ std::string Symbol::toString(void) const
     return oss.str();
 }
 
+/*
+ * Symbol::==
+ */
 bool Symbol::operator==(const Symbol& that) const
 {
     if(this->addr != that.addr)
@@ -660,6 +690,9 @@ bool Symbol::operator==(const Symbol& that) const
     return true;
 }
 
+/*
+ * Symbol::!=
+ */
 bool Symbol::operator!=(const Symbol& that) const
 {
     if(this->addr == that.addr)
@@ -675,7 +708,7 @@ bool Symbol::operator!=(const Symbol& that) const
 SymbolTable::SymbolTable() {} 
 
 /*
- * add()
+ * SymbolTable::add()
  */
 void SymbolTable::add(const Symbol& s)
 {
@@ -683,7 +716,7 @@ void SymbolTable::add(const Symbol& s)
 }
 
 /*
- * update()
+ * SymbolTable::update()
  */
 void SymbolTable::update(const unsigned int idx, const Symbol& s)
 {
@@ -692,7 +725,7 @@ void SymbolTable::update(const unsigned int idx, const Symbol& s)
 }
 
 /*
- * get()
+ * SymbolTable::get()
  */
 Symbol& SymbolTable::get(const unsigned int idx) 
 {
@@ -703,7 +736,7 @@ Symbol& SymbolTable::get(const unsigned int idx)
 }
 
 /*
- * getAddr()
+ * SymbolTable::getAddr()
  */
 uint32_t SymbolTable::getAddr(const std::string& label) const
 {
@@ -717,7 +750,7 @@ uint32_t SymbolTable::getAddr(const std::string& label) const
 }
 
 /*
- * size()
+ * SymbolTable::size()
  */
 unsigned int SymbolTable::size(void) const
 {
@@ -725,7 +758,7 @@ unsigned int SymbolTable::size(void) const
 }
 
 /*
- * init()
+ * SymbolTable::init()
  */
 void SymbolTable::init(void)
 {
@@ -739,7 +772,7 @@ void SymbolTable::init(void)
 SourceInfo::SourceInfo() {}
 
 /*
- * addText()
+ * SourceInfo::addText()
  */
 void SourceInfo::addText(const TextInfo& l)
 {
@@ -747,7 +780,7 @@ void SourceInfo::addText(const TextInfo& l)
 }
 
 /*
- * addData()
+ * SourceInfo::addData()
  */
 void SourceInfo::addData(const DataInfo& d)
 {
@@ -755,7 +788,7 @@ void SourceInfo::addData(const DataInfo& d)
 }
 
 /*
- * update()
+ * SourceInfo::update()
  */
 void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 {
@@ -764,7 +797,7 @@ void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 }
 
 /*
- * insert()
+ * SourceInfo::insert()
  */
 void SourceInfo::insert(const unsigned int idx, const TextInfo& l)
 {
@@ -772,7 +805,7 @@ void SourceInfo::insert(const unsigned int idx, const TextInfo& l)
 }
 
 /*
- * getdata()
+ * SourceInfo::getdata()
  */
 DataInfo& SourceInfo::getData(const unsigned int idx)
 {
@@ -783,7 +816,7 @@ DataInfo& SourceInfo::getData(const unsigned int idx)
 }
 
 /*
- * getText()
+ * SourceInfo::getText()
  */
 TextInfo& SourceInfo::getText(const unsigned int idx)
 {
@@ -794,7 +827,7 @@ TextInfo& SourceInfo::getText(const unsigned int idx)
 }
 
 /*
- * getLineNum()
+ * SourceInfo::getLineNum()
  */
 unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 {
@@ -805,7 +838,7 @@ unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 }
 
 /*
- * getNumErr()
+ * SourceInfo::getNumErr()
  */
 unsigned int SourceInfo::getNumErr(void) const
 {
@@ -817,7 +850,7 @@ unsigned int SourceInfo::getNumErr(void) const
 }
 
 /*
- * getNumLines()
+ * SourceInfo::getNumLines()
  */
 unsigned int SourceInfo::getNumLines(void) const
 {
@@ -825,7 +858,7 @@ unsigned int SourceInfo::getNumLines(void) const
 }
 
 /*
- * hasError()
+ * SourceInfo::hasError()
  */
 bool SourceInfo::hasError(void) const
 {
@@ -839,7 +872,7 @@ bool SourceInfo::hasError(void) const
 }
 
 /*
- * getTextInfoSize()
+ * SourceInfo::getTextInfoSize()
  */
 unsigned int SourceInfo::getTextInfoSize(void) const
 {
@@ -847,7 +880,7 @@ unsigned int SourceInfo::getTextInfoSize(void) const
 }
 
 /*
- * getDataInfoSize()
+ * SourceInfo::getDataInfoSize()
  */
 unsigned int SourceInfo::getDataInfoSize(void) const
 {
@@ -856,7 +889,7 @@ unsigned int SourceInfo::getDataInfoSize(void) const
 
 
 /*
- * toString()
+ * SourceInfo::toString()
  */
 std::string SourceInfo::toString(void) const
 {
@@ -872,7 +905,7 @@ std::string SourceInfo::toString(void) const
 }
 
 /*
- * errString()
+ * SourceInfo::errString()
  */
 std::string SourceInfo::errString(void) const
 {
@@ -901,6 +934,4 @@ std::string SourceInfo::errString(void) const
     }
 
     return oss.str();
-
-
 }

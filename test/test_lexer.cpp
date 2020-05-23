@@ -566,7 +566,6 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(false);
-    test_lexer.setExpandPsuedo(true);
     test_lexer.loadFile(test_mult_add_file);
     test_lexer.lex();
 
@@ -667,8 +666,6 @@ TEST_CASE("test_array", "[classic]")
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(true);
-    // for this test, just leave the psuedo instructions in place
-    test_lexer.setExpandPsuedo(false);          
     test_lexer.loadFile(test_array_file);
     test_lexer.lex();
 
@@ -708,6 +705,8 @@ TEST_CASE("test_array", "[classic]")
 
         if(expected_line != output_line)
         {
+            std::cout << "Expecting :" << std::endl << expected_line.toString() << std::endl;
+            std::cout << "Got :" << std::endl << output_line.toString() << std::endl;
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
@@ -897,6 +896,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.val[2]          = 75000 & (0x0000FFFF);
     line.type[2]         = SYM_LITERAL;
     line.is_imm          = true;
+    line.lower           = true;
     info.addText(line);
 
     // la $t1, arr
@@ -908,7 +908,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.opcode.mnemonic = "lui";
     line.val[0]          = 1;
     line.type[0]         = SYM_REG_TEMP;
-    line.val[1]          = 0x10000000 & 0xFFFF0000;
+    line.val[1]          = (0x10000000 & 0xFFFF0000) >> 16;
     line.type[1]         = SYM_LITERAL;
     line.upper           = true;
     line.is_imm          = true;
@@ -934,9 +934,98 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.symbol          = "arr";
     info.addText(line);
 
+    // branch_label: bgt $s1 $t1 arr
+    // slt $at $t1 $s1
+    line.init();
+    line.line_num        = 15;
+    line.addr            = 0x0040001C;
+    line.opcode.instr    = LEX_SLT;
+    line.opcode.mnemonic = "slt";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 1;
+    line.type[1]         = SYM_REG_TEMP;
+    line.val[2]          = 1;
+    line.type[2]         = SYM_REG_SAVED;
+    line.is_label        = true;
+    line.label           = "branch_label";
+    info.addText(line);
+
+    // bne $at $zero arr (0x10000000)
+    line.init();
+    line.line_num        = 15;
+    line.addr            = 0x00400020;
+    line.opcode.instr    = LEX_BNE;
+    line.opcode.mnemonic = "bne";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_ZERO;
+    line.val[2]          = 0x2;
+    line.type[2]         = SYM_LITERAL;
+    line.is_label        = true;
+    line.label           = "branch_label";
+    info.addText(line);
+
+    // blt $s0 $t0 0x20
+    // slt $at $s0 $t0
+    line.init();
+    line.line_num        = 16;
+    line.addr            = 0x00400024;
+    line.opcode.instr    = LEX_SLT;
+    line.opcode.mnemonic = "slt";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_SAVED;
+    line.val[2]          = 0;
+    line.type[2]         = SYM_REG_TEMP;
+    info.addText(line);
+
+    // bne $at $zero 0x20
+    line.init();
+    line.line_num        = 16;
+    line.addr            = 0x00400028;
+    line.opcode.instr    = LEX_BNE;
+    line.opcode.mnemonic = "bne";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_ZERO;
+    line.val[2]          = 0x20;
+    line.type[2]         = SYM_LITERAL;
+    info.addText(line);
+
+    // blt $s0 $t2 0x40
+    // slt $at $s0 $t2 
+    line.init();
+    line.line_num        = 17;
+    line.addr            = 0x0040002C;
+    line.opcode.instr    = LEX_SLT;
+    line.opcode.mnemonic = "slt";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_SAVED;
+    line.val[2]          = 2;
+    line.type[2]         = SYM_REG_TEMP;
+    info.addText(line);
+
+    // bne $at $zero 0x40
+    line.init();
+    line.line_num        = 17;
+    line.addr            = 0x00400030;
+    line.opcode.instr    = LEX_BNE;
+    line.opcode.mnemonic = "bne";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 0;
+    line.type[1]         = SYM_REG_ZERO;
+    line.val[2]          = 0x40;
+    line.type[2]         = SYM_LITERAL;
+    info.addText(line);
+
     // arr: .word 3
-    // TODO: actual label address should be 0x02 (which needs to change
-    // to fit memory map)
     data_line.init();
     data_line.line_num  = 5;
     data_line.addr      = 0x10000000;
@@ -1008,6 +1097,6 @@ TEST_CASE("test_psuedo_instr", "[classic]")
 
     // Also check that we have the corect number of text and data segments 
     REQUIRE(1 == src_out.getDataInfoSize());
-    REQUIRE(7 == src_out.getTextInfoSize());
+    REQUIRE(13 == src_out.getTextInfoSize());
     std::cout << "All psuedo ops correctly expanded" << std::endl;
 }

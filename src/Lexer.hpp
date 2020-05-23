@@ -45,7 +45,6 @@ class Lexer
         int   text_start_addr;
         int   data_start_addr;
         bool  verbose;
-        bool  expand_psuedo;
 
     private:
         void  alloc_mem(void);
@@ -120,7 +119,7 @@ class Lexer
 
     private:
         void resolveLabels(void);
-        void parseAddress(void);
+        void parseAddress(int num);
         void parseBranch(void);
         void parseBranchZero(void);
         void parseMemArgs(void);
@@ -151,14 +150,12 @@ class Lexer
         int   loadFile(const std::string& filename);
         // getters 
         bool  getVerbose(void) const;
-        bool  getExpandPsuedo(void) const;
         const SourceInfo& getSourceInfo(void) const;
         const SymbolTable& getSymTable(void) const;
         int   getTextStartAddr(void) const;
         int   getDataStartAddr(void) const;
         // setters 
         void  setVerbose(const bool v);
-        void  setExpandPsuedo(const bool v);
         void  setTextStartAddr(int a);
         void  setDataStartAddr(int a);
 

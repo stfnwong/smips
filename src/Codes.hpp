@@ -107,6 +107,7 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_JR,    "jr"),
     // branch
     Opcode(LEX_BEQ,   "beq"),
+	Opcode(LEX_BLT,   "blt"),
 	Opcode(LEX_BGT,   "bgt"),
     Opcode(LEX_BGTZ,  "bgtz"),
     Opcode(LEX_BLEZ,  "blez"),
