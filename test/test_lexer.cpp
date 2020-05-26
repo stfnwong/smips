@@ -601,14 +601,12 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     {
         expected_line = expected_src_out.getText(line);
         output_line = src_out.getText(line);
-        if(show_all_output)
-        {
-            std::cout << "Checking line " << std::dec << line+1 << "/" << 
-                std::dec << expected_src_out.getTextInfoSize();
-        }
 
         if(expected_line != output_line)
         {
+            std::cout << "Line " << std::dec << line + 1 <<  "/" << 
+                std::dec << expected_src_out.getTextInfoSize() << 
+                " mismatch" << std::endl;
             std::cout << std::endl << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
@@ -666,11 +664,12 @@ TEST_CASE("test_for_loop", "[classic]")
     {
         expected_line = expected_src_out.getText(line);
         output_line = src_out.getText(line);
-        std::cout << "Checking line " << std::dec << line+1 << "/" << 
-            std::dec << expected_src_out.getTextInfoSize() << std::endl;
 
         if(expected_line != output_line)
         {
+            std::cout << "Line " << std::dec << line+1 << "/" << 
+                std::dec << expected_src_out.getTextInfoSize() <<
+                "mismatch" << std::endl;
             std::cout << "Expecting :" << std::endl << expected_line.toString() << std::endl;
             std::cout << "Got :" << std::endl << output_line.toString() << std::endl;
             std::cout << "    diff : " << std::endl;
@@ -727,11 +726,11 @@ TEST_CASE("test_array", "[classic]")
     {
         expected_line = expected_src_out.getText(line);
         output_line = src_out.getText(line);
-        std::cout << "Checking line " << std::dec << line+1 << "/" << 
-            std::dec << expected_src_out.getTextInfoSize() << std::endl;
 
         if(expected_line != output_line)
         {
+            std::cout << "Line " << std::dec << line+1 << "/" << 
+                expected_src_out.getTextInfoSize() << " mismatch " << std::endl;
             std::cout << "Expecting :" << std::endl << expected_line.toString() << std::endl;
             std::cout << "Got :" << std::endl << output_line.toString() << std::endl;
             std::cout << "    diff : " << std::endl;
@@ -830,11 +829,13 @@ TEST_CASE("test_paren_parse", "[classic]")
     {
         expected_line = expected_src_out.getText(line);
         output_line = src_out.getText(line);
-        std::cout << "Checking line " << std::dec << line+1 << "/" << 
-            std::dec << expected_src_out.getTextInfoSize() << std::endl;
 
         if(expected_line != output_line)
         {
+            std::cout << "Line " << std::dec << line+1 << "/" << 
+                expected_src_out.getTextInfoSize() << " mismatch" << std::endl;
+            std::cout << "Expected " << std::endl << expected_line.toString() << std::endl;
+            std::cout << "Got " << std::endl << output_line.toString() << std::endl;
             std::cout << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
@@ -1221,11 +1222,11 @@ TEST_CASE("test_psuedo_instr", "[classic]")
     {
         expected_line = expected_src_out.getText(line);
         output_line = src_out.getText(line);
-        std::cout << "Checking line " << std::dec << line+1 << "/" << 
-            std::dec << expected_src_out.getTextInfoSize() << std::endl;
 
         if(expected_line != output_line)
         {
+            std::cout << "Line " << std::dec << line+1 << "/" <<
+                expected_src_out.getTextInfoSize() << " mismatch " << std::endl;
             std::cout << "Expected " << std::endl << expected_line.toString() << std::endl;
             std::cout << "Got " << std::endl << output_line.toString() << std::endl;
             std::cout << "    diff : " << std::endl;

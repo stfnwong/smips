@@ -1019,19 +1019,30 @@ void Lexer::parseRegArgs(const int num_args)
         
         // NOTE: what if this is the ZERO register or the GLOBAL register?
         // why are we relying on text_info.is_imm to check?
+        std::cout << "[" << __func__ << "] arg " << argn << " token type : " << this->cur_token.toString() << std::endl;
         if(this->text_info.is_imm && (argn == num_args-1))
         {
-            // Check if there is an offset 
-            if(this->cur_token.offset != "\0")
-                this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 11);
-            else
-                this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-            this->text_info.type[argn] = SYM_LITERAL;
-
-            // adjust upper values 
-            if(this->text_info.upper)
+            // it is legal for this to be a symbol rather than a literal
+            if(this->cur_token.type == SYM_LABEL)
             {
-                this->text_info.val[argn] = (this->text_info.val[argn] << 16);
+                this->text_info.is_symbol = true;
+                this->text_info.symbol = std::string(this->cur_token.val);
+            }
+            else
+            {
+                // TODO : update offset check testing...
+                // Check if there is an offset 
+                if(this->cur_token.offset != "\0")
+                    this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
+                else
+                    this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+                this->text_info.type[argn] = SYM_LITERAL;
+
+                // adjust upper values 
+                if(this->text_info.upper)
+                {
+                    this->text_info.val[argn] = (this->text_info.val[argn] << 16);
+                }
             }
         }
         else
@@ -1053,6 +1064,9 @@ void Lexer::parseRegArgs(const int num_args)
                     this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
                 else
                     this->text_info.val[argn] = 0;
+                break;
+
+            case SYM_LABEL:
                 break;
 
             default:
