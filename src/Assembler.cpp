@@ -107,6 +107,7 @@ uint32_t Assembler::asm_i_instr(const TextInfo& l, const int n) const
     uint32_t instr = 0;
     int reg;
 
+    // Just need to double check this...
     for(int i = 0; i < n; ++i)
     {
         reg = this->val2Offset(l.type[i], l.val[i]);
@@ -240,7 +241,10 @@ Instr Assembler::asm_lui(const TextInfo& l) const
 
     instr.ins = 0x0F << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 1);
-    instr.ins = instr.ins | ((l.val[1] & 0xFFFF0000) << 16);
+    //instr.ins = instr.ins | ((l.val[1] & 0xFFFF0000) >> 16);
+    if(l.type[1] == SYM_REG_TEMP)
+        instr.ins = instr.ins | (1 << this->i_instr_offsets[1]);
+    instr.ins = instr.ins | (l.val[1]);
     instr.adr = l.addr;
     return instr;
 }

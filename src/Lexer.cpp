@@ -524,12 +524,14 @@ void Lexer::parseASCIIZ(void)
     this->data_info.line_num = this->cur_line;
     this->data_info.addr = this->data_addr;
 
+    std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
     this->nextToken();
     if(this->cur_token.type == SYM_STRING)
     {
         for(unsigned int c = 1; c < this->cur_token.val.length()-1; ++c)
         {
             this->data_info.addByte(uint8_t(this->cur_token.val[c]));
+            this->incrDataAddr();
         }
     }
     else
@@ -635,13 +637,14 @@ void Lexer::parseWord(void)
     this->data_info.line_num = this->cur_line;
     this->data_info.addr     = this->data_addr;     // the address should be the start address at this time
 
+    std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
     // TODO : in the test case, this should cause the word to go up by 5
     while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
     {
         this->nextToken();
-        // awkward, but works.
-        if(this->cur_line > this->data_info.line_num)
-            break;
+        // TODO : this shouldn't really be here... 
+        //if(this->cur_line > this->data_info.line_num)
+        //    break;
 
         if(this->cur_token.type != SYM_LITERAL)
         {
@@ -656,11 +659,16 @@ void Lexer::parseWord(void)
         word = std::stoi(this->cur_token.val);
         this->data_info.addByte(word);
         word_idx++;
+        std::cout << "[" << __func__ << "] wrote word " << std::hex << word <<
+            " which should be at oddress 0x" << std::hex << this->data_addr << std::endl;
         this->incrDataAddr();
     }
 
-    std::cout << "[" << __func__ << "] this->data_info : " << std::endl;
-    std::cout << this->data_info.toString() << std::endl;
+    if(this->verbose)
+    {
+        std::cout << "[" << __func__ << "] this->data_info : " << std::endl;
+        std::cout << this->data_info.toString() << std::endl;
+    }
 
     //std::cout << "[" << __func__ << "] after processing words, this->data_addr = " 
     //    << std::dec << this->data_addr << std::endl;
@@ -675,24 +683,26 @@ void Lexer::parseSpace(void)
 {
     this->data_info.directive = SYM_DIR_SPACE;
     this->data_info.line_num = this->cur_line;
+    this->data_info.addr     = this->data_addr;
 
     // the next token should be a literal indicating how many bytes to reserve
     this->nextToken();
     if(this->cur_token.type != SYM_LITERAL)
     {
-
         this->data_info.error = true;
         this->data_info.errstr = "Expected literal after directive .space, got " + this->cur_token.toString();
+        return;
     }
-    else
+
+    this->data_info.space = std::stoi(this->cur_token.val);
+    
+    if(this->verbose)
     {
-        this->data_info.space = std::stoi(this->cur_token.val);
-        // TODO : Is this the source of our mysterious +6?
         std::cout << "[" << __func__ << "] adding " << std::dec << 
-            this->data_info.space << " to this->data_addr (" << std::dec 
+            this->data_info.space << " to this->data_addr (" << std::hex 
             << this->data_addr << ")" << std::endl;
-        this->data_addr += this->data_info.space;
     }
+    this->data_addr += this->data_info.space;
 }
 
 
@@ -1415,7 +1425,7 @@ LINE_END:
     else if(this->cur_mode == LEX_DATA_SEG)
     {
         //this->data_addr++;
-        this->incrDataAddr();
+        //this->incrDataAddr();
         this->data_info.line_num = line_num;
         if(this->data_info.addr == 0)
             this->data_info.addr     = this->data_addr;

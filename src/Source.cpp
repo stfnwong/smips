@@ -504,7 +504,7 @@ std::string DataInfo::toString(void) const
     // TODO : how to print data segment (in cases where its more than 5 bytes)?
     oss << "---------------------------------------------------------------------" << std::endl;
     // extend to the right as needed
-    oss << "Line  Type   Addr      Directive  Label    Error  Data                    " << std::endl;
+    oss << "Line  Type   Addr      Directive  Label    Len  Error  Data                    " << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
@@ -531,7 +531,10 @@ std::string DataInfo::toString(void) const
         oss << std::left << std::setw(10) << std::setfill(' ') << this->label;
     else
         oss << std::left << std::setw(9) << std::setfill(' ') << " ";
+    // len
+    oss << std::dec << std::setw(4) << this->data.size();
 
+    // error 
     if(this->error)
         oss << "  YES  ";
     else

@@ -567,7 +567,6 @@ SourceInfo get_array_expected_source_info(void)
 }
 
 
-
 /*
  * Test mult_add example
  */
@@ -577,19 +576,23 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    //test_lexer.setVerbose(false);
+    test_lexer.setVerbose(false);
     test_lexer.loadFile(test_mult_add_file);
     test_lexer.lex();
 
     // get the source info
     expected_src_out = get_mult_add_expected_source_info();
-    std::cout << "Expected output :" << std::endl;
-    std::cout << expected_src_out.toString() << std::endl << std::endl;
-
     src_out = test_lexer.getSourceInfo();
-    std::cout << "Lexer output : " << std::endl;
-    std::cout << src_out.toString() << std::endl;
     REQUIRE(expected_src_out.getTextInfoSize() == src_out.getTextInfoSize());
+    
+    if(show_all_output)
+    {
+        std::cout << "Expected output :" << std::endl;
+        std::cout << expected_src_out.toString() << std::endl << std::endl;
+
+        std::cout << "Lexer output : " << std::endl;
+        std::cout << src_out.toString() << std::endl;
+    }
 
     // Check each line in turn
     TextInfo expected_line;
@@ -598,8 +601,11 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     {
         expected_line = expected_src_out.getText(line);
         output_line = src_out.getText(line);
-        std::cout << "Checking line " << std::dec << line+1 << "/" << 
-            std::dec << expected_src_out.getTextInfoSize();
+        if(show_all_output)
+        {
+            std::cout << "Checking line " << std::dec << line+1 << "/" << 
+                std::dec << expected_src_out.getTextInfoSize();
+        }
 
         if(expected_line != output_line)
         {
