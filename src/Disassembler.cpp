@@ -5,7 +5,7 @@
  * Stefan Wong 2019
  */
 
-
+#include <iostream>
 #include "Disassembler.hpp"
 
 
@@ -28,6 +28,7 @@ void Disassembler::disassemble(void)
 
     for(i = 0; i < this->program.size(); ++i)
     {
+        std::cout << "[" << __func__ << "] would diassemble instr " << i << " here" << std::endl;
     }
 }
 
