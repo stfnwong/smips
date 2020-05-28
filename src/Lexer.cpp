@@ -185,39 +185,51 @@ bool Lexer::isComment(void) const
  * getRegType()
  */
 // TODO : what to do about $ra, $sp, $at etc?
-TokenType Lexer::getRegType(const char& reg_char) const
+//TokenType Lexer::getRegType(const char& reg_char) const
+TokenType Lexer::getRegType(const std::string& reg_str) const
 {
-    switch(reg_char)
+    std::cout << "[" << __func__ << "] reg_str = " 
+        << reg_str << " (length " << reg_str.size() 
+        << ")" <<  std::endl;
+    if(reg_str.size() == 1)
     {
-        case 'A':
-        case 'a':
-            return SYM_REG_ARG;
-        case 'F':
-        case 'f':
-            return SYM_REG_FRAME;
-        case 'R':
-        case 'r':
-            return SYM_REG_RET;
-        case 'S':
-        case 's':
-            return SYM_REG_SAVED;
-        case 'T':
-        case 't':
-            return SYM_REG_TEMP;
-        case 'Z':
-        case 'z':
-            return SYM_REG_ZERO;
-        case 'G':
-        case 'g':
-            return SYM_REG_GLOBAL;
-        case 'K':
-        case 'k':
-            return SYM_REG_KERN;
-        case 'V':
-        case 'v':
-            return SYM_REG_RET;
-        default:
-            return SYM_NONE;
+        switch(reg_str[0])
+        {
+            case 'A':
+            case 'a':
+                return SYM_REG_ARG;
+            case 'F':
+            case 'f':
+                return SYM_REG_FRAME;
+            case 'R':
+            case 'r':
+                return SYM_REG_RET;
+            case 'S':
+            case 's':
+                return SYM_REG_SAVED;
+            case 'T':
+            case 't':
+                return SYM_REG_TEMP;
+            case 'Z':
+            case 'z':
+                return SYM_REG_ZERO;
+            case 'G':
+            case 'g':
+                return SYM_REG_GLOBAL;
+            case 'K':
+            case 'k':
+                return SYM_REG_KERN;
+            case 'V':
+            case 'v':
+                return SYM_REG_RET;
+            default:
+                return SYM_NONE;
+        }
+    }
+    else if(reg_str.size() == 2)
+    {
+        if(reg_str == "at")
+            return SYM_REG_AT;
     }
     // in case we somehow fall through
     return SYM_NONE;
@@ -307,6 +319,7 @@ LITERAL_REG_END:
  * extractReg()
  * Extract a register
  */
+// TODO : do a refactor where we have a common register format
 Token Lexer::extractReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
 {
     Token out_token;
@@ -337,23 +350,32 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
     // we should now be right on the '$' character
     if(paren_stack.empty())
     {
+        // TODO : debug, remove 
+        std::cout << "[" << __func__ << "] paren stack is empty (token = "
+            << token << ")" << std::endl;
+        std::cout << "[" << __func__ << "] token[tok_ptr]   : " << token[tok_ptr] << std::endl;
+        std::cout << "[" << __func__ << "] token[tok_ptr+1] : " << token[tok_ptr+1] << std::endl;
+        std::cout << "[" << __func__ << "] token[tok_ptr+2] : " << token[tok_ptr+2] << std::endl;
+
+        // TODO : after the '$' character should be two more chars. If the second
+        // of these is a number then this is just a 'regular' register. If its an
+        // alpha then it must be a 'special' register (like $at, $gp, etc)
+
         // there were no parenthesis, therefore we can 
         // just directly extract the register value
-        tok_ptr += 1;
-        out_token.type = this->getRegType(token[tok_ptr]);
+        out_token.type = this->getRegType(std::string(1, token[tok_ptr+1]));
         if(out_token.type == SYM_NONE)
             out_token.val = "\0";           // ensure there is no string here
         else if(out_token.type == SYM_REG_ZERO || out_token.type == SYM_REG_GLOBAL)
             out_token.val = "0";
         else
-            out_token.val  = token.substr(tok_ptr+1, token.length());
+            out_token.val  = token.substr(tok_ptr+2, token.length());
         end_offset = token.length();
     }
     else
     {
         // there is at least one parenthesis
-        tok_ptr += 1;
-        out_token.type = this->getRegType(token[tok_ptr]);
+        out_token.type = this->getRegType(std::string(1, token[tok_ptr+1]));
         paren_ptr = tok_ptr;
         while(paren_ptr < token.length())
         {
@@ -372,7 +394,7 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         else if(out_token.type == SYM_REG_ZERO || out_token.type == SYM_REG_GLOBAL)
             out_token.val = "0";
         else
-            out_token.val  = token.substr(tok_ptr+1, (paren_ptr - tok_ptr-1));
+            out_token.val  = token.substr(tok_ptr+2, (paren_ptr - tok_ptr-1));
         end_offset = token.length();
     }
 
@@ -1026,7 +1048,7 @@ void Lexer::parseRegArgs(const int num_args)
             if(this->cur_token.type == SYM_LABEL)
             {
                 this->text_info.is_symbol = true;
-                this->text_info.symbol = std::string(this->cur_token.val);
+                this->text_info.symbol    = std::string(this->cur_token.val);
             }
             else
             {
@@ -1065,6 +1087,9 @@ void Lexer::parseRegArgs(const int num_args)
                 else
                     this->text_info.val[argn] = 0;
                 break;
+
+            case SYM_REG_AT:
+                this->text_info.val[argn] = 1;
 
             case SYM_LABEL:
                 break;

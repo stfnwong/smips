@@ -127,7 +127,8 @@ class Lexer
         void parseJump(void);
 		void parseLabel(void);
         void parseLine(void);
-        TokenType getRegType(const char& reg_char) const;
+        TokenType getRegType(const std::string& reg_str) const;
+        //TokenType getRegType(const char& reg_char) const;
 
     private:
         // psuedo instruction expansion

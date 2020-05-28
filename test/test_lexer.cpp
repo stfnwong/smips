@@ -21,6 +21,7 @@ const std::string test_for_loop_file = "asm/for_loop.asm";
 const std::string test_array_file    = "asm/array.asm";
 const std::string test_paren_file    = "asm/paren.asm";
 const std::string test_psuedo_file   = "asm/psuedo.asm";
+const std::string test_instr_file    = "asm/instr_test.asm";
 
 const bool show_all_output = false;
 
@@ -625,7 +626,7 @@ TEST_CASE("test_for_loop", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    //test_lexer.setVerbose(true);
+    test_lexer.setVerbose(true);
     test_lexer.loadFile(test_for_loop_file);
     test_lexer.lex();
 
@@ -804,7 +805,7 @@ TEST_CASE("test_paren_parse", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    //test_lexer.setVerbose(true);
+    test_lexer.setVerbose(true);
     test_lexer.loadFile(test_paren_file);
     test_lexer.lex();
 
@@ -1185,7 +1186,7 @@ TEST_CASE("test_psuedo_instr", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    //test_lexer.setVerbose(true);
+    test_lexer.setVerbose(true);
     test_lexer.loadFile(test_psuedo_file);
     test_lexer.lex();
 
@@ -1238,4 +1239,115 @@ TEST_CASE("test_psuedo_instr", "[classic]")
     // Also check that we have the corect number of text and data segments 
     REQUIRE(1 == src_out.getDataInfoSize());
     REQUIRE(20 == src_out.getTextInfoSize());
+}
+
+
+/*
+ *  All instruction test 
+ */
+SourceInfo get_instr_test_source_info(void)
+{
+    SourceInfo info;
+    TextInfo   line;
+    DataInfo   data_line;
+
+    // .data ten: word 10
+    data_line.init();
+    data_line.addr  = 0x10000000;
+    data_line.label = "ten";
+    data_line.directive = SYM_DIR_WORD;
+    data_line.data = {10};
+    info.addData(data_line);
+
+    // lui $t0 ten
+    line.init();
+    line.line_num        = 8;
+    line.addr            = 0x00400000;
+    line.opcode.instr    = LEX_LUI;
+    line.opcode.mnemonic = "lui";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_TEMP;
+    line.val[1]          = 10;
+    line.type[1]         = SYM_LITERAL;
+    line.is_imm          = true;
+    line.symbol          = "ten";
+    info.addText(line);
+
+
+    // lui $at 4097
+    line.init();
+    line.line_num        = 8;
+    line.addr            = 0x00400004;
+    line.opcode.instr    = LEX_LUI;
+    line.opcode.mnemonic = "lui";
+    line.val[0]          = 0;
+    line.type[0]         = SYM_REG_AT;
+    line.val[1]          = 4097;
+    line.type[1]         = SYM_LITERAL;
+    line.is_imm          = true;
+    line.symbol          = "ten";
+    info.addText(line);
+
+    return info;
+}
+
+
+/*
+ * All instruction test
+ */
+TEST_CASE("test_instr", "[classic]")
+{
+    Lexer test_lexer;
+    SourceInfo src_out;
+    SourceInfo expected_src_out;
+
+    test_lexer.setVerbose(true);
+    test_lexer.loadFile(test_instr_file);
+    test_lexer.lex();
+
+    // get the source info
+    expected_src_out = get_instr_test_source_info();
+    src_out = test_lexer.getSourceInfo();
+
+    if(show_all_output)
+    {
+        std::cout << "Expected output :" << std::endl;
+        std::cout << expected_src_out.toString() << std::endl << std::endl;
+
+        std::cout << "Lexer output : " << std::endl;
+        std::cout << src_out.toString() << std::endl;
+
+        SymbolTable sym_table = test_lexer.getSymTable();
+        std::cout << "Symbol Table: " << std::endl;
+
+        for(unsigned int sym = 0; sym < sym_table.size(); ++sym)
+        {
+            Symbol cur_sym = sym_table.get(sym);
+            std::cout << "     " << sym << " " << 
+                cur_sym.toString() << std::endl;
+        }
+    }
+    // Check each line in turn
+    TextInfo expected_line;
+    TextInfo output_line;
+
+    std::cout << src_out.getTextInfoSize() << " lines in output text segment" << std::endl;
+    std::cout << src_out.getDataInfoSize() << " lines in output data segment" << std::endl;
+
+    for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
+    {
+        expected_line = expected_src_out.getText(line);
+        output_line = src_out.getText(line);
+
+        if(expected_line != output_line)
+        {
+            std::cout << "Line " << std::dec << line+1 << "/" <<
+                expected_src_out.getTextInfoSize() << " mismatch " << std::endl;
+            std::cout << "Expected " << std::endl << expected_line.toString() << std::endl;
+            std::cout << "Got " << std::endl << output_line.toString() << std::endl;
+            std::cout << "    diff : " << std::endl;
+            std::cout << expected_line.diff(output_line) << std::endl;
+        }
+        REQUIRE(expected_line == output_line);      
+    }
 }
