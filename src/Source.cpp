@@ -21,6 +21,60 @@
  */
 
 /* 
+ * REGISTER
+ */
+Register::Register() : idx(0), repr("") {} 
+
+Register::Register(int i, const std::string& n) : idx(i), repr(n) {} 
+
+/*
+ * Register::==
+ */
+bool Register::operator==(const Register& that) const
+{
+    if(this->idx != that.idx)
+        return false;
+    if(this->repr != that.repr)
+        return false;
+    return true;
+}
+
+/*
+ * Register::!=
+ */
+bool Register::operator!=(const Register& that) const
+{
+    return !(*this == that);
+}
+
+/*
+ * Register::=
+ */
+Register& Register::operator=(const Register& that) 
+{
+    if(this != &that)
+    {
+        this->idx = that.idx;
+        this->repr = that.repr;
+    }
+
+    return *this;
+}
+
+/*
+ * Register::toString()
+ */
+std::string Register::toString(void) const
+{
+    std::ostringstream oss;
+
+    oss << this->repr << "[" << std::dec << this->idx << "]";
+
+    return oss.str();
+}
+
+
+/* 
  * TOKEN
  */
 Token::Token()

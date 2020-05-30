@@ -230,6 +230,8 @@ TokenType Lexer::getRegType(const std::string& reg_str) const
     {
         if(reg_str == "at")
             return SYM_REG_AT;
+        if(reg_str == "gp")
+            return SYM_REG_GLOBAL;
     }
     // in case we somehow fall through
     return SYM_NONE;
@@ -282,7 +284,7 @@ Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset,
 {
     Token out_token;
     unsigned int tok_ptr;
-    std::string offset;
+    std::string mem_offset;
 
     // TODO : update to handle hex using c-style (0x) prefix
     tok_ptr = start_offset;
@@ -303,11 +305,10 @@ Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset,
     }
 
     // 'offset' in this context means that the literal is used  
-    // in the source to indicate a memory offset  (TODO: change name to
-    // mem_offset)?
-    offset = token.substr(start_offset, tok_ptr - start_offset);
+    // in the source to indicate a memory offset  
+    mem_offset = token.substr(start_offset, tok_ptr - start_offset);
     out_token        = this->extractReg(token, tok_ptr, end_offset);
-    out_token.offset = offset;
+    out_token.offset = mem_offset;
 
 LITERAL_REG_END:
     end_offset = tok_ptr;
@@ -361,9 +362,24 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         // of these is a number then this is just a 'regular' register. If its an
         // alpha then it must be a 'special' register (like $at, $gp, etc)
 
+        // TODO : need a more uniform way of dealing with register names. How about 
+        // 1) get the token string 
+        // 2) clip the '$' char off the front 
+        // 3) string compare the token. If its 2 chars long then its either a t, s, r, k, etc register,
+        // or one of the special 2 char registers (gp, at, etc)
+        // 4) failing that, we compare to the longer register strings. For now this is just $zero
+        //
+        //
+        // The 'internal' register format is maps the string names to the register numbers.
+        // eg: $zero -> 0, $at -> 1 
+
         // there were no parenthesis, therefore we can 
         // just directly extract the register value
-        out_token.type = this->getRegType(std::string(1, token[tok_ptr+1]));
+        if(std::isdigit(token[tok_ptr+2]))
+            out_token.type = this->getRegType(std::string(1, token[tok_ptr+1]));
+        else
+            out_token.type = this->getRegType(std::string(2, token[tok_ptr+1]));
+
         if(out_token.type == SYM_NONE)
             out_token.val = "\0";           // ensure there is no string here
         else if(out_token.type == SYM_REG_ZERO || out_token.type == SYM_REG_GLOBAL)

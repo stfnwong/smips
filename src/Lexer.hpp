@@ -15,6 +15,7 @@
 // Give some kind of named identifier to the Lexer mode
 enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};
 
+
 /*
  * Lexer
  * Lexes a source file and produces a sequence of Tokens
