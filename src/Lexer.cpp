@@ -185,7 +185,6 @@ bool Lexer::isComment(void) const
  * getRegType()
  */
 // TODO : what to do about $ra, $sp, $at etc?
-//TokenType Lexer::getRegType(const char& reg_char) const
 TokenType Lexer::getRegType(const std::string& reg_str) const
 {
     std::cout << "[" << __func__ << "] reg_str = " 
@@ -376,9 +375,17 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         // there were no parenthesis, therefore we can 
         // just directly extract the register value
         if(std::isdigit(token[tok_ptr+2]))
+        {
+            std::cout << "[" << __func__ << "] tok_ptr+2 is digit, extracting " 
+                << std::string(1, token[tok_ptr+1]) << std::endl;
             out_token.type = this->getRegType(std::string(1, token[tok_ptr+1]));
+        }
         else
-            out_token.type = this->getRegType(std::string(2, token[tok_ptr+1]));
+        {
+            std::cout << "[" << __func__ << "] tok_ptr+2 is not digit, extracting " 
+                << std::string(2, token[tok_ptr+1]) << std::endl;
+            out_token.type = this->getRegType(std::string(token.begin() + tok_ptr + 1, token.begin() + tok_ptr + 2));
+        }
 
         if(out_token.type == SYM_NONE)
             out_token.val = "\0";           // ensure there is no string here

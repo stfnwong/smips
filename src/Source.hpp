@@ -109,7 +109,6 @@ const Register mips_reg_types[] = {
     Register(REG_STACK,  "$sp"),
     Register(REG_FRAME,  "$fp"),
     Register(REG_RETURN, "$ra"),
-
 };
 
 
