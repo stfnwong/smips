@@ -351,11 +351,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
     if(paren_stack.empty())
     {
         // TODO : debug, remove 
-        std::cout << "[" << __func__ << "] paren stack is empty (token = "
-            << token << ")" << std::endl;
-        std::cout << "[" << __func__ << "] token[tok_ptr]   : " << token[tok_ptr] << std::endl;
-        std::cout << "[" << __func__ << "] token[tok_ptr+1] : " << token[tok_ptr+1] << std::endl;
-        std::cout << "[" << __func__ << "] token[tok_ptr+2] : " << token[tok_ptr+2] << std::endl;
 
         // TODO : after the '$' character should be two more chars. If the second
         // of these is a number then this is just a 'regular' register. If its an
@@ -377,22 +372,34 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         if(std::isdigit(token[tok_ptr+2]))
         {
             std::cout << "[" << __func__ << "] tok_ptr+2 is digit, extracting " 
-                << std::string(1, token[tok_ptr+1]) << std::endl;
-            out_token.type = this->getRegType(std::string(1, token[tok_ptr+1]));
+                << std::string(token.begin() + tok_ptr + 1, token.begin() + tok_ptr + 2) << std::endl;
+            out_token.type = this->getRegType(
+                    std::string(
+                        token.begin() + tok_ptr + 1, 
+                        token.begin() + tok_ptr + 2
+                    )
+            );
+            //out_token.type = this->getRegType(std::string(1, token[tok_ptr+1]));
+            out_token.val = std::string(token.begin() + tok_ptr + 0, token.begin() + tok_ptr + 2);
         }
         else
         {
             std::cout << "[" << __func__ << "] tok_ptr+2 is not digit, extracting " 
-                << std::string(2, token[tok_ptr+1]) << std::endl;
-            out_token.type = this->getRegType(std::string(token.begin() + tok_ptr + 1, token.begin() + tok_ptr + 2));
+                << std::string(token.begin() + tok_ptr + 1, token.begin() + tok_ptr + 3)
+                << std::endl;
+            out_token.type = this->getRegType(
+                    std::string(
+                        token.begin() + tok_ptr + 1, 
+                        token.begin() + tok_ptr + 3
+                    )
+            );
+            out_token.val = std::string(token.begin() + tok_ptr + 1, token.begin() + tok_ptr + 3);
         }
 
         if(out_token.type == SYM_NONE)
             out_token.val = "\0";           // ensure there is no string here
         else if(out_token.type == SYM_REG_ZERO || out_token.type == SYM_REG_GLOBAL)
             out_token.val = "0";
-        else
-            out_token.val  = token.substr(tok_ptr+2, token.length());
         end_offset = token.length();
     }
     else

@@ -18,60 +18,11 @@
  * or text segment, and that segment would contain the IR for the actual assembly 
  * inside of it.
  *
+ * TODO  for TODO : go back to ELF file specification and think some more about
+ * how that should be reperesented.
+ *
  */
 
-/* 
- * REGISTER
- */
-Register::Register() : idx(0), repr("") {} 
-
-Register::Register(int i, const std::string& n) : idx(i), repr(n) {} 
-
-/*
- * Register::==
- */
-bool Register::operator==(const Register& that) const
-{
-    if(this->idx != that.idx)
-        return false;
-    if(this->repr != that.repr)
-        return false;
-    return true;
-}
-
-/*
- * Register::!=
- */
-bool Register::operator!=(const Register& that) const
-{
-    return !(*this == that);
-}
-
-/*
- * Register::=
- */
-Register& Register::operator=(const Register& that) 
-{
-    if(this != &that)
-    {
-        this->idx = that.idx;
-        this->repr = that.repr;
-    }
-
-    return *this;
-}
-
-/*
- * Register::toString()
- */
-std::string Register::toString(void) const
-{
-    std::ostringstream oss;
-
-    oss << this->repr << "[" << std::dec << this->idx << "]";
-
-    return oss.str();
-}
 
 
 /* 
@@ -107,6 +58,7 @@ bool Token::isReg(void) const
         case SYM_REG_ZERO:
         case SYM_REG_GLOBAL:
         case SYM_REG_FRAME:
+        case SYM_REG_AT:
             return true;
         default:
             return false;
