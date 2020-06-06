@@ -247,12 +247,6 @@ Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset,
     else
         out_token.val = token.substr(start_offset, tok_ptr - start_offset);
 
-
-    // TODO:  probably kill this
-    // 'offset' in this context means that the literal is used  
-    // in the source to indicate a memory offset  
-    //mem_offset = token.substr(start_offset, tok_ptr - start_offset);
-
 LITERAL_REG_END:
     end_offset = tok_ptr;
     out_token.type = SYM_LITERAL;
@@ -296,9 +290,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         tok_ptr++;
     }
 
-    // TODO : remove
-    std::cout << "[" << __func__ << "] token : " << token << std::endl;
-
     // we should now be right on the '$' character
     start_offset = tok_ptr;
     if(paren_stack.empty())
@@ -323,13 +314,7 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
     }
 
     //  TODO: also check the paren stack can be cleared?
-    //        token.begin() + start_offset, 
-    //        token.begin() + start_offset + end_offset
-    //);
     std::string token_substr = token.substr(start_offset, end_offset - start_offset);
-    // TODO : remove
-    std::cout << "[" << __func__ << "] token_substr : " << token_substr << std::endl;
-
 
     // match the register string with a register
     reg_idx = this->reg_map.getIdx(token_substr);
@@ -1533,6 +1518,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]   = SYM_REGISTER;
                 ti.type[1]   = SYM_REGISTER;
                 ti.type[2]   = SYM_LITERAL;
+                ti.val[0]    = REG_AT; 
+                ti.val[1]    = REG_ZERO; 
                 ti.val[2]    = this->text_info.val[2];
                 ti.is_imm    = this->text_info.is_imm;
                 ti.symbol    = this->text_info.symbol;
@@ -1575,6 +1562,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]   = SYM_REGISTER;
                 ti.type[1]   = SYM_REGISTER;
                 ti.type[2]   = SYM_LITERAL;
+                ti.val[0]    = REG_AT;
+                ti.val[1]    = REG_ZERO;
                 ti.val[2]    = this->text_info.val[2];
                 ti.is_imm    = this->text_info.is_imm;
                 ti.symbol    = this->text_info.symbol;
@@ -1598,9 +1587,9 @@ void Lexer::expandPsuedo(void)
                 for(int r = 0; r < 3; ++r)
                     ti.type[r] = SYM_REGISTER;
 
-                ti.val[0]   = 0;            // TODO : where should AT be (assembler needs to decide)?
-                ti.val[1]   = this->text_info.val[0];
-                ti.val[2]   = this->text_info.val[1];
+                ti.val[0]    = REG_AT;            
+                ti.val[1]    = this->text_info.val[0];
+                ti.val[2]    = this->text_info.val[1];
                 ti.label     = this->text_info.label;
                 ti.is_label  = this->text_info.is_label;
 
@@ -1616,6 +1605,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]   = SYM_REGISTER;
                 ti.type[1]   = SYM_REGISTER;
                 ti.type[2]   = SYM_LITERAL;
+                ti.val[0]    = REG_AT;
+                ti.val[1]    = REG_ZERO;
                 ti.val[2]    = this->text_info.val[2];
                 ti.is_imm    = this->text_info.is_imm;
                 ti.symbol    = this->text_info.symbol;
@@ -1641,8 +1632,8 @@ void Lexer::expandPsuedo(void)
                     ti.type[r] = SYM_REGISTER;
 
                 ti.val[0]   = REG_AT;            
-                ti.val[1]   = this->text_info.val[0];
-                ti.val[2]   = this->text_info.val[1];
+                ti.val[1]   = this->text_info.val[1];
+                ti.val[2]   = this->text_info.val[0];
                 ti.label    = this->text_info.label;
                 ti.is_label = this->text_info.is_label;
 
@@ -1663,7 +1654,7 @@ void Lexer::expandPsuedo(void)
                 ti.val[2]   = this->text_info.val[2];
                 ti.label    = this->text_info.label;
                 ti.is_label = this->text_info.is_label;
-                ti.is_imm    = this->text_info.is_imm;
+                ti.is_imm   = this->text_info.is_imm;
 
                 this->source_info.addText(ti);
                 this->incrTextAddr();

@@ -630,24 +630,7 @@ void DataInfo::addWord(const uint32_t word)
 /*
  * Symbol::Symbol
  */
-Symbol::Symbol()
-{
-    this->addr = 0;
-    this->label = "\0";
-}
-
-/*
- * Symbol::toString()
- */
-std::string Symbol::toString(void) const
-{
-    std::ostringstream oss;
-    oss << "[0x" << std::setw(8) << std::setfill('0') << 
-        std::hex << this->addr << "] ";
-    oss << this->label;
-
-    return oss.str();
-}
+Symbol::Symbol() : addr(0), label("\0"), section(0) {} 
 
 /*
  * Symbol::==
@@ -666,11 +649,30 @@ bool Symbol::operator==(const Symbol& that) const
  */
 bool Symbol::operator!=(const Symbol& that) const
 {
-    if(this->addr == that.addr)
-        return false;
-    if(this->label == that.label)
-        return false;
-    return true;
+    return !(*this == that);
+}
+
+/*
+ * Symbol::init()
+ */
+void Symbol::init(void)
+{
+    this->addr = 0;
+    this->label = "\0";
+    this->section = 0;
+}
+
+/*
+ * Symbol::toString()
+ */
+std::string Symbol::toString(void) const
+{
+    std::ostringstream oss;
+    oss << "[0x" << std::setw(8) << std::setfill('0') << 
+        std::hex << this->addr << "] ";
+    oss << this->label;
+
+    return oss.str();
 }
 
 /*

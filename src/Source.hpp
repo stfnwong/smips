@@ -157,11 +157,15 @@ struct Symbol
 {
     uint32_t    addr;
     std::string label;
+    int         section;    // For now just 0 for data, 1 for text
 
     public:
         Symbol();
+        Symbol(const Symbol& that) = default;
         bool operator==(const Symbol& that) const;
         bool operator!=(const Symbol& that) const;
+        Symbol& operator=(const Symbol& that) = default;
+        void init(void);
         std::string toString(void) const;
 };
 
