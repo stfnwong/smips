@@ -143,182 +143,6 @@ SourceInfo get_mult_add_expected_source_info(void)
     return info;
 }
 
-/*
- * Generate SourceInfo for for-loop program
- */
-SourceInfo get_for_loop_expected_source_info(void)
-{
-    SourceInfo info;
-    TextInfo   line;
-
-    // line 4
-    // ADD $t0, $gp, $zero
-    line.line_num        = 4;
-    line.addr            = 0x00400000;
-    line.opcode.instr    = LEX_ADD;
-    line.opcode.mnemonic = "add";
-    line.val[0]         = REG_TEMP_0;
-    line.type[0]        = SYM_REGISTER;
-    line.val[1]         = REG_GLOBAL;
-    line.type[1]        = SYM_REGISTER;
-    line.val[2]         = REG_ZERO;
-    info.addText(line);
-
-    // line 5
-    // LW $t1, 4($gp)
-    line.init();
-    line.line_num        = 5;
-    line.addr            = 0x00400004;
-    line.opcode.instr    = LEX_LW;
-    line.opcode.mnemonic = "lw";
-    line.val[0]          = REG_TEMP_1;
-    line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_GLOBAL;
-    line.type[1]         = SYM_REGISTER;
-    // offset
-    line.val[2]          = 4;
-    line.type[2]         = SYM_LITERAL;
-    info.addText(line);
-
-    // line 6
-    // SLL $t1, $t1, 2
-    line.init();
-    line.line_num        = 6;
-    line.addr            = 0x00400008;
-    line.opcode.instr    = LEX_SLL;
-    line.opcode.mnemonic = "sll";
-    line.val[0]          = REG_TEMP_1;
-    line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_TEMP_1;
-    line.type[1]         = SYM_REGISTER;
-    line.val[2]          = 2;
-    line.type[2]         = SYM_LITERAL;
-    line.is_imm          = true;
-    info.addText(line);
-
-    // line 7
-    // ADD $t1, $t1, $gp
-    line.init();
-    line.line_num        = 7;
-    line.addr            = 0x0040000C;
-    line.opcode.instr    = LEX_ADD;
-    line.opcode.mnemonic = "add";
-    line.val[0]          = REG_TEMP_1;
-    line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_TEMP_1;
-    line.type[1]         = SYM_REGISTER;
-    line.val[2]          = REG_GLOBAL;
-    line.type[2]         = SYM_REGISTER;
-    info.addText(line);
-
-    // line 8
-    // ORI $t2, $zero, 256
-    line.init();
-    line.line_num        = 8;
-    line.addr            = 0x00400010;
-    line.opcode.instr    = LEX_ORI;
-    line.opcode.mnemonic = "ori";
-    line.val[0]          = REG_TEMP_2;
-    line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
-    line.type[1]         = SYM_REGISTER;
-    line.val[2]          = 256;
-    line.type[2]         = SYM_LITERAL;
-    line.is_imm          = true;
-    info.addText(line);
-
-    // label gets attached to first following non-empty line
-    // line 10
-    // top: SLTU $t3, $t0, $t1
-    line.init();
-    line.line_num        = 10;
-    line.addr            = 0x00400014;
-    line.opcode.instr    = LEX_SLTU;
-    line.opcode.mnemonic = "sltu";
-    line.val[0]          = REG_TEMP_3;
-    line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_TEMP_0;
-    line.type[1]         = SYM_REGISTER;
-    line.val[2]          = REG_TEMP_1;
-    line.type[2]         = SYM_REGISTER;
-    line.is_label        = true;
-    line.label           = "top";
-    info.addText(line);
-
-    // line 11
-    // BEQ $t3, $zero, done
-    line.init();
-    line.line_num        = 11;
-    line.addr            = 0x00400018;
-    line.opcode.instr    = LEX_BEQ;
-    line.opcode.mnemonic = "beq";
-    line.val[0]          = REG_TEMP_3;
-    line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
-    line.type[1]         = SYM_REGISTER;
-    // 3rd arg is actually converted literal
-    line.type[2]         = SYM_LITERAL;
-    line.val[2]          = 0x00400028;
-    line.is_symbol       = true;
-    line.symbol          = "done";
-    line.is_imm          = true;
-    info.addText(line);
-
-    // line 12
-    // SW $t2, 28($t0)
-    line.init();
-    line.line_num        = 12;
-    line.addr            = 0x0040001C;
-    line.opcode.instr    = LEX_SW;
-    line.opcode.mnemonic = "sw";
-    line.val[0]          = REG_TEMP_2;
-    line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_TEMP_0;
-    line.type[1]         = SYM_REGISTER;
-    line.val[2]          = 28;
-    line.type[2]         = SYM_LITERAL;
-    info.addText(line);
-
-    // line 13
-    // ADDI $t0, $t0, 4
-    line.init();
-    line.line_num        = 13;
-    line.addr            = 0x00400020;
-    line.opcode.instr    = LEX_ADDI;
-    line.opcode.mnemonic = "sw";
-    line.val[0]          = REG_TEMP_0;
-    line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_TEMP_0;
-    line.type[1]         = SYM_REGISTER;
-    line.val[2]          = 4;
-    line.type[2]         = SYM_LITERAL;
-    line.is_imm          = true;
-    info.addText(line);
-
-    // line 14
-    // J TOP
-    line.init();
-    line.line_num        = 14;
-    line.addr            = 0x00400024;
-    line.opcode.instr    = LEX_J;
-    line.opcode.mnemonic = "j";
-    line.is_symbol       = true;
-    line.symbol          = "top";
-    // 3 arg is also converted literal in this case
-    line.type[2]         = SYM_LITERAL;
-    line.val[2]          = 0x00400014;
-    info.addText(line);
-
-    // DONE
-    line.init();
-    line.line_num        = 16;      
-    line.addr            = 0x00400028;
-    line.is_label        = true;
-    line.label           = "done";
-    info.addText(line);
-
-    return info;
-}
 
 /*
  * Generate SourceInfo for array program
@@ -371,12 +195,12 @@ SourceInfo get_array_expected_source_info(void)
 
     // line 10
     // la $s0, list
-    // [lui $t0, list]
+    // [lui $s0, list]
     line.line_num        = 10;
     line.addr            = 0x00400000;
     line.opcode.instr    = LEX_LUI;
     line.opcode.mnemonic = "lui";
-    line.val[0]          = REG_TEMP_0;
+    line.val[0]          = REG_SAVED_0;
     line.type[0]         = SYM_REGISTER;
     line.type[1]         = SYM_LITERAL;
     line.val[1]          = (0x10000000 & 0xFFFF0000) >> 16;
@@ -618,6 +442,184 @@ TEST_CASE("test_lex_mult_add", "[classic]")
         REQUIRE(expected_line == output_line);
         std::cout << "    [OK]" << std::endl;
     }
+}
+
+
+/*
+ * Generate SourceInfo for for-loop program
+ */
+SourceInfo get_for_loop_expected_source_info(void)
+{
+    SourceInfo info;
+    TextInfo   line;
+
+    // line 4
+    // ADD $t0, $gp, $zero
+    line.line_num        = 4;
+    line.addr            = 0x00400000;
+    line.opcode.instr    = LEX_ADD;
+    line.opcode.mnemonic = "add";
+    line.val[0]          = REG_TEMP_0;
+    line.type[0]         = SYM_REGISTER;
+    line.val[1]          = REG_GLOBAL;
+    line.type[1]         = SYM_REGISTER;
+    line.val[2]          = REG_ZERO;
+    info.addText(line);
+
+    // line 5
+    // LW $t1, 4($gp)
+    line.init();
+    line.line_num        = 5;
+    line.addr            = 0x00400004;
+    line.opcode.instr    = LEX_LW;
+    line.opcode.mnemonic = "lw";
+    line.val[0]          = REG_TEMP_1;
+    line.type[0]         = SYM_REGISTER;
+    line.val[1]          = REG_GLOBAL;
+    line.type[1]         = SYM_REGISTER;
+    // offset
+    line.val[2]          = 4;
+    line.type[2]         = SYM_LITERAL;
+    info.addText(line);
+
+    // line 6
+    // SLL $t1, $t1, 2
+    line.init();
+    line.line_num        = 6;
+    line.addr            = 0x00400008;
+    line.opcode.instr    = LEX_SLL;
+    line.opcode.mnemonic = "sll";
+    line.val[0]          = REG_TEMP_1;
+    line.type[0]         = SYM_REGISTER;
+    line.val[1]          = REG_TEMP_1;
+    line.type[1]         = SYM_REGISTER;
+    line.val[2]          = 2;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
+
+    // line 7
+    // ADD $t1, $t1, $gp
+    line.init();
+    line.line_num        = 7;
+    line.addr            = 0x0040000C;
+    line.opcode.instr    = LEX_ADD;
+    line.opcode.mnemonic = "add";
+    line.val[0]          = REG_TEMP_1;
+    line.type[0]         = SYM_REGISTER;
+    line.val[1]          = REG_TEMP_1;
+    line.type[1]         = SYM_REGISTER;
+    line.val[2]          = REG_GLOBAL;
+    line.type[2]         = SYM_REGISTER;
+    info.addText(line);
+
+    // line 8
+    // ORI $t2, $zero, 256
+    line.init();
+    line.line_num        = 8;
+    line.addr            = 0x00400010;
+    line.opcode.instr    = LEX_ORI;
+    line.opcode.mnemonic = "ori";
+    line.val[0]          = REG_TEMP_2;
+    line.type[0]         = SYM_REGISTER;
+    line.val[1]          = REG_ZERO;
+    line.type[1]         = SYM_REGISTER;
+    line.val[2]          = 256;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
+
+    // label gets attached to first following non-empty line
+    // line 10
+    // top: SLTU $t3, $t0, $t1
+    line.init();
+    line.line_num        = 10;
+    line.addr            = 0x00400014;
+    line.opcode.instr    = LEX_SLTU;
+    line.opcode.mnemonic = "sltu";
+    line.val[0]          = REG_TEMP_3;
+    line.type[0]         = SYM_REGISTER;
+    line.val[1]          = REG_TEMP_0;
+    line.type[1]         = SYM_REGISTER;
+    line.val[2]          = REG_TEMP_1;
+    line.type[2]         = SYM_REGISTER;
+    line.is_label        = true;
+    line.label           = "top";
+    info.addText(line);
+
+    // line 11
+    // BEQ $t3, $zero, done
+    line.init();
+    line.line_num        = 11;
+    line.addr            = 0x00400018;
+    line.opcode.instr    = LEX_BEQ;
+    line.opcode.mnemonic = "beq";
+    line.val[0]          = REG_TEMP_3;
+    line.type[0]         = SYM_REGISTER;
+    line.val[1]          = REG_ZERO;
+    line.type[1]         = SYM_REGISTER;
+    // 3rd arg is actually converted literal
+    line.type[2]         = SYM_LITERAL;
+    line.val[2]          = 0x00400028;
+    line.is_symbol       = true;
+    line.symbol          = "done";
+    line.is_imm          = true;
+    info.addText(line);
+
+    // line 12
+    // SW $t2, 28($t0)
+    line.init();
+    line.line_num        = 12;
+    line.addr            = 0x0040001C;
+    line.opcode.instr    = LEX_SW;
+    line.opcode.mnemonic = "sw";
+    line.val[0]          = REG_TEMP_2;
+    line.type[0]         = SYM_REGISTER;
+    line.val[1]          = REG_TEMP_0;
+    line.type[1]         = SYM_REGISTER;
+    line.val[2]          = 28;
+    line.type[2]         = SYM_LITERAL;
+    info.addText(line);
+
+    // line 13
+    // ADDI $t0, $t0, 4
+    line.init();
+    line.line_num        = 13;
+    line.addr            = 0x00400020;
+    line.opcode.instr    = LEX_ADDI;
+    line.opcode.mnemonic = "sw";
+    line.val[0]          = REG_TEMP_0;
+    line.type[0]         = SYM_REGISTER;
+    line.val[1]          = REG_TEMP_0;
+    line.type[1]         = SYM_REGISTER;
+    line.val[2]          = 4;
+    line.type[2]         = SYM_LITERAL;
+    line.is_imm          = true;
+    info.addText(line);
+
+    // line 14
+    // J TOP
+    line.init();
+    line.line_num        = 14;
+    line.addr            = 0x00400024;
+    line.opcode.instr    = LEX_J;
+    line.opcode.mnemonic = "j";
+    line.is_symbol       = true;
+    line.symbol          = "top";
+    // 3 arg is also converted literal in this case
+    line.type[2]         = SYM_LITERAL;
+    line.val[2]          = 0x00400014;
+    info.addText(line);
+
+    // DONE
+    line.init();
+    line.line_num        = 16;      
+    line.addr            = 0x00400028;
+    line.is_label        = true;
+    line.label           = "done";
+    info.addText(line);
+
+    return info;
 }
 
 

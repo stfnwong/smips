@@ -157,7 +157,7 @@ struct Symbol
 {
     uint32_t    addr;
     std::string label;
-    int         section;    // For now just 0 for data, 1 for text
+    int         section;    // For now just 0 for data, 1 for text (as in lexer)
 
     public:
         Symbol();

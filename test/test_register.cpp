@@ -27,4 +27,8 @@ TEST_CASE("register_map", "[classic]")
     REQUIRE("$?" == test_map.getName(999));
 
     REQUIRE(-1 == test_map.getIdx("not a register"));
+
+    // Check that we can get the zero register 
+    REQUIRE(0 == test_map.getIdx("$zero"));
+    REQUIRE("$zero" == test_map.getName(0));
 }

@@ -9,7 +9,7 @@
 top:
     sltu   $t3, $t0, $t1        # have we reached the final address?
     beq    $t3, $zero, done     # yes, we're done
-    sw     $t2, 28($t7)         # A[i] = 0
+    sw     $t2, 28($t0)         # A[i] = 0
     addi   $t0, $t0, 4          # update $t0 to point to next element
     j      top                  # go to top of loop
 done:

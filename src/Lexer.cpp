@@ -286,6 +286,8 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
             out_token = this->extractLiteral(token, tok_ptr, end_offset);
             out_token.reg_offset = out_token.val;        // we will overwrite the other fields
             tok_ptr = end_offset-1;      // we must have advaneced by this amount
+            std::cout << "[" << __func__ << "] out_token (after offset literal extract) " 
+                << out_token.toString() << std::endl;
         }
         tok_ptr++;
     }
@@ -318,7 +320,7 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
 
     // match the register string with a register
     reg_idx = this->reg_map.getIdx(token_substr);
-    if(reg_idx > 0)
+    if(reg_idx >= 0)
     {
         out_token.type = SYM_REGISTER;
         out_token.val = std::to_string(reg_idx);    // TODO : think about string conversions (ie: do we need to do it?)
@@ -328,6 +330,8 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         out_token.type = SYM_NONE;
         out_token.val = "\0";
     }
+
+    std::cout << "[" << __func__ << "] output register token : " << out_token.toString() << std::endl;
 
     return out_token;
 }

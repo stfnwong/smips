@@ -87,7 +87,11 @@ std::string Token::toString(void) const
             return "SYSCALL";
         // Registers
         case SYM_REGISTER:
-            return "REGISTER <" + this->val + ">";
+            {
+                if(this->reg_offset != "\0")
+                    return "REGISTER <" + this->val + ">[" + this->reg_offset + "]";
+                return "REGISTER <" + this->val + ">";
+            }
         default:
             return "NULL <" + this->val + ">";
     }
