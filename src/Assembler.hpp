@@ -49,7 +49,6 @@ class Assembler
 
     // assemble by instruction type
     private:
-        int      val2Offset(const TokenType& type, const int val) const;
         uint32_t asm_r_instr(const TextInfo& l, const int n) const;
         uint32_t asm_i_instr(const TextInfo& l, const int n) const;
         uint32_t asm_j_instr(const TextInfo& l) const;

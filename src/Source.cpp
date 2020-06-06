@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <sstream>
 #include "Source.hpp"
+#include "Register.hpp"
 
 /*
  * TODO: 
@@ -19,7 +20,8 @@
  * inside of it.
  *
  * TODO  for TODO : go back to ELF file specification and think some more about
- * how that should be reperesented.
+ * how that should be reperesented. Eg - should the parser hold different section 'types' 
+ * for the sections in the ELF file?
  *
  */
 
@@ -28,55 +30,39 @@
 /* 
  * TOKEN
  */
-Token::Token()
-{
-    this->init();
-}
+Token::Token() : type(SYM_NONE), val("\0"), reg_offset("\0") {} 
 
-Token::Token(const TokenType& t, const std::string& v)
-{
-    this->type = t;
-    this->val = v;
-}
+Token::Token(const TokenType& t, const std::string& v) : type(t), val(v), reg_offset("\0") {} 
 
+/*
+ * Token::init()
+ */
 void Token::init(void)
 {
-    this->type   = SYM_NONE;
-    this->val    = "\0";
-    this->offset = "\0";
+    this->type       = SYM_NONE;
+    this->val        = "\0";
+    this->reg_offset = "\0";
 }
 
+/*
+ * Token::isReg()
+ */
 bool Token::isReg(void) const
 {
-    switch(this->type)
-    {
-        case SYM_REG_TEMP:
-        case SYM_REG_SAVED:
-        case SYM_REG_ARG:
-        case SYM_REG_RET:
-        case SYM_REG_RET_ADR:
-        case SYM_REG_ZERO:
-        case SYM_REG_GLOBAL:
-        case SYM_REG_FRAME:
-        case SYM_REG_AT:
-            return true;
-        default:
-            return false;
-    }
-
-    // If we somehow get here, then this is clearly not 
-    // the value that we are looking for
-    return false;
+    return (this->type == SYM_REGISTER) ? true : false;
 }
 
+/*
+ * Token::isOffset()
+ */
 bool Token::isOffset(void) const
 {
-    if(this->type == SYM_REG_GLOBAL || this->type == SYM_REG_FRAME)
-        return true;
-
-    return false;
+    return (this->reg_offset != "\0") ? true : false;
 }
 
+/*
+ * Token::toString()
+ */
 std::string Token::toString(void) const
 {
     switch(this->type)
@@ -99,26 +85,9 @@ std::string Token::toString(void) const
             return "STRING <" + this->val + ">";
         case SYM_SYSCALL:
             return "SYSCALL";
-
         // Registers
-        case SYM_REG_AT:
-            return "AT <" + this->val + ">";
-        case SYM_REG_TEMP:
-            return "R_TEMP <" + this->val + ">";
-        case SYM_REG_SAVED:
-            return "R_SAVED <" + this->val + ">";
-        case SYM_REG_ARG:
-            return "R_ARG <" + this->val + ">";
-        case SYM_REG_RET:
-            return "R_RET <" + this->val + ">";
-        case SYM_REG_RET_ADR:
-            return "R_RET_ADR <" + this->val + ">";
-        case SYM_REG_ZERO:
-            return "R_ZERO <" + this->val + ">";
-        case SYM_REG_NUM:
-            return "R_NUM <" + this->val + ">";
-        case SYM_REG_GLOBAL:
-            return "R_GLOBAL <" + this->val + ">";
+        case SYM_REGISTER:
+            return "REGISTER <" + this->val + ">";
         default:
             return "NULL <" + this->val + ">";
     }
@@ -134,7 +103,7 @@ bool Token::operator==(const Token& that) const
         return false;
     if(this->val != that.val)
         return false;
-    if(this->offset != that.offset)
+    if(this->reg_offset != that.reg_offset)
         return false;
 
     return true;
@@ -149,24 +118,12 @@ bool Token::operator!=(const Token& that) const
         return false;
     if(this->val == that.val)
         return false;
-    if(this->offset != that.offset)
+    if(this->reg_offset != that.reg_offset)
         return false;
 
     return true;
 }
 
-// assignment 
-Token& Token::operator=(const Token& that)
-{
-    if(this != &that)
-    {
-        this->type   = that.type;
-        this->val    = that.val;
-        this->offset = that.offset;
-    }
-
-    return *this;
-}
 
 /*
  * TextInfo
@@ -242,27 +199,32 @@ std::string TextInfo::toString(void) const
     // Insert arg/register chars
     for(auto i = 0; i < 3; ++i)
     {
-        if(this->type[i] == SYM_REG_TEMP)
-            oss << "t" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_AT)
-            oss << "at" << this->val[i] << " ";     // TODO : what do the values for $at look like?
-        else if(this->type[i] == SYM_REG_SAVED)
-            oss << "s" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_ARG)
-            oss << "a" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_RET)
-            oss << "r" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_RET_ADR)
-            oss << "RA ";
-        else if(this->type[i] == SYM_REG_ZERO)
-            oss << "Z  ";
-        else if(this->type[i] == SYM_REG_NUM)
-            oss << "$" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_GLOBAL)
-            //oss << "G+" << this->val[i] << " ";
-            oss << "G  ";
-        else if(this->type[i] == SYM_REG_FRAME)
-            oss << "F+" << this->val[i];
+        // TODO : come back to this... temp registers are in two places in register map
+        //if(this->type[i] == SYM_REG_TEMP)
+        //    oss << "t" << this->val[i] << " ";
+        if(this->type[i] == SYM_REGISTER)
+        {
+            if(this->val[i] == REG_AT)
+                oss << "at" << this->val[i] << " ";     
+            else if(this->val[i] >= REG_ARG_0 && this->val[i] <= REG_ARG_3)
+                oss << "a" << this->val[i] << " ";
+            else if(this->val[i] == REG_RETURN)
+                oss << "r" << this->val[i] << " ";
+            else if(this->val[i] == REG_RETURN)
+                oss << "RA ";
+            else if(this->val[i] == REG_ZERO)
+                oss << "Z  ";
+            //else if(this->val[i] == SYM_REG_NUM)
+            //    oss << "$" << this->val[i] << " ";
+            else if(this->val[i] == REG_GLOBAL)
+                oss << "G  ";
+            else if(this->val[i] == REG_FRAME)
+                oss << "F+" << this->val[i];
+            else if(this->val[i] == REG_STACK)
+                oss << "S+" << this->val[i];
+            else if(this->val[i] >= REG_SAVED_0 && this->val[i] <= REG_SAVED_7)
+                oss << "s" << this->val[i] << " ";
+        }
         else if(this->type[i] == SYM_LITERAL)       // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
             oss << "L  ";
         else

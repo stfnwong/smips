@@ -20,65 +20,6 @@ Assembler::Assembler()
     this->num_err = 0;
 }
 
-/*
- * val2Offset()
- * Convert register value to a memory offset
- */
-int Assembler::val2Offset(const TokenType& type, const int val) const
-{
-    int offset;
-
-    switch(type)
-    {
-        case SYM_REG_ZERO:
-            return 0;
-
-        case SYM_REG_AT:
-            return 1;
-
-        case SYM_REG_RET:
-            if((2 + val) > 3)
-                return this->ARG_INVALID_OFFSET;
-            return 2 + val;
-
-        case SYM_REG_ARG:
-            if(4 + val > 7)
-                return this->ARG_INVALID_OFFSET;
-            return 4 + val;
-
-        case SYM_REG_TEMP:
-            offset = 8 + val;
-            if(offset > 7 && offset < 16)
-                return offset;
-            if(offset > 23 && offset < 26)
-                return offset;
-            return this->ARG_INVALID_OFFSET;
-
-        case SYM_REG_SAVED:
-            if(16 + val > 23)
-                return this->ARG_INVALID_OFFSET;
-            return 16 + val;
-
-        case SYM_REG_GLOBAL:
-            return 28;
-
-        case SYM_REG_STACK:
-            return 29;
-
-        case SYM_REG_FRAME:
-            return 30;
-
-        case SYM_LITERAL:
-            return val;
-
-        default:
-            std::cout << "[" << __func__  << "] not a register type" << std::endl;
-            return this->ARG_INVALID_OFFSET;
-    }
-
-    // getting here is an error 
-    return this->ARG_INVALID_OFFSET;
-}
 
 /*
  * asm_r_instr()
@@ -87,13 +28,9 @@ int Assembler::val2Offset(const TokenType& type, const int val) const
 uint32_t Assembler::asm_r_instr(const TextInfo& l, const int n) const
 {
     uint32_t instr = 0;
-    int reg;
 
     for(int i = 0; i < n; ++i)
-    {
-        reg   = this->val2Offset(l.type[i], l.val[i]);
-        instr = instr | (reg << this->r_instr_offsets[i]);
-    }
+        instr = instr | (l.val[i] << this->r_instr_offsets[i]);
 
     return instr;
 }
@@ -105,14 +42,10 @@ uint32_t Assembler::asm_r_instr(const TextInfo& l, const int n) const
 uint32_t Assembler::asm_i_instr(const TextInfo& l, const int n) const
 {
     uint32_t instr = 0;
-    int reg;
 
     // Just need to double check this...
     for(int i = 0; i < n; ++i)
-    {
-        reg = this->val2Offset(l.type[i], l.val[i]);
-        instr = instr | (reg << this->i_instr_offsets[i]);
-    }
+        instr = instr | (l.val[i] << this->i_instr_offsets[i]);
 
     return instr;
 }
@@ -242,8 +175,9 @@ Instr Assembler::asm_lui(const TextInfo& l) const
     instr.ins = 0x0F << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 1);
     //instr.ins = instr.ins | ((l.val[1] & 0xFFFF0000) >> 16);
-    if(l.type[1] == SYM_REG_TEMP)
-        instr.ins = instr.ins | (1 << this->i_instr_offsets[1]);
+    // TODO : why was this exception here in the first place?
+    //if(l.type[1] == SYM_REG_TEMP)
+    //    instr.ins = instr.ins | (1 << this->i_instr_offsets[1]);
     instr.ins = instr.ins | (l.val[1]);
     instr.adr = l.addr;
     return instr;

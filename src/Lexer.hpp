@@ -11,6 +11,7 @@
 #include <string>
 #include "Opcode.hpp"
 #include "Source.hpp"
+#include "Register.hpp"
 
 // Give some kind of named identifier to the Lexer mode
 enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};
@@ -31,6 +32,10 @@ class Lexer
     private:
         OpcodeTable psuedo_op_table;
         void init_psuedo_op_table(void);
+
+    //  Register mapping
+    private:
+        RegisterMap reg_map;
 
     // Assembler directives 
     private:
@@ -128,8 +133,6 @@ class Lexer
         void parseJump(void);
 		void parseLabel(void);
         void parseLine(void);
-        TokenType getRegType(const std::string& reg_str) const;
-        //TokenType getRegType(const char& reg_char) const;
 
     private:
         // psuedo instruction expansion

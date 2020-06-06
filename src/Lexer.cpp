@@ -181,61 +181,6 @@ bool Lexer::isComment(void) const
 }
 
 
-/*
- * getRegType()
- */
-// TODO : what to do about $ra, $sp, $at etc?
-TokenType Lexer::getRegType(const std::string& reg_str) const
-{
-    std::cout << "[" << __func__ << "] reg_str = " 
-        << reg_str << " (length " << reg_str.size() 
-        << ")" <<  std::endl;
-    if(reg_str.size() == 1)
-    {
-        switch(reg_str[0])
-        {
-            case 'A':
-            case 'a':
-                return SYM_REG_ARG;
-            case 'F':
-            case 'f':
-                return SYM_REG_FRAME;
-            case 'R':
-            case 'r':
-                return SYM_REG_RET;
-            case 'S':
-            case 's':
-                return SYM_REG_SAVED;
-            case 'T':
-            case 't':
-                return SYM_REG_TEMP;
-            case 'Z':
-            case 'z':
-                return SYM_REG_ZERO;
-            case 'G':
-            case 'g':
-                return SYM_REG_GLOBAL;
-            case 'K':
-            case 'k':
-                return SYM_REG_KERN;
-            case 'V':
-            case 'v':
-                return SYM_REG_RET;
-            default:
-                return SYM_NONE;
-        }
-    }
-    else if(reg_str.size() == 2)
-    {
-        if(reg_str == "at")
-            return SYM_REG_AT;
-        if(reg_str == "gp")
-            return SYM_REG_GLOBAL;
-    }
-    // in case we somehow fall through
-    return SYM_NONE;
-}
-
 
 /*
  * scanToken()
@@ -275,6 +220,7 @@ void Lexer::scanToken(void)
         this->advance();
 }
 
+// TODO : re-write all the extraction methods, most of this shit is hot garbage
 
 /*
  * extractLiteral()
@@ -297,20 +243,19 @@ Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset,
     }
 
     if(tok_ptr >= (token.size()))   // no more chars, this is just a literal
-    {
-        out_token.val = token.substr(start_offset, tok_ptr);
-        out_token.type = SYM_LITERAL;
-        goto LITERAL_REG_END;
-    }
+        out_token.val = token.substr(start_offset);     
+    else
+        out_token.val = token.substr(start_offset, tok_ptr - start_offset);
 
+
+    // TODO:  probably kill this
     // 'offset' in this context means that the literal is used  
     // in the source to indicate a memory offset  
-    mem_offset = token.substr(start_offset, tok_ptr - start_offset);
-    out_token        = this->extractReg(token, tok_ptr, end_offset);
-    out_token.offset = mem_offset;
+    //mem_offset = token.substr(start_offset, tok_ptr - start_offset);
 
 LITERAL_REG_END:
     end_offset = tok_ptr;
+    out_token.type = SYM_LITERAL;
     return out_token;
 }
 
@@ -319,7 +264,6 @@ LITERAL_REG_END:
  * extractReg()
  * Extract a register
  */
-// TODO : do a refactor where we have a common register format
 Token Lexer::extractReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
 {
     Token out_token;
@@ -327,6 +271,7 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
     unsigned int paren_ptr = 0;
     std::stack<int> paren_stack;
     std::string offset;
+    int reg_idx;
 
     tok_ptr = start_offset;
     
@@ -338,74 +283,31 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
             paren_stack.pop();
         if(token[tok_ptr] == '$')
             break;
+
+        // We handle offsets here so that any number of parens 
+        // can appear before the register name. Offsets only occur
+        // before a '$' character
         if(std::isdigit(token[tok_ptr]))
         {
-            // this will be an offset
             out_token = this->extractLiteral(token, tok_ptr, end_offset);
-            offset = out_token.offset;
+            out_token.reg_offset = out_token.val;        // we will overwrite the other fields
+            tok_ptr = end_offset-1;      // we must have advaneced by this amount
         }
         tok_ptr++;
     }
 
+    // TODO : remove
+    std::cout << "[" << __func__ << "] token : " << token << std::endl;
+
     // we should now be right on the '$' character
+    start_offset = tok_ptr;
     if(paren_stack.empty())
     {
-        // TODO : debug, remove 
-
-        // TODO : after the '$' character should be two more chars. If the second
-        // of these is a number then this is just a 'regular' register. If its an
-        // alpha then it must be a 'special' register (like $at, $gp, etc)
-
-        // TODO : need a more uniform way of dealing with register names. How about 
-        // 1) get the token string 
-        // 2) clip the '$' char off the front 
-        // 3) string compare the token. If its 2 chars long then its either a t, s, r, k, etc register,
-        // or one of the special 2 char registers (gp, at, etc)
-        // 4) failing that, we compare to the longer register strings. For now this is just $zero
-        //
-        //
-        // The 'internal' register format is maps the string names to the register numbers.
-        // eg: $zero -> 0, $at -> 1 
-
-        // there were no parenthesis, therefore we can 
-        // just directly extract the register value
-        if(std::isdigit(token[tok_ptr+2]))
-        {
-            std::cout << "[" << __func__ << "] tok_ptr+2 is digit, extracting " 
-                << std::string(token.begin() + tok_ptr + 1, token.begin() + tok_ptr + 2) << std::endl;
-            out_token.type = this->getRegType(
-                    std::string(
-                        token.begin() + tok_ptr + 1, 
-                        token.begin() + tok_ptr + 2
-                    )
-            );
-            //out_token.type = this->getRegType(std::string(1, token[tok_ptr+1]));
-            out_token.val = std::string(token.begin() + tok_ptr + 0, token.begin() + tok_ptr + 2);
-        }
-        else
-        {
-            std::cout << "[" << __func__ << "] tok_ptr+2 is not digit, extracting " 
-                << std::string(token.begin() + tok_ptr + 1, token.begin() + tok_ptr + 3)
-                << std::endl;
-            out_token.type = this->getRegType(
-                    std::string(
-                        token.begin() + tok_ptr + 1, 
-                        token.begin() + tok_ptr + 3
-                    )
-            );
-            out_token.val = std::string(token.begin() + tok_ptr + 1, token.begin() + tok_ptr + 3);
-        }
-
-        if(out_token.type == SYM_NONE)
-            out_token.val = "\0";           // ensure there is no string here
-        else if(out_token.type == SYM_REG_ZERO || out_token.type == SYM_REG_GLOBAL)
-            out_token.val = "0";
         end_offset = token.length();
     }
     else
     {
         // there is at least one parenthesis
-        out_token.type = this->getRegType(std::string(1, token[tok_ptr+1]));
         paren_ptr = tok_ptr;
         while(paren_ptr < token.length())
         {
@@ -417,15 +319,29 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
             }
             paren_ptr++;
         }
-        // The value now lies between tok_ptr and paren_ptr-1
-        // Ensure that we've checked all parenthesis
-        if(out_token.type == SYM_NONE)
-            out_token.val = "\0";           // ensure there is no string here
-        else if(out_token.type == SYM_REG_ZERO || out_token.type == SYM_REG_GLOBAL)
-            out_token.val = "0";
-        else
-            out_token.val  = token.substr(tok_ptr+2, (paren_ptr - tok_ptr-1));
-        end_offset = token.length();
+        end_offset = paren_ptr;
+    }
+
+    //  TODO: also check the paren stack can be cleared?
+    //        token.begin() + start_offset, 
+    //        token.begin() + start_offset + end_offset
+    //);
+    std::string token_substr = token.substr(start_offset, end_offset - start_offset);
+    // TODO : remove
+    std::cout << "[" << __func__ << "] token_substr : " << token_substr << std::endl;
+
+
+    // match the register string with a register
+    reg_idx = this->reg_map.getIdx(token_substr);
+    if(reg_idx > 0)
+    {
+        out_token.type = SYM_REGISTER;
+        out_token.val = std::to_string(reg_idx);    // TODO : think about string conversions (ie: do we need to do it?)
+    }
+    else
+    {
+        out_token.type = SYM_NONE;
+        out_token.val = "\0";
     }
 
     return out_token;
@@ -500,7 +416,7 @@ void Lexer::nextToken(void)
     
     start_offset = 0;
     // Check digits, which may be either literals or register offsets 
-    if(std::isdigit(token_str[0]))
+    if(std::isdigit(token_str[0]) && token_str[1] != '(')
     {
         out_token = this->extractLiteral(token_str, start_offset, end_offset);
         if(out_token.type == SYM_NONE)
@@ -514,7 +430,9 @@ void Lexer::nextToken(void)
     }
 
     // Check registers or expand parenthesis
-    if((token_str[0] == '$') || (token_str[0] == '('))
+    if((token_str[0] == '$') || 
+       (token_str[0] == '(') || 
+       (std::isdigit(token_str[0]) && token_str[1] == '('))
     {
         out_token = this->extractReg(token_str, start_offset, end_offset);
         if(out_token.type == SYM_NONE)
@@ -551,7 +469,11 @@ TOKEN_END:
         std::cout << "[" << __func__ << "] (line " << std::dec << 
             this->cur_line << ") got " << this->cur_token.toString() << 
             " token <" << token_str << "> with value <" << 
-            this->cur_token.val << ">" << std::endl;
+            this->cur_token.val << ">";
+        if(cur_token.reg_offset != "\0")
+            std::cout << " and offset " << cur_token.reg_offset;
+       
+        std::cout << std::endl;
 
         if(this->text_info.error)
             std::cout << "[" << __func__ << "] " << this->text_info.errstr << std::endl;
@@ -808,28 +730,16 @@ void Lexer::parseBranchZero(void)
         goto BRANCH_ZERO_END;
     }
 
-    this->text_info.type[0]   = this->cur_token.type;
+    this->text_info.type[0] = this->cur_token.type;
+    this->text_info.val[0]  = std::stoi(this->cur_token.val);
     // if we have an offset, convert it here 
-    if(this->cur_token.offset != "\0")
+    if(this->cur_token.reg_offset != "\0")
     {
-        this->text_info.val[1] = std::stoi(this->cur_token.offset, nullptr, 10);
+        this->text_info.val[1] = std::stoi(this->cur_token.reg_offset, nullptr, 10);
         this->text_info.type[1] = SYM_LITERAL;
     }
 
-    switch(this->cur_token.type)
-    {
-        case SYM_REG_ZERO:
-        case SYM_REG_GLOBAL:
-        case SYM_REG_FRAME:
-            this->text_info.val[0] = 0;
-            break;
-
-        default:
-            this->text_info.val[0] = std::stoi(this->cur_token.val, nullptr, 10);
-            break;
-    }
-
-    // Next token must be a symbol
+    // Next token must be a symbol  (TODO : could also be a literal?)
     this->nextToken();
     if(this->cur_token.type != SYM_LABEL)
     {
@@ -862,8 +772,9 @@ BRANCH_ZERO_END:
 void Lexer::parseAddress(int num_reg_args)
 {
     bool error = false;
+    int r;
 
-    for(int r = 0; r < num_reg_args; ++r)
+    for(r = 0; r < num_reg_args; ++r)
     {
         this->nextToken();
         if(!this->cur_token.isReg())
@@ -872,19 +783,7 @@ void Lexer::parseAddress(int num_reg_args)
             goto ADDRESS_END;
         }
         this->text_info.type[r] = this->cur_token.type;
-
-        switch(this->cur_token.type)
-        {
-            case SYM_REG_ZERO:
-            case SYM_REG_GLOBAL:
-            case SYM_REG_FRAME:
-                this->text_info.val[r] = 0;
-                break;
-
-            default:
-                this->text_info.val[r] = std::stoi(this->cur_token.val, nullptr, 10);
-                break;
-        }
+        this->text_info.val[r] = std::stoi(this->cur_token.val);
     }
 
     // Finally, there should be one label or constant token at the end
@@ -912,8 +811,8 @@ ADDRESS_END:
     if(error)
     {
         this->text_info.error = true;
-        this->text_info.errstr = "Invalid argument " + 
-            this->cur_token.toString() + " for instruction " + 
+        this->text_info.errstr = "Argument (" + std::to_string(r+1) + ") [" + 
+            this->cur_token.toString() + "] for instruction " + 
             this->text_info.opcode.toString();
 
         if(this->verbose)
@@ -942,19 +841,7 @@ void Lexer::parseBranch(void)
             goto BRANCH_END;
         }
         this->text_info.type[argn] = this->cur_token.type;
-
-        switch(this->cur_token.type)
-        {
-            case SYM_REG_ZERO:
-            case SYM_REG_GLOBAL:
-            case SYM_REG_FRAME:
-                this->text_info.val[argn] = 0;
-                break;
-
-            default:
-                this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-                break;
-        }
+        this->text_info.val[argn] = std::stoi(this->cur_token.val);
     }
 
     // Finally, there should be one label or constant token at the end
@@ -997,47 +884,34 @@ BRANCH_END:
 void Lexer::parseMemArgs(void)
 {
     bool error = false;
+    int argn;
 
-    this->nextToken();
-    if(!this->cur_token.isReg())
+    for(argn = 0; argn < 2; ++argn)
     {
-        error = true;
-        goto ARG_END;
+        this->nextToken();
+        if(!this->cur_token.isReg())
+        {
+            error = true;
+            goto ARG_END;
+        }
+        // TODO : debug, remove
+        std::cout << "[" << __func__ << "] got token : " << this->cur_token.toString() << std::endl;
+        this->text_info.type[argn] = this->cur_token.type;
+        this->text_info.val[argn]  = std::stoi(this->cur_token.val); //, nullptr, 10);
+
+        if(argn == 1 && this->cur_token.reg_offset != "\0")
+        {
+            this->text_info.val[2]  = std::stoi(this->cur_token.reg_offset); //, nullptr, 10);
+            this->text_info.type[2] = SYM_LITERAL;
+        }
     }
-    this->text_info.type[0] = this->cur_token.type;
-    this->text_info.val[0]  = std::stoi(this->cur_token.val, nullptr, 10);
-
-    // this should be a register that may or may not
-    // have an offset 
-    this->nextToken();
-    this->text_info.type[1] = this->cur_token.type;
-
-    switch(this->cur_token.type)
-    {
-        case SYM_REG_ZERO:
-        case SYM_REG_GLOBAL:
-        case SYM_REG_FRAME:
-            this->cur_token.val[1] = 0;
-            break;
-
-        default:
-            this->cur_token.val[1] = std::stoi(this->cur_token.val, nullptr, 10);
-            break;
-    }
-
-    if(this->cur_token.offset != "\0")
-    {
-        this->text_info.val[2]  = std::stoi(this->cur_token.offset, nullptr, 10);
-        this->text_info.type[2] = SYM_LITERAL;
-    }
-
 
 ARG_END:
     if(error)
     {
         this->text_info.error = true;
-        this->text_info.errstr = "Invalid argument " + 
-            this->cur_token.toString();
+        this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
+           ") invalid [" + this->cur_token.toString() + "]";
 
         if(this->verbose)
         {
@@ -1066,13 +940,16 @@ void Lexer::parseRegArgs(const int num_args)
         // 1) IF The instruction is an immediate instruction
         // 2) AND there is an offset string in the current Token 
         // 3) THEN we convert that offset string to an int and store it in 
-        // this->text_info.val[num_args-1] as a SYM_LITERAL
+        // this->text_info.val[num_args+1] as a SYM_LITERAL 
+        // 4) This should work, because there are no 3-argument instructions 
+        // which accept a register offset in the right-most position. Or in
+        // other words, the register offset becomes the third argument (as a literal)
         //
         
         // NOTE: what if this is the ZERO register or the GLOBAL register?
         // why are we relying on text_info.is_imm to check?
         std::cout << "[" << __func__ << "] arg " << argn << " token type : " << this->cur_token.toString() << std::endl;
-        if(this->text_info.is_imm && (argn == num_args-1))
+        if(this->text_info.is_imm && (argn == num_args-1))  // TODO: reconsider the side effect of using this->text_info.is_imm...
         {
             // it is legal for this to be a symbol rather than a literal
             if(this->cur_token.type == SYM_LABEL)
@@ -1080,21 +957,31 @@ void Lexer::parseRegArgs(const int num_args)
                 this->text_info.is_symbol = true;
                 this->text_info.symbol    = std::string(this->cur_token.val);
             }
-            else
+            else if(this->cur_token.type == SYM_LITERAL)    // bit of a repeat here...
             {
-                // TODO : update offset check testing...
+                this->text_info.val[argn]  = std::stoi(this->cur_token.val);
+            }
+            else if(this->cur_token.type == SYM_REGISTER)
+            {
+                this->text_info.val[argn] = std::stoi(this->cur_token.val);
+
                 // Check if there is an offset 
-                if(this->cur_token.offset != "\0")
-                    this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
-                else
-                    this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-                this->text_info.type[argn] = SYM_LITERAL;
+                if(this->cur_token.reg_offset != "\0")
+                {
+                    this->text_info.val[argn+1] = std::stoi(this->cur_token.reg_offset, nullptr, 10);
+                    this->text_info.type[argn+1] = SYM_LITERAL;
+                }
 
                 // adjust upper values 
                 if(this->text_info.upper)
                 {
                     this->text_info.val[argn] = (this->text_info.val[argn] << 16);
                 }
+            }
+            else        // we only accept literals, registers, or labels
+            {
+                error = true;
+                goto ARG_ERR;
             }
         }
         else
@@ -1106,28 +993,30 @@ void Lexer::parseRegArgs(const int num_args)
             }
         }
         this->text_info.type[argn] = this->cur_token.type;
+        if(this->cur_token.type != SYM_LABEL)
+            this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
 
-        switch(this->cur_token.type)
-        {
-            case SYM_REG_ZERO:
-            case SYM_REG_GLOBAL:
-            case SYM_REG_FRAME:
-                if(this->cur_token.offset != "\0")
-                    this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
-                else
-                    this->text_info.val[argn] = 0;
-                break;
 
-            case SYM_REG_AT:
-                this->text_info.val[argn] = 1;
+        // TODO : fix this up
+        //switch(this->cur_token.type)
+        //{
+        //    case SYM_LABEL:
+        //        break;      // dont do any extra string conversions for labels
 
-            case SYM_LABEL:
-                break;
+        //    //case REG_ZERO:
+        //    //case REG_GLOBAL:
+        //    //case REG_FRAME:
+        //    case SYM_REGISTER:
+        //        if(this->cur_token.reg_offset != "\0")
+        //            this->text_info.val[argn] = std::stoi(this->cur_token.reg_offset, nullptr, 10);
+        //        else
+        //            this->text_info.val[argn] = 0;
+        //        break;
 
-            default:
-                this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-                break;
-        }
+        //    default:
+        //        this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+        //        break;
+        //}
     }
 
 ARG_ERR:
@@ -1622,10 +1511,11 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "slt";
                 ti.addr      = this->text_info.addr;
                 ti.line_num  = this->text_info.line_num;
-                ti.type[0]   = SYM_REG_AT;
-                ti.type[1]   = SYM_REG_TEMP;
-                ti.type[2]   = SYM_REG_SAVED;
-                ti.val[0]    = 0;            // TODO : where should AT be? (this is for the assembler to decide)
+
+                for(int r = 0; r < 3; ++r)
+                    ti.type[r] = SYM_REGISTER;
+
+                ti.val[0]    = REG_AT;            
                 ti.val[1]    = this->text_info.val[1];
                 ti.val[2]    = this->text_info.val[0];
                 ti.label     = this->text_info.label;
@@ -1640,8 +1530,8 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "bne";
                 ti.addr      = this->text_info.addr + 4;
                 ti.line_num  = this->text_info.line_num;
-                ti.type[0]   = SYM_REG_AT;
-                ti.type[1]   = SYM_REG_ZERO;
+                ti.type[0]   = SYM_REGISTER;
+                ti.type[1]   = SYM_REGISTER;
                 ti.type[2]   = SYM_LITERAL;
                 ti.val[2]    = this->text_info.val[2];
                 ti.is_imm    = this->text_info.is_imm;
@@ -1663,14 +1553,15 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "slt";
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_SAVED;
-                ti.type[2]  = SYM_REG_TEMP;
-                ti.val[0]   = 0;            // TODO : where should AT be (assembler needs to decide)?
+
+                for(int r = 0; r < 3; ++r)
+                    ti.type[r] = SYM_REGISTER;
+
+                ti.val[0]   = REG_AT;            
                 ti.val[1]   = this->text_info.val[0];
                 ti.val[2]   = this->text_info.val[1];
-                ti.label     = this->text_info.label;
-                ti.is_label  = this->text_info.is_label;
+                ti.label    = this->text_info.label;
+                ti.is_label = this->text_info.is_label;
 
                 this->source_info.addText(ti);
                 this->incrTextAddr();
@@ -1681,8 +1572,8 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "bne";
                 ti.addr      = this->text_info.addr + 4;
                 ti.line_num  = this->text_info.line_num;
-                ti.type[0]   = SYM_REG_AT;
-                ti.type[1]   = SYM_REG_ZERO;
+                ti.type[0]   = SYM_REGISTER;
+                ti.type[1]   = SYM_REGISTER;
                 ti.type[2]   = SYM_LITERAL;
                 ti.val[2]    = this->text_info.val[2];
                 ti.is_imm    = this->text_info.is_imm;
@@ -1703,9 +1594,10 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "slt";
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_TEMP;
-                ti.type[2]  = SYM_REG_SAVED;
+
+                for(int r = 0; r < 3; ++r)
+                    ti.type[r] = SYM_REGISTER;
+
                 ti.val[0]   = 0;            // TODO : where should AT be (assembler needs to decide)?
                 ti.val[1]   = this->text_info.val[0];
                 ti.val[2]   = this->text_info.val[1];
@@ -1721,8 +1613,8 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "beq";
                 ti.addr      = this->text_info.addr + 4;
                 ti.line_num  = this->text_info.line_num;
-                ti.type[0]   = SYM_REG_AT;
-                ti.type[1]   = SYM_REG_ZERO;
+                ti.type[0]   = SYM_REGISTER;
+                ti.type[1]   = SYM_REGISTER;
                 ti.type[2]   = SYM_LITERAL;
                 ti.val[2]    = this->text_info.val[2];
                 ti.is_imm    = this->text_info.is_imm;
@@ -1744,10 +1636,11 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "slt";
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_TEMP;
-                ti.type[2]  = SYM_REG_SAVED;
-                ti.val[0]   = 0;            // TODO : where should AT be (assembler needs to decide)?
+
+                for(int r = 0; r < 3; ++r)
+                    ti.type[r] = SYM_REGISTER;
+
+                ti.val[0]   = REG_AT;            
                 ti.val[1]   = this->text_info.val[0];
                 ti.val[2]   = this->text_info.val[1];
                 ti.label    = this->text_info.label;
@@ -1762,11 +1655,11 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "beq";
                 ti.addr     = this->text_info.addr + 4;
                 ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_ZERO;
+                ti.type[0]  = SYM_REGISTER;
+                ti.type[1]  = SYM_REGISTER;
                 ti.type[2]  = SYM_LITERAL;
-                ti.val[0]   = 0;            // TODO : where should AT be (assembler needs to decide)?
-                ti.val[1]   = 0;
+                ti.val[0]   = REG_AT;            
+                ti.val[1]   = REG_ZERO;
                 ti.val[2]   = this->text_info.val[2];
                 ti.label    = this->text_info.label;
                 ti.is_label = this->text_info.is_label;
@@ -1786,10 +1679,11 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "sltu";
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_TEMP;
-                ti.type[2]  = SYM_REG_SAVED;
-                ti.val[0]   = 0;            // TODO : where should AT be (assembler needs to decide)?
+
+                for(int r = 0; r < 3; ++r)
+                    ti.type[r] = SYM_REGISTER;
+
+                ti.val[0]   = REG_AT;            
                 ti.val[1]   = this->text_info.val[1];
                 ti.val[2]   = this->text_info.val[0];
                 ti.label    = this->text_info.label;
@@ -1804,11 +1698,11 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "bne";
                 ti.addr     = this->text_info.addr + 4;
                 ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_ZERO;
+                ti.type[0]  = SYM_REGISTER;
+                ti.type[1]  = SYM_REGISTER;
                 ti.type[2]  = SYM_LITERAL;
-                ti.val[0]   = 0;            // TODO : where should AT be (assembler needs to decide)?
-                ti.val[1]   = 0;
+                ti.val[0]   = REG_AT;            
+                ti.val[1]   = REG_ZERO;
                 ti.val[2]   = this->text_info.val[2];
                 ti.label    = this->text_info.label;
                 ti.is_imm   = this->text_info.is_imm;
@@ -1825,17 +1719,18 @@ void Lexer::expandPsuedo(void)
                 ti.init();
                 ti.opcode.instr = LEX_BEQ;
                 ti.opcode.mnemonic = "beq";
-                ti.addr     = this->text_info.addr;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_SAVED;
-                ti.type[1]  = SYM_REG_ZERO;
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[0]   = this->text_info.val[0];           
-                ti.val[1]   = 0;
-                ti.val[2]   = this->text_info.val[1];
-                ti.label    = this->text_info.label;
-                ti.is_label = this->text_info.is_label;
-                ti.symbol   = this->text_info.symbol;
+                ti.addr      = this->text_info.addr;
+                ti.line_num  = this->text_info.line_num;
+                ti.type[0]   = SYM_REGISTER;
+                ti.type[1]   = SYM_REGISTER;
+                ti.type[2]   = SYM_LITERAL;
+
+                ti.val[0]    = this->text_info.val[0];           
+                ti.val[1]    = REG_ZERO;
+                ti.val[2]    = this->text_info.val[1];
+                ti.label     = this->text_info.label;
+                ti.is_label  = this->text_info.is_label;
+                ti.symbol    = this->text_info.symbol;
                 ti.is_symbol = this->text_info.is_symbol;
                 ti.is_imm    = this->text_info.is_imm;
 
@@ -1905,8 +1800,8 @@ void Lexer::expandPsuedo(void)
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
                 ti.type[0]  = this->text_info.type[0];
-                ti.val[0]   = this->text_info.val[0];
                 ti.type[1]  = SYM_LITERAL;
+                ti.val[0]   = this->text_info.val[0];
                 ti.val[1]   = this->text_info.val[1] & 0xFFFF0000;
                 ti.is_imm   = true;
                 ti.upper    = true;
@@ -1920,10 +1815,10 @@ void Lexer::expandPsuedo(void)
                 ti.addr     = this->text_info.addr + 4;
                 ti.line_num = this->text_info.line_num;
                 ti.type[0]  = this->text_info.type[0];
-                ti.val[0]   = this->text_info.val[0];
                 ti.type[1]  = this->text_info.type[0];
-                ti.val[1]   = this->text_info.val[0];
                 ti.type[2]  = SYM_LITERAL;
+                ti.val[0]   = this->text_info.val[0];
+                ti.val[1]   = this->text_info.val[0];
                 ti.val[2]   = this->text_info.val[1] & 0x0000FFFF;
                 ti.is_imm   = true;
                 ti.lower    = true;
@@ -1939,9 +1834,10 @@ void Lexer::expandPsuedo(void)
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
                 ti.type[0]  = this->text_info.type[0];
-                ti.val[0]   = this->text_info.val[0];
-                ti.type[1]  = SYM_REG_ZERO;
+                ti.type[1]  = SYM_REGISTER;
                 ti.type[2]  = SYM_LITERAL;
+                ti.val[0]   = this->text_info.val[0];
+                ti.val[1]   = REG_ZERO;
                 ti.val[2]   = this->text_info.val[1];       
                 ti.is_imm   = true;
 

@@ -43,19 +43,7 @@ typedef enum TokenType
     SYM_CHAR,
     SYM_STRING,
     SYM_SYSCALL,
-    // register types
-    SYM_REG_AT,     // assembler temporary
-    SYM_REG_STACK,
-    SYM_REG_FRAME,
-    SYM_REG_TEMP,
-    SYM_REG_SAVED,
-    SYM_REG_ARG,
-    SYM_REG_RET,
-    SYM_REG_RET_ADR,
-    SYM_REG_KERN,
-    SYM_REG_ZERO,
-    SYM_REG_NUM,        // register that has just a number
-    SYM_REG_GLOBAL,     // for the $GP register
+    SYM_REGISTER,
 } TokenType;
 
 /*
@@ -66,11 +54,12 @@ struct Token
 {
     TokenType   type;
     std::string val;
-    std::string offset;
+    std::string reg_offset;   // eg: the 4 in 4($t1), etc
 
     public:
         Token();
         Token(const TokenType& t, const std::string& v);
+        Token(const Token& that) = default;
         void init(void);
         bool isReg(void) const;
         bool isOffset(void) const;
@@ -81,7 +70,7 @@ struct Token
         bool operator!=(const Token& that) const;
 
         // assignment
-        Token& operator=(const Token& that);
+        Token& operator=(const Token& that) = default;
 };
 
 
