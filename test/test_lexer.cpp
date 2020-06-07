@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 
+#include "Address.hpp"  // TODO : also do text offset relative to base...
 #include "Codes.hpp"
 #include "Lexer.hpp"
 #include "Source.hpp"
@@ -26,6 +27,7 @@ const std::string test_instr_file    = "asm/instr_test.asm";
 
 const bool show_all_output = false;
 
+
 /*
  * Generate mult-add SourceInfo
  */
@@ -38,7 +40,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     // lw $t0, 4($gp)
     line.init();
     line.line_num        = 3;
-    line.addr            = 0x00400000; //0x00400000;      
+    line.addr            = 0x00400000; 
     line.opcode.instr    = LEX_LW;
     line.opcode.mnemonic = "lw";
     line.val[0]          = REG_TEMP_0;
@@ -53,7 +55,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     // mult $t0, $t0, $t0
     line.init();
     line.line_num        = 4;
-    line.addr            = 0x00400004; //0x00400001;      
+    line.addr            = 0x00400004; 
     line.opcode.instr    = LEX_MULT;
     line.opcode.mnemonic = "mult";
     line.val[0]         = REG_TEMP_0;
@@ -68,7 +70,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     // lw $t1, 4($gp)
     line.init();
     line.line_num        = 5;
-    line.addr            = 0x00400008;  //0x00400002;      
+    line.addr            = 0x00400008; 
     line.opcode.instr    = LEX_LW;
     line.opcode.mnemonic = "lw";
     line.val[0]          = REG_TEMP_1;
@@ -83,7 +85,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     // ori $t2, $zero, 3
     line.init();
     line.line_num        = 6;
-    line.addr            = 0x0040000C;  //0x00400003;      
+    line.addr            = 0x0040000C;  
     line.opcode.instr    = LEX_ORI;
     line.opcode.mnemonic = "ori";
     line.is_imm          = true;
@@ -99,7 +101,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     // mult $t1, $t1, $t2
     line.init();
     line.line_num        = 7;
-    line.addr            = 0x00400010;  //0x00400004;      
+    line.addr            = 0x00400010;  
     line.opcode.instr    = LEX_MULT;
     line.opcode.mnemonic = "mult";
     line.val[0]          = REG_TEMP_1;
@@ -114,7 +116,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     // add $t2, $t0, $t1
     line.init();
     line.line_num        = 8;
-    line.addr            = 0x00400014;  //0x00400005;      
+    line.addr            = 0x00400014;  
     line.opcode.instr    = LEX_ADD;
     line.opcode.mnemonic = "add";
     line.val[0]          = REG_TEMP_2;
@@ -129,7 +131,7 @@ SourceInfo get_mult_add_expected_source_info(void)
     // sw $t2, 0($gp)
     line.init();
     line.line_num        = 9;
-    line.addr            = 0x00400018;      //0x00400006;
+    line.addr            = 0x00400018;      
     line.opcode.instr    = LEX_SW;
     line.opcode.mnemonic = "sw";
     line.val[0]          = REG_TEMP_2;
@@ -161,7 +163,7 @@ SourceInfo get_array_expected_source_info(void)
     // line 3
     // list: word 3, 0, 1, 2, 6
     data_line.init();
-    data_line.addr = 0x10000000;
+    data_line.addr = DATA_START_ADDR;
     data_line.label = "list";
     data_line.directive = SYM_DIR_WORD;
     data_line.data = {3, 0, 1, 2, 6};
@@ -171,7 +173,7 @@ SourceInfo get_array_expected_source_info(void)
     // line 4 
     // char_arr: .asciiz "hello"
     data_line.init();
-    data_line.addr = 0x10000000 + (5 * 32);
+    data_line.addr = DATA_START_ADDR + (5 * 32);
     data_line.label = "char_arr";
     data_line.directive = SYM_DIR_ASCIIZ;
     data_line.data = {0x68, 0x65, 0x6C, 0x6C, 0x6F};
@@ -180,13 +182,13 @@ SourceInfo get_array_expected_source_info(void)
     // line 5 
     // buffer: .space 128
     data_line.init();
-    data_line.addr  = 0x10000000 + (5 * 32) + 1;
+    data_line.addr  = DATA_START_ADDR + (5 * 32) + 1;
     data_line.label = "buffer";
     data_line.directive = SYM_DIR_SPACE;
     data_line.space = 128;
     info.addData(data_line);
 
-    // NOTE: the next data segment would start at 0x10000000 + (5 * 32) + 1 + 128
+    // NOTE: the next data segment would start at DATA_START_ADDR + (5 * 32) + 1 + 128
     
     // line 9
     // .text
@@ -203,7 +205,7 @@ SourceInfo get_array_expected_source_info(void)
     line.val[0]          = REG_SAVED_0;
     line.type[0]         = SYM_REGISTER;
     line.type[1]         = SYM_LITERAL;
-    line.val[1]          = (0x10000000 & 0xFFFF0000) >> 16;
+    line.val[1]          = (DATA_START_ADDR & 0xFFFF0000) >> 16;
     line.is_symbol       = true;
     line.is_imm          = true;
     line.upper           = true;
@@ -220,7 +222,7 @@ SourceInfo get_array_expected_source_info(void)
     line.val[1]          = REG_SAVED_0;
     line.type[1]         = SYM_REGISTER;
     line.type[2]         = SYM_LITERAL;
-    line.val[2]          = 0x10000000 & 0x0000FFFF;
+    line.val[2]          = DATA_START_ADDR & 0x0000FFFF;
     line.is_symbol       = true;
     line.is_imm          = true;
     line.lower           = true;
@@ -942,7 +944,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     info.addText(line);
 
     // la $t1, arr
-    // lui $t1, 0x10000000 & (0xFFFF0000)
+    // lui $t1, DATA_START_ADDR & (0xFFFF0000)
     line.init();
     line.line_num        = 11;
     line.addr            = 0x00400014;
@@ -950,7 +952,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.opcode.mnemonic = "lui";
     line.val[0]          = REG_TEMP_1;
     line.type[0]         = SYM_REGISTER;
-    line.val[1]          = (0x10000000 & 0xFFFF0000) >> 16;
+    line.val[1]          = (DATA_START_ADDR & 0xFFFF0000) >> 16;
     line.type[1]         = SYM_LITERAL;
     line.upper           = true;
     line.is_imm          = true;
@@ -968,7 +970,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.type[0]         = SYM_REGISTER;
     line.val[1]          = REG_TEMP_1;
     line.type[1]         = SYM_REGISTER;
-    line.val[2]          = 0x10000000 & 0x0000FFFF;
+    line.val[2]          = DATA_START_ADDR & 0x0000FFFF;
     line.type[2]         = SYM_LITERAL;
     line.is_imm          = true;
     line.is_symbol       = true;
@@ -1174,7 +1176,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     // arr: .word 3
     data_line.init();
     data_line.line_num  = 5;
-    data_line.addr      = 0x10000000;
+    data_line.addr      = DATA_START_ADDR;
     data_line.label     = "arr";
     data_line.directive = SYM_DIR_WORD;
     data_line.data      = {3};
@@ -1261,7 +1263,7 @@ SourceInfo get_instr_test_source_info(void)
 
     // .data ten: word 10
     data_line.init();
-    data_line.addr  = 0x10000000;
+    data_line.addr  = DATA_START_ADDR;
     data_line.label = "ten";
     data_line.directive = SYM_DIR_WORD;
     data_line.data = {10};

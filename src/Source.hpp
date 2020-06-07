@@ -6,8 +6,8 @@
  * Stefan Wong 2019
  */
 
-#ifndef __SOURCE_HPP
-#define __SOURCE_HPP
+#ifndef __SMIPS_SOURCE_HPP
+#define __SMIPS_SOURCE_HPP
 
 #include <string>
 #include "Opcode.hpp"
@@ -220,4 +220,4 @@ class SourceInfo
         std::string  errString(void) const;
 };
 
-#endif /*__SOURCE_HPP*/
+#endif /*__SMIPS_SOURCE_HPP*/

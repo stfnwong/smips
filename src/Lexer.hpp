@@ -5,8 +5,8 @@
  * Stefan Wong 2019
  */
 
-#ifndef __LEXER_HPP
-#define __LEXER_HPP
+#ifndef __SMIPS_LEXER_HPP
+#define __SMIPS_LEXER_HPP
 
 #include <string>
 #include "Opcode.hpp"
@@ -15,7 +15,6 @@
 
 // Give some kind of named identifier to the Lexer mode
 enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};
-
 
 /*
  * Lexer
@@ -161,9 +160,6 @@ class Lexer
         int   getDataStartAddr(void) const;
         // setters 
         void  setVerbose(const bool v);
-        void  setTextStartAddr(int a);
-        void  setDataStartAddr(int a);
-
 };
 
-#endif /*__LEXER_HPP*/
+#endif /*__SMIPS_LEXER_HPP*/

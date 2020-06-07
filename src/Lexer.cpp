@@ -13,9 +13,11 @@
 #include <string>
 #include <stack>
 
+#include "Address.hpp"
 #include "Lexer.hpp"
 #include "Codes.hpp"
 #include "Data.hpp"     // MemLine is here at the moment...
+
 
 
 Lexer::Lexer()
@@ -29,8 +31,8 @@ Lexer::Lexer()
     this->cur_pos         = 0;
     this->text_addr       = 0;
     this->data_addr       = 0;
-    this->text_start_addr = 0x00400000;
-    this->data_start_addr = 0x10000000;
+    this->text_start_addr = TEXT_START_ADDR;
+    this->data_start_addr = DATA_START_ADDR;
     this->cur_mode        = LEX_TEXT_SEG;
     // create token buffer
     this->alloc_mem();
@@ -286,8 +288,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
             out_token = this->extractLiteral(token, tok_ptr, end_offset);
             out_token.reg_offset = out_token.val;        // we will overwrite the other fields
             tok_ptr = end_offset-1;      // we must have advaneced by this amount
-            std::cout << "[" << __func__ << "] out_token (after offset literal extract) " 
-                << out_token.toString() << std::endl;
         }
         tok_ptr++;
     }
@@ -307,7 +307,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
             if(token[paren_ptr] == ')')
             {
                 paren_stack.pop();
-                std::cout << "[" << __func__ << "] found paren_ptr at " << paren_ptr << std::endl;
                 break;
             }
             paren_ptr++;
@@ -330,8 +329,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         out_token.type = SYM_NONE;
         out_token.val = "\0";
     }
-
-    std::cout << "[" << __func__ << "] output register token : " << out_token.toString() << std::endl;
 
     return out_token;
 }
@@ -537,7 +534,6 @@ void Lexer::parseByte(void)
             byte = 255;
         this->data_info.addByte(uint8_t(byte));
         this->incrDataAddr();
-        //this->data_addr++;
     }
 }
 
@@ -601,14 +597,9 @@ void Lexer::parseWord(void)
     this->data_info.addr     = this->data_addr;     // the address should be the start address at this time
 
     std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
-    // TODO : in the test case, this should cause the word to go up by 5
     while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
     {
         this->nextToken();
-        // TODO : this shouldn't really be here... 
-        //if(this->cur_line > this->data_info.line_num)
-        //    break;
-
         if(this->cur_token.type != SYM_LITERAL)
         {
             this->data_info.error = true;
@@ -632,9 +623,6 @@ void Lexer::parseWord(void)
         std::cout << "[" << __func__ << "] this->data_info : " << std::endl;
         std::cout << this->data_info.toString() << std::endl;
     }
-
-    //std::cout << "[" << __func__ << "] after processing words, this->data_addr = " 
-    //    << std::dec << this->data_addr << std::endl;
 }
 
 
@@ -935,9 +923,6 @@ void Lexer::parseRegArgs(const int num_args)
         // other words, the register offset becomes the third argument (as a literal)
         //
         
-        // NOTE: what if this is the ZERO register or the GLOBAL register?
-        // why are we relying on text_info.is_imm to check?
-        std::cout << "[" << __func__ << "] arg " << argn << " token type : " << this->cur_token.toString() << std::endl;
         if(this->text_info.is_imm && (argn == num_args-1))  // TODO: reconsider the side effect of using this->text_info.is_imm...
         {
             // it is legal for this to be a symbol rather than a literal
@@ -984,28 +969,6 @@ void Lexer::parseRegArgs(const int num_args)
         this->text_info.type[argn] = this->cur_token.type;
         if(this->cur_token.type != SYM_LABEL)
             this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-
-
-        // TODO : fix this up
-        //switch(this->cur_token.type)
-        //{
-        //    case SYM_LABEL:
-        //        break;      // dont do any extra string conversions for labels
-
-        //    //case REG_ZERO:
-        //    //case REG_GLOBAL:
-        //    //case REG_FRAME:
-        //    case SYM_REGISTER:
-        //        if(this->cur_token.reg_offset != "\0")
-        //            this->text_info.val[argn] = std::stoi(this->cur_token.reg_offset, nullptr, 10);
-        //        else
-        //            this->text_info.val[argn] = 0;
-        //        break;
-
-        //    default:
-        //        this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-        //        break;
-        //}
     }
 
 ARG_ERR:
@@ -1112,6 +1075,7 @@ void Lexer::parseLine(void)
             sym.label = this->cur_token.val;
 
         sym.addr = (this->cur_mode == LEX_TEXT_SEG) ? this->text_addr : this->data_addr;
+        sym.section = int(this->cur_mode);
         // add to symbol table 
         this->sym_table.add(sym);
 
@@ -1352,7 +1316,7 @@ LINE_END:
         this->text_info.line_num = line_num;
         this->text_info.addr     = this->text_addr;
 
-        // TODO: this is annpyng and it makes reasoning about the operation a pain. The 
+        // NOTE: this is annoying and it makes reasoning about the operation a pain. The 
         // reason that this is here is because in expandPsuedo() when expanding an operation
         // we add the expanded instructions directly into this->text_info. The expansion looks
         // at the last instruction in this->text_info, and if its one of the psuedo ops then
@@ -1371,8 +1335,6 @@ LINE_END:
     }
     else if(this->cur_mode == LEX_DATA_SEG)
     {
-        //this->data_addr++;
-        //this->incrDataAddr();
         this->data_info.line_num = line_num;
         if(this->data_info.addr == 0)
             this->data_info.addr     = this->data_addr;
@@ -1416,6 +1378,8 @@ void Lexer::resolveLabels(void)
 
             if(label_addr > 0)
             {
+                // TODO : if this is in the data section, deference the value 
+
                 if(line.opcode.instr == LEX_LUI)
                 {
                     line.type[1] = SYM_LITERAL;
@@ -1862,7 +1826,7 @@ void Lexer::lex(void)
 {
     this->cur_line = 1;
     this->cur_pos = 0;
-    this->text_addr = this->text_start_addr;     // TODO : proper address init..
+    this->text_addr = this->text_start_addr;     
     this->data_addr = this->data_start_addr;
 
     while(!this->exhausted())
@@ -1948,14 +1912,4 @@ int Lexer::getDataStartAddr(void) const
 void Lexer::setVerbose(const bool v)
 {
     this->verbose = v;
-}
-
-void Lexer::setTextStartAddr(int a)
-{
-    this->text_start_addr = a;
-}
-
-void Lexer::setDataStartAddr(int a)
-{
-    this->data_start_addr = a;
 }
