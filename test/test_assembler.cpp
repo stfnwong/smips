@@ -1,4 +1,5 @@
-/* TEST_ASSEMBLER 
+/* 
+ * TEST_ASSEMBLER 
  * Unit tests for SMIPS Assembler object 
  *
  * Stefan Wong 2019

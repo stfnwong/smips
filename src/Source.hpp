@@ -147,6 +147,8 @@ struct DataInfo
         void addByte(const uint8_t byte);
         void addHalf(const uint16_t half);
         void addWord(const uint32_t word);
+
+        unsigned int size(void) const;
 };
 
 
@@ -215,6 +217,9 @@ class SourceInfo
 
         unsigned int getTextInfoSize(void) const;
         unsigned int getDataInfoSize(void) const;
+
+        // TODO : search for data by address (dereference data section)
+        uint8_t      getDataByAddr(const uint32_t addr);        // TODO : better to do by copy or by ref?
 
         std::string  toString(void) const;
         std::string  errString(void) const;

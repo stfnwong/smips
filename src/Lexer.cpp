@@ -906,7 +906,7 @@ ARG_END:
  */
 void Lexer::parseRegArgs(const int num_args)
 {
-    int argn = 0;
+    int argn;
     bool error = false;
 
     for(argn = 0; argn < num_args; ++argn)
@@ -930,6 +930,8 @@ void Lexer::parseRegArgs(const int num_args)
             {
                 this->text_info.is_symbol = true;
                 this->text_info.symbol    = std::string(this->cur_token.val);
+                std::cout << "[" << __func__ << "] got label <" << this->text_info.symbol
+                    << "> for argument " << argn+1 << std::endl;
             }
             else if(this->cur_token.type == SYM_LITERAL)    // bit of a repeat here...
             {
@@ -1378,8 +1380,6 @@ void Lexer::resolveLabels(void)
 
             if(label_addr > 0)
             {
-                // TODO : if this is in the data section, deference the value 
-
                 if(line.opcode.instr == LEX_LUI)
                 {
                     line.type[1] = SYM_LITERAL;
@@ -1418,7 +1418,6 @@ void Lexer::resolveLabels(void)
                         line.line_num << " [0x" << std::hex << 
                         std::setfill('0') << std::setw(8) << 
                         line.addr << "] to value [0x" << 
-                        std::hex << label_addr << "] (opcode " << line.opcode.toString() <<
                         ")" << std::endl;
                 }
             }

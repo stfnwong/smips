@@ -4,6 +4,7 @@
 .data 
 ten: .word 10
 
+.text
 ; LOAD UPPER IMMEDIATE
 lui $t0 ten     # load 'ten' into $t0
 lui $at 4096    # use temp register

@@ -570,6 +570,7 @@ bool DataInfo::operator!=(const DataInfo& that) const
     return !(*this == that);
 }
 
+// TODO: can probably default this..
 /*
  * DataInfo::=
  */
@@ -630,6 +631,13 @@ void DataInfo::addWord(const uint32_t word)
     this->data.push_back(byte);
 }
 
+/*
+ * DataInfo::size()
+ */
+unsigned int DataInfo::size(void) const
+{
+    return this->data.size();
+}
 
 /*
  * Symbol::Symbol
@@ -862,6 +870,27 @@ unsigned int SourceInfo::getTextInfoSize(void) const
 unsigned int SourceInfo::getDataInfoSize(void) const
 {
     return this->data_info.size();
+}
+
+/*
+ * SourceInfo::getDataByAddr()
+ */
+uint8_t SourceInfo::getDataByAddr(const uint32_t addr)
+{
+    // TODO : for now we just search linearly through all addresses. 
+    // If this turns out to be a bottleneck then we can make a dictionary
+    // of pointers or something like that.
+    for(unsigned int a = 0; a < this->data_info.size(); ++a)
+    {
+        if(this->data_info[a].addr == addr)
+        {
+            if(this->data_info[a].size() > 0)
+                return this->data_info[a].data[0];
+            return 0;
+        }
+    }
+
+    return 0;
 }
 
 
