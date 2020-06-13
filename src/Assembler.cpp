@@ -29,8 +29,12 @@ uint32_t Assembler::asm_r_instr(const TextInfo& l, const int n) const
 {
     uint32_t instr = 0;
 
+    std::cout << "[" << __func__ << "] assembling opcode " << l.opcode.toString() << std::endl;
     for(int i = 0; i < n; ++i)
+    {
+        std::cout << "[" << __func__ << " adding " << l.type[i] << " with val " << l.val[i] << std::endl;
         instr = instr | (l.val[i] << this->r_instr_offsets[i]);
+    }
 
     return instr;
 }
@@ -43,9 +47,12 @@ uint32_t Assembler::asm_i_instr(const TextInfo& l, const int n) const
 {
     uint32_t instr = 0;
 
-    // Just need to double check this...
+    std::cout << "[" << __func__ << "] assembling opcode " << l.opcode.toString() << std::endl;
     for(int i = 0; i < n; ++i)
+    {
+        std::cout << "[" << __func__ << " adding " << l.type[i] << " with val " << l.val[i] << std::endl;
         instr = instr | (l.val[i] << this->i_instr_offsets[i]);
+    }
 
     return instr;
 }
@@ -124,10 +131,13 @@ Instr Assembler::asm_bne(const TextInfo& l) const
 {
     Instr instr;
 
-    instr.ins = 0x05 << this->i_instr_op_offset;
+    instr.ins = 0x5 << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
     instr.ins = instr.ins | (l.val[2] & 0x0000FFFF);
     instr.adr = l.addr;
+
+    std::cout << "[" << __func__ << "] BNE : " << instr.toString() << std::endl;
+
     return instr;
 }
 
@@ -157,8 +167,8 @@ Instr Assembler::asm_lw(const TextInfo& l) const
     Instr instr;
 
     instr.ins = 0x23 << this->i_instr_op_offset;
-    instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[2]);        // insert immediate
+    instr.ins = instr.ins | this->asm_i_instr(l, 3);
+    //instr.ins = instr.ins | (l.val[2]);        // insert immediate
     instr.adr = l.addr;
     return instr;
 }
@@ -172,12 +182,9 @@ Instr Assembler::asm_lui(const TextInfo& l) const
 {
     Instr instr;
 
-    instr.ins = 0x0F << this->i_instr_op_offset;
-    instr.ins = instr.ins | this->asm_i_instr(l, 1);
-    //instr.ins = instr.ins | ((l.val[1] & 0xFFFF0000) >> 16);
-    // TODO : why was this exception here in the first place?
-    //if(l.type[1] == SYM_REG_TEMP)
-    //    instr.ins = instr.ins | (1 << this->i_instr_offsets[1]);
+    std::cout << "[" << __func__ << "] assembling lui" << std::endl;
+    instr.ins = 0xF << this->i_instr_op_offset;
+    instr.ins = instr.ins | this->asm_i_instr(l, 2);
     instr.ins = instr.ins | (l.val[1]);
     instr.adr = l.addr;
     return instr;
@@ -222,9 +229,9 @@ Instr Assembler::asm_ori(const TextInfo& l) const
 {
     Instr instr;
 
+    instr.ins = instr.ins | (0x0D << this->i_instr_op_offset);
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
     instr.ins = instr.ins | (l.val[2]);
-    instr.ins = instr.ins | (0x0C << this->i_instr_op_offset);
     instr.adr = l.addr;
     return instr;
 }
@@ -256,6 +263,9 @@ Instr Assembler::asm_slt(const TextInfo& l) const
     instr.ins = 0x0;
     instr.ins = instr.ins | this->asm_r_instr(l, 3);
     instr.adr = l.addr;
+
+    std::cout << "[" << __func__ << "] SLT : " << instr.toString() << std::endl;
+
     return instr;
 }
 
@@ -325,6 +335,7 @@ Instr Assembler::asm_sw(const TextInfo& l) const
  * AssembleLine()
  * Transform a TextInfo object into an Instr object
  */
+// TODO : replace with function pointer table...?
 Instr Assembler::assembleText(const TextInfo& line)
 {
     switch(line.opcode.instr)
@@ -343,6 +354,10 @@ Instr Assembler::assembleText(const TextInfo& line)
 
         case LEX_BEQ:
             return this->asm_beq(line);
+            break;
+
+        case LEX_BNE:
+            return this->asm_bne(line);
             break;
 
         case LEX_J:

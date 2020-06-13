@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -1395,6 +1396,12 @@ void Lexer::resolveLabels(void)
                     else
                         line.val[2] = (label_addr & 0xFFFF0000) >> 16;
                 }
+                else if(line.opcode.instr == LEX_BNE)
+                {
+                    // convert to offset
+                    uint32_t offset = label_addr - line.addr;
+                    line.val[2] = (offset & 0x0000FFFF);
+                }
                 //else if(line.opcode.instr == LEX_J)
                 //{
                 //    line.val[0] = label_addr << 2;
@@ -1485,8 +1492,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]   = SYM_REGISTER;
                 ti.type[1]   = SYM_REGISTER;
                 ti.type[2]   = SYM_LITERAL;
-                ti.val[0]    = REG_AT; 
-                ti.val[1]    = REG_ZERO; 
+                ti.val[0]    = REG_ZERO;        // flipped for assembler
+                ti.val[1]    = REG_AT;          // flipped for assembler
                 ti.val[2]    = this->text_info.val[2];
                 ti.is_imm    = this->text_info.is_imm;
                 ti.symbol    = this->text_info.symbol;

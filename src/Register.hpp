@@ -15,38 +15,38 @@
 
 typedef enum MIPS_REG
 {
-    REG_ZERO,     // $zero
-    REG_AT,       // $at
-    REG_RETURN_0, // $v0
-    REG_RETURN_1, // $v1
-    REG_ARG_0,    // $a0
-    REG_ARG_1,    // $a1
-    REG_ARG_2,    // $a2
-    REG_ARG_3,    // $a3
-    REG_TEMP_0,   // $t0
-    REG_TEMP_1,   // $t1
-    REG_TEMP_2,   // $t2
-    REG_TEMP_3,   // $t3
-    REG_TEMP_4,   // $t4
-    REG_TEMP_5,   // $t5
-    REG_TEMP_6,   // $t6
-    REG_TEMP_7,   // $t7
-    REG_SAVED_0,  // $s0
-    REG_SAVED_1,  // $s1
-    REG_SAVED_2,  // $s2
-    REG_SAVED_3,  // $s3
-    REG_SAVED_4,  // $s4
-    REG_SAVED_5,  // $s5
-    REG_SAVED_6,  // $s6
-    REG_SAVED_7,  // $s7
-    REG_TEMP_8,   // $t8
-    REG_TEMP_9,   // $t9
-    REG_KERNEL_0, // $k0
-    REG_KERNEL_1, // $k1
-    REG_GLOBAL,   // $gp
-    REG_STACK,    // $sp
-    REG_FRAME,    // $fp
-    REG_RETURN,   // $ra
+    REG_ZERO,     // $zero : 0
+    REG_AT,       // $at   : 1
+    REG_RETURN_0, // $v0   : 2
+    REG_RETURN_1, // $v1   : 3
+    REG_ARG_0,    // $a0   : 4
+    REG_ARG_1,    // $a1   : 5
+    REG_ARG_2,    // $a2   : 6
+    REG_ARG_3,    // $a3   : 7
+    REG_TEMP_0,   // $t0   : 8
+    REG_TEMP_1,   // $t1   : 9
+    REG_TEMP_2,   // $t2   : 10
+    REG_TEMP_3,   // $t3   : 11
+    REG_TEMP_4,   // $t4   : 12
+    REG_TEMP_5,   // $t5   : 13
+    REG_TEMP_6,   // $t6   : 14
+    REG_TEMP_7,   // $t7   : 15
+    REG_SAVED_0,  // $s0   : 16
+    REG_SAVED_1,  // $s1   : 17
+    REG_SAVED_2,  // $s2   : 18
+    REG_SAVED_3,  // $s3   : 19
+    REG_SAVED_4,  // $s4   : 20
+    REG_SAVED_5,  // $s5   : 21
+    REG_SAVED_6,  // $s6   : 22
+    REG_SAVED_7,  // $s7   : 23
+    REG_TEMP_8,   // $t8   : 24
+    REG_TEMP_9,   // $t9   : 25
+    REG_KERNEL_0, // $k0   : 26
+    REG_KERNEL_1, // $k1   : 27
+    REG_GLOBAL,   // $gp   : 28
+    REG_STACK,    // $sp   : 29
+    REG_FRAME,    // $fp   : 30
+    REG_RETURN,   // $ra   : 31
 } MIPS_REG;
 
 

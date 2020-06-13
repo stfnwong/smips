@@ -209,25 +209,25 @@ std::string TextInfo::toString(void) const
         if(this->type[i] == SYM_REGISTER)
         {
             if(this->val[i] == REG_AT)
-                oss << "at" << this->val[i] << " ";     
+                oss << "at" << std::dec << this->val[i] << " ";     
             else if(this->val[i] >= REG_ARG_0 && this->val[i] <= REG_ARG_3)
-                oss << "a" << this->val[i] << " ";
+                oss << "a" << std::dec << this->val[i] << " ";
             else if(this->val[i] == REG_RETURN)
-                oss << "r" << this->val[i] << " ";
+                oss << "r" << std::dec << this->val[i] << " ";
             else if(this->val[i] == REG_RETURN)
                 oss << "RA ";
             else if(this->val[i] == REG_ZERO)
-                oss << "Z  ";
+                oss << "Z ";
             //else if(this->val[i] == SYM_REG_NUM)
             //    oss << "$" << this->val[i] << " ";
             else if(this->val[i] == REG_GLOBAL)
                 oss << "G  ";
             else if(this->val[i] == REG_FRAME)
-                oss << "F+" << this->val[i];
+                oss << "F+" << std::dec << this->val[i];
             else if(this->val[i] == REG_STACK)
-                oss << "S+" << this->val[i];
+                oss << "S+" << std::dec << this->val[i];
             else if(this->val[i] >= REG_SAVED_0 && this->val[i] <= REG_SAVED_7)
-                oss << "s" << this->val[i] << " ";
+                oss << "s" << std::dec << this->val[i] << " ";
         }
         else if(this->type[i] == SYM_LITERAL)       // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
             oss << "L  ";

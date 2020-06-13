@@ -20,17 +20,21 @@
  */
 class Assembler
 {
+    // TODO ; move to global space in header?
     private:
         bool verbose;
         int  num_err;
         // instruction arg offsets
         const uint8_t j_instr_op_offset = 26;
         const uint8_t i_instr_op_offset = 26;
+        const uint8_t r_instr_op_offset = 26;
+
         const uint8_t r_instr_offsets[3] = {
             11,     // rd offset
             21,     // rs offset 
             16      // rt offset
         };
+        // TODO : this order fails for BNE...
         const uint8_t i_instr_offsets[3] = {
             16,     // rt   (dest))
             21,     // rs   (base)

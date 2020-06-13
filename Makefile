@@ -16,7 +16,7 @@ OPT=-O0
 CXXFLAGS=-Wall -g2 -std=c++14 -D_REENTRANT $(OPT)
 TESTFLAGS=
 LDFLAGS=-pthread
-LIBS = 
+LIBS =
 TEST_LIBS=
 
 # style for assembly output

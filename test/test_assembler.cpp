@@ -17,6 +17,10 @@
 #include "Lexer.hpp"
 #include "Assembler.hpp"
 #include "Program.hpp"
+#include "Register.hpp"
+#include "Address.hpp"
+
+
 
 //const bool show_all_output = false;
 
@@ -24,6 +28,7 @@ const int i_instr_op_offset = 26;
 const int i_instr_rt_offset = 16;
 const int i_instr_rs_offset = 21;
 
+const int r_instr_op_offset = 26;
 const int r_instr_rs_offset = 21;
 const int r_instr_rt_offset = 16;
 const int r_instr_rd_offset = 11;
@@ -348,47 +353,121 @@ Program get_array_expected_program(void)
     
     // la $s0, list
     // Exapnds to:
-    //     lui $at, (list & 0xFFFF0000) >> 16
-    //     ori $s0, $at, (list & 0x0000FFFF)
+    //     lui $s0, (list & 0xFFFF0000) >> 16
+    //     ori $s0, $s0, (list & 0x0000FFFF)
     instr.init();
     instr.adr = 0x00400000;
     instr.ins = 0xF << i_instr_op_offset;
-    instr.ins = instr.ins | (0 < i_instr_rt_offset);        // NOTE: this expands to $at, where is $at?
-    instr.ins = instr.ins | (0x1000);
-    // 0011 | 11
+    instr.ins = instr.ins | (REG_SAVED_0 << i_instr_rt_offset);        
+    instr.ins = instr.ins | ((DATA_START_ADDR & 0xFFFF0000) >> 16);
     prog.add(instr);
+
     instr.init();
     instr.adr = 0x00400004;
     instr.ins = 0xD << i_instr_op_offset;
-    instr.ins = instr.ins | (0x10 << i_instr_rt_offset);
-    instr.ins = instr.ins | (0x10 << i_instr_rs_offset);
-    instr.ins = instr.ins | 0x0000;
+    instr.ins = instr.ins | (REG_SAVED_0 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_SAVED_0 << i_instr_rs_offset);
+    instr.ins = instr.ins | (DATA_START_ADDR & 0x0000FFFF);
     prog.add(instr);
 
     // li $t0, 0
     // Expands to 
-    //     lui $at, 0
-    //     ori $t0, $at, 0
-    instr.init();
-    instr.adr = 0x00400004;
-    instr.ins = 0xF << i_instr_op_offset;
-    instr.ins = instr.ins | (0 < i_instr_rt_offset);
-    instr.ins = instr.ins | (0x0);
-    prog.add(instr);
+    //     ori $t0, $zero, 0
     instr.init();
     instr.adr = 0x00400008;
     instr.ins = 0xD << i_instr_op_offset;
-    instr.ins = instr.ins | (8 << i_instr_rt_offset);
-    instr.ins = instr.ins | (0 << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_ZERO << i_instr_rs_offset);
     instr.ins = instr.ins | (0x0);
     prog.add(instr);
 
     // li $t1, 5
     // Expands to 
-    //     lui $at, 5
-    //     ori $t1, $at, 5
+    //     ori $t1, $zero, 5
+    instr.init();
     instr.adr = 0x0040000C;
-    instr.ins = 0xF << i_instr_op_offset;
+    instr.ins = 0xD << i_instr_op_offset;
+    instr.ins = instr.ins | (REG_TEMP_1 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_ZERO << i_instr_rs_offset);
+    instr.ins = instr.ins | 0x5;
+    prog.add(instr);
+
+    // loop: bgt $t0, $t1, end_loop
+    // Expands to
+    //      slt $at, $t1, $t0
+    //      bne $at, $zero, end_loop
+    instr.init();
+    instr.adr = 0x00400010;
+    instr.ins = 0x0 << r_instr_op_offset;
+    instr.ins = instr.ins | (REG_AT << r_instr_rd_offset);
+    instr.ins = instr.ins | (REG_TEMP_1 << r_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << r_instr_rt_offset);
+    prog.add(instr);
+
+    instr.init();
+    instr.adr = 0x00400014;
+    instr.ins = 0x5 << i_instr_op_offset;
+    instr.ins = instr.ins | (REG_AT << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_ZERO << i_instr_rt_offset);
+    instr.ins = instr.ins | 0x1C;   // offset to end_loop label
+    prog.add(instr);
+
+    // lw $a0 ($s0)
+    instr.init();
+    instr.adr = 0x00400018;
+    instr.ins = 0x23 << i_instr_op_offset;
+    instr.ins = instr.ins | (REG_SAVED_0 << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_ARG_0 << i_instr_rt_offset);
+    instr.ins = instr.ins | 0x0;   // no offset in this case
+    prog.add(instr);
+
+    // li $v0 1
+    // Expands to
+    //      ori $v0 $zero 1
+    instr.init();
+    instr.adr = 0x0040001C;
+    instr.ins = 0xD << i_instr_op_offset;
+    instr.ins = instr.ins | (REG_RETURN_0 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_ZERO << i_instr_rs_offset);
+    instr.ins = instr.ins | 0x1;
+    prog.add(instr);
+
+    // syscall
+    // Note yet implemented at time of writing
+    instr.init();
+    instr.adr = 0x00400020;
+    prog.add(instr);
+
+    // addi $s0, $s0, 4
+    instr.init();
+    instr.adr = 0x00400024;
+    instr.ins = 0x8 << i_instr_op_offset;
+    instr.ins = instr.ins | (REG_SAVED_0 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_SAVED_0 << i_instr_rs_offset);
+    instr.ins = instr.ins | 0x4;
+    prog.add(instr);
+
+    // addi $t0, $t0, 1
+    instr.init();
+    instr.adr = 0x00400028;
+    instr.ins = 0x8 << i_instr_op_offset;
+    instr.ins = instr.ins | (REG_TEMP_0 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << i_instr_rs_offset);
+    instr.ins = instr.ins | 0x1;
+    prog.add(instr);
+
+    // j loop
+    instr.init();
+    instr.adr = 0x0040002C;
+    instr.ins = 0x2 << j_instr_op_offset;
+    instr.ins = instr.ins | 0x00400010;
+    prog.add(instr);
+    
+    // end_loop
+    // No instructions here, just an address
+    instr.init();
+    instr.adr = 0x00400030;
+    prog.add(instr);
 
     return prog;
 }
@@ -468,7 +547,6 @@ TEST_CASE("test_array", "[classic]")
         
         REQUIRE(instr_exp == instr_out);
     }
-
     //REQUIRE(prog_exp.size() == prog_out.size());
 }
 
