@@ -53,8 +53,8 @@ Program get_mult_add_expected_program(void)
     // LW $t0, 4($gp)
     instr.adr = 0x00400000;
     instr.ins = 35 << i_instr_op_offset;  // I-format opcode
-    instr.ins = instr.ins | (8  << i_instr_rt_offset);
-    instr.ins = instr.ins | (28 << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_0  << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_GLOBAL << i_instr_rs_offset);
     instr.ins = instr.ins | 4;
     prog.add(instr);
 
@@ -62,17 +62,17 @@ Program get_mult_add_expected_program(void)
     // MULT $t0, $t0, $t0
     instr.adr = 0x00400004;
     instr.ins = 0x18;
-    instr.ins = instr.ins | (8 << r_instr_rs_offset);
-    instr.ins = instr.ins | (8 << r_instr_rt_offset);
-    instr.ins = instr.ins | (8 << r_instr_rd_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << r_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << r_instr_rt_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << r_instr_rd_offset);
     prog.add(instr);
 
     instr.init();
     // LW $t1, 4($gp)
     instr.adr = 0x00400008;
     instr.ins = 35 << i_instr_op_offset;
-    instr.ins = instr.ins | (9 << i_instr_rt_offset);
-    instr.ins = instr.ins | (28 << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_1 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_GLOBAL << i_instr_rs_offset);
     instr.ins = instr.ins | 4;
     prog.add(instr);
 
@@ -80,8 +80,8 @@ Program get_mult_add_expected_program(void)
     // ORI $t2, $zero, 3
     instr.adr = 0x0040000C;
     instr.ins = 0xD << i_instr_op_offset;
-    instr.ins = instr.ins | (10 << i_instr_rt_offset);
-    instr.ins = instr.ins | (0  << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_2 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_ZERO << i_instr_rs_offset);
     instr.ins = instr.ins | 3;
     prog.add(instr);
 
@@ -89,26 +89,26 @@ Program get_mult_add_expected_program(void)
     // MULT $t1, $t1, $t2
     instr.adr = 0x00400010;
     instr.ins = 0x18;
-    instr.ins = instr.ins | (9  << r_instr_rd_offset);
-    instr.ins = instr.ins | (9  << r_instr_rs_offset);
-    instr.ins = instr.ins | (10 << r_instr_rt_offset);
+    instr.ins = instr.ins | (REG_TEMP_1 << r_instr_rd_offset);
+    instr.ins = instr.ins | (REG_TEMP_1 << r_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_2 << r_instr_rt_offset);
     prog.add(instr);
 
     instr.init();
     // ADD $t2, $t0, $t1
     instr.adr = 0x00400014;
     instr.ins = 0x20;
-    instr.ins = instr.ins | (10 << r_instr_rd_offset);
-    instr.ins = instr.ins | (8  << r_instr_rs_offset);
-    instr.ins = instr.ins | (9  << r_instr_rt_offset);
+    instr.ins = instr.ins | (REG_TEMP_2 << r_instr_rd_offset);
+    instr.ins = instr.ins | (REG_TEMP_0  << r_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_1  << r_instr_rt_offset);
     prog.add(instr);
 
     instr.init();
     // SW $t2, 0($gp) 
     instr.adr = 0x00400018;
     instr.ins = 0x2B << i_instr_op_offset;
-    instr.ins = instr.ins | (10 << i_instr_rt_offset);
-    instr.ins = instr.ins | (28 << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_2 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_GLOBAL << i_instr_rs_offset);
     instr.ins = instr.ins | 0;  // has no effect, but mirrors the instruction
     prog.add(instr);
 
@@ -231,8 +231,8 @@ Program get_for_loop_expected_program(void)
     // BEQ $t3, $zero, DONE
     instr.adr = 0x00400018;
     instr.ins = 0x4 << i_instr_op_offset;
-    instr.ins = instr.ins | (11 << i_instr_rt_offset);
-    instr.ins = instr.ins | (0 << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_3 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_ZERO << i_instr_rs_offset);
     instr.ins = instr.ins | (0x0040028 & 0x0000FFFF); 
     prog.add(instr);
 
@@ -240,8 +240,8 @@ Program get_for_loop_expected_program(void)
     // SW $t2 28($t0)
     instr.adr = 0x0040001C;
     instr.ins = 0x2B << i_instr_op_offset;
-    instr.ins = instr.ins | (10 << i_instr_rt_offset);
-    instr.ins = instr.ins | (8 << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_2 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << i_instr_rs_offset);
     instr.ins = instr.ins | 28;
     prog.add(instr);
 
@@ -249,8 +249,8 @@ Program get_for_loop_expected_program(void)
     // ADDI $t0, $t0, 4
     instr.adr = 0x00400020;
     instr.ins = 0x08 << i_instr_op_offset;
-    instr.ins = instr.ins | (8 << i_instr_rs_offset);
-    instr.ins = instr.ins | (8 << i_instr_rt_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << i_instr_rs_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << i_instr_rt_offset);
     instr.ins = instr.ins | 4;
     prog.add(instr);
 
@@ -570,7 +570,7 @@ Program get_instr_test_expected_program(void)
     instr.init();
     instr.adr = 0x00400000;
     instr.ins = 0xF << i_instr_op_offset;
-    instr.ins = instr.ins | (0 < i_instr_rt_offset);        
+    instr.ins = instr.ins | (REG_TEMP_0 < i_instr_rt_offset);        
     instr.ins = instr.ins | (0x1000);
     prog.add(instr);
 
@@ -578,10 +578,9 @@ Program get_instr_test_expected_program(void)
     instr.init();
     instr.adr = 0x00400004;
     instr.ins = 0xF << i_instr_op_offset;
-    instr.ins = instr.ins | (1 < i_instr_rt_offset);       // $at mapped to $1
+    instr.ins = instr.ins | (REG_AT < i_instr_rt_offset);       
     instr.ins = instr.ins | (0x1000);
     prog.add(instr);
-
 
     return prog;
 }

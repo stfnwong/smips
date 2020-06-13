@@ -29,12 +29,8 @@ uint32_t Assembler::asm_r_instr(const TextInfo& l, const int n) const
 {
     uint32_t instr = 0;
 
-    std::cout << "[" << __func__ << "] assembling opcode " << l.opcode.toString() << std::endl;
     for(int i = 0; i < n; ++i)
-    {
-        std::cout << "[" << __func__ << " adding " << l.type[i] << " with val " << l.val[i] << std::endl;
         instr = instr | (l.val[i] << this->r_instr_offsets[i]);
-    }
 
     return instr;
 }
@@ -47,12 +43,8 @@ uint32_t Assembler::asm_i_instr(const TextInfo& l, const int n) const
 {
     uint32_t instr = 0;
 
-    std::cout << "[" << __func__ << "] assembling opcode " << l.opcode.toString() << std::endl;
     for(int i = 0; i < n; ++i)
-    {
-        std::cout << "[" << __func__ << " adding " << l.type[i] << " with val " << l.val[i] << std::endl;
         instr = instr | (l.val[i] << this->i_instr_offsets[i]);
-    }
 
     return instr;
 }
@@ -116,8 +108,7 @@ Instr Assembler::asm_beq(const TextInfo& l) const
     Instr instr;
     
     instr.ins = 0x04 << this->i_instr_op_offset;
-    instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[2] & 0x0000FFFF);    // be explicit about masking out upper bits
+    instr.ins = instr.ins | this->asm_i_instr(l, 3);
     instr.adr = l.addr;
     return instr;
 }
@@ -135,8 +126,6 @@ Instr Assembler::asm_bne(const TextInfo& l) const
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
     instr.ins = instr.ins | (l.val[2] & 0x0000FFFF);
     instr.adr = l.addr;
-
-    std::cout << "[" << __func__ << "] BNE : " << instr.toString() << std::endl;
 
     return instr;
 }
@@ -168,7 +157,6 @@ Instr Assembler::asm_lw(const TextInfo& l) const
 
     instr.ins = 0x23 << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 3);
-    //instr.ins = instr.ins | (l.val[2]);        // insert immediate
     instr.adr = l.addr;
     return instr;
 }
@@ -182,7 +170,6 @@ Instr Assembler::asm_lui(const TextInfo& l) const
 {
     Instr instr;
 
-    std::cout << "[" << __func__ << "] assembling lui" << std::endl;
     instr.ins = 0xF << this->i_instr_op_offset;
     instr.ins = instr.ins | this->asm_i_instr(l, 2);
     instr.ins = instr.ins | (l.val[1]);
@@ -263,8 +250,6 @@ Instr Assembler::asm_slt(const TextInfo& l) const
     instr.ins = 0x0;
     instr.ins = instr.ins | this->asm_r_instr(l, 3);
     instr.adr = l.addr;
-
-    std::cout << "[" << __func__ << "] SLT : " << instr.toString() << std::endl;
 
     return instr;
 }

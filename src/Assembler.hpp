@@ -29,12 +29,22 @@ class Assembler
         const uint8_t i_instr_op_offset = 26;
         const uint8_t r_instr_op_offset = 26;
 
+        // R-format is 
+        // OP rd, rs, rt
         const uint8_t r_instr_offsets[3] = {
             11,     // rd offset
             21,     // rs offset 
             16      // rt offset
         };
-        // TODO : this order fails for BNE...
+        // I-format is 
+        // OP rt, IMM(rs)
+        // except for BEQ and BNE, which are 
+        // OP rs, rt ,IMM
+        // 
+        // Note that for an instruction with OP rs, IMM(rs) format, the lexer 
+        // LineInfo order will be 
+        // rs[0] rt[1], imm[2]
+        // hence the below ordering
         const uint8_t i_instr_offsets[3] = {
             16,     // rt   (dest))
             21,     // rs   (base)
