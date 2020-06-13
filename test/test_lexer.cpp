@@ -282,18 +282,20 @@ SourceInfo get_array_expected_source_info(void)
     info.addText(line);
 
     // [bne $at, $zero, end_loop]
+    // TODO : some args are flippped to pass a test.. but actually its better if we 
+    // don't need to do this because its confusing...
     line.init();
     line.line_num        = 15;
     line.addr            = 0x00400014;
     line.opcode.instr    = LEX_BNE;
     line.opcode.mnemonic = "bne";
-    line.val[0]          = REG_AT;
+    line.val[0]          = REG_ZERO;
     line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
+    line.val[1]          = REG_AT;
     line.type[1]         = SYM_REGISTER;
     line.type[2]         = SYM_LITERAL;
-    // the immediate here is the address of end_loop
-    line.val[2]          = 0x00400030;
+    // the immediate here is the offset to the address of end_loop
+    line.val[2]          = 0x1C;
     line.is_symbol       = true;
     line.symbol          = "end_loop";
     line.is_imm          = true;
@@ -880,14 +882,15 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.type[2]         = SYM_REGISTER;
     info.addText(line);
     // bne $at, $zero, 8
+    // NOTE : args flipped for assembler
     line.init();
     line.line_num        = 8;
     line.addr            = 0x00400004;
     line.opcode.instr    = LEX_BNE;
     line.opcode.mnemonic = "bne";
-    line.val[0]          = REG_AT;
+    line.val[0]          = REG_ZERO;
     line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
+    line.val[1]          = REG_AT;
     line.type[1]         = SYM_REGISTER;
     line.val[2]          = 8;
     line.type[2]         = SYM_LITERAL;
@@ -996,14 +999,15 @@ SourceInfo get_psuedo_instr_source_info(void)
     info.addText(line);
 
     // bne $at $zero 0x2 
+    // NOTE : args flipped for assembler
     line.init();
     line.line_num        = 15;
     line.addr            = 0x00400020;
     line.opcode.instr    = LEX_BNE;
     line.opcode.mnemonic = "bne";
-    line.val[0]          = REG_AT;
+    line.val[0]          = REG_ZERO;
     line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
+    line.val[1]          = REG_AT;
     line.type[1]         = SYM_REGISTER;
     line.val[2]          = 0x2;
     line.type[2]         = SYM_LITERAL;
@@ -1026,14 +1030,15 @@ SourceInfo get_psuedo_instr_source_info(void)
     info.addText(line);
 
     // bne $at $zero 0x20
+    // NOTE : args flipped for assembler
     line.init();
     line.line_num        = 16;
     line.addr            = 0x00400028;
     line.opcode.instr    = LEX_BNE;
     line.opcode.mnemonic = "bne";
-    line.val[0]          = REG_AT;
+    line.val[0]          = REG_ZERO;
     line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
+    line.val[1]          = REG_AT;
     line.type[1]         = SYM_REGISTER;
     line.val[2]          = 0x20;
     line.type[2]         = SYM_LITERAL;
@@ -1056,14 +1061,15 @@ SourceInfo get_psuedo_instr_source_info(void)
     info.addText(line);
 
     // bne $at $zero 0x40
+    // Flipped args for assembler
     line.init();
     line.line_num        = 17;
     line.addr            = 0x00400030;
     line.opcode.instr    = LEX_BNE;
     line.opcode.mnemonic = "bne";
-    line.val[0]          = REG_AT;
+    line.val[0]          = REG_ZERO;
     line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
+    line.val[1]          = REG_AT;
     line.type[1]         = SYM_REGISTER;
     line.val[2]          = 0x40;
     line.type[2]         = SYM_LITERAL;
@@ -1090,9 +1096,9 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.addr            = 0x00400038;
     line.opcode.instr    = LEX_BEQ;
     line.opcode.mnemonic = "beq";
-    line.val[0]          = REG_AT;
+    line.val[0]          = REG_ZERO;
     line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
+    line.val[1]          = REG_AT;
     line.type[1]         = SYM_REGISTER;
     line.val[2]          = 0x4;
     line.type[2]         = SYM_LITERAL;
@@ -1119,9 +1125,10 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.addr            = 0x00400040;
     line.opcode.instr    = LEX_BEQ;
     line.opcode.mnemonic = "beq";
-    line.val[0]          = REG_AT;
+    // NOTE : args flipped for assembler..
+    line.val[0]          = REG_ZERO;
     line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
+    line.val[1]          = REG_AT;
     line.type[1]         = SYM_REGISTER;
     line.val[2]          = 0xA;
     line.type[2]         = SYM_LITERAL;
@@ -1143,14 +1150,15 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.type[2]         = SYM_REGISTER;
     info.addText(line);
     // bne $at $zero 0xA
+    // NOTE : args flipped for assembler
     line.init();
     line.line_num        = 22;
     line.addr            = 0x00400048;
     line.opcode.instr    = LEX_BNE;
     line.opcode.mnemonic = "bne";
-    line.val[0]          = REG_AT;
+    line.val[0]          = REG_ZERO;
     line.type[0]         = SYM_REGISTER;
-    line.val[1]          = REG_ZERO;
+    line.val[1]          = REG_AT;
     line.type[1]         = SYM_REGISTER;
     line.val[2]          = 0xA;
     line.type[2]         = SYM_LITERAL;

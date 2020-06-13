@@ -1459,6 +1459,7 @@ void Lexer::expandPsuedo(void)
     TextInfo ti;
 
     // TODO : a lot of consolidation can happen here...
+    // TODO : Some args are flipped for assembler... should that happen here or in asm?
     switch(this->text_info.opcode.instr)
     {
         case LEX_BGT:
@@ -1536,8 +1537,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]   = SYM_REGISTER;
                 ti.type[1]   = SYM_REGISTER;
                 ti.type[2]   = SYM_LITERAL;
-                ti.val[0]    = REG_AT;
-                ti.val[1]    = REG_ZERO;
+                ti.val[0]    = REG_ZERO;        // flipped for assembler
+                ti.val[1]    = REG_AT;          // flipped for assembler
                 ti.val[2]    = this->text_info.val[2];
                 ti.is_imm    = this->text_info.is_imm;
                 ti.symbol    = this->text_info.symbol;
@@ -1579,8 +1580,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]   = SYM_REGISTER;
                 ti.type[1]   = SYM_REGISTER;
                 ti.type[2]   = SYM_LITERAL;
-                ti.val[0]    = REG_AT;
-                ti.val[1]    = REG_ZERO;
+                ti.val[0]    = REG_ZERO;
+                ti.val[1]    = REG_AT;
                 ti.val[2]    = this->text_info.val[2];
                 ti.is_imm    = this->text_info.is_imm;
                 ti.symbol    = this->text_info.symbol;
@@ -1623,8 +1624,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]  = SYM_REGISTER;
                 ti.type[1]  = SYM_REGISTER;
                 ti.type[2]  = SYM_LITERAL;
-                ti.val[0]   = REG_AT;            
-                ti.val[1]   = REG_ZERO;
+                ti.val[0]   = REG_ZERO;            
+                ti.val[1]   = REG_AT;
                 ti.val[2]   = this->text_info.val[2];
                 ti.label    = this->text_info.label;
                 ti.is_label = this->text_info.is_label;
@@ -1666,8 +1667,8 @@ void Lexer::expandPsuedo(void)
                 ti.type[0]  = SYM_REGISTER;
                 ti.type[1]  = SYM_REGISTER;
                 ti.type[2]  = SYM_LITERAL;
-                ti.val[0]   = REG_AT;            
-                ti.val[1]   = REG_ZERO;
+                ti.val[0]   = REG_ZERO;            
+                ti.val[1]   = REG_AT;
                 ti.val[2]   = this->text_info.val[2];
                 ti.label    = this->text_info.label;
                 ti.is_imm   = this->text_info.is_imm;
