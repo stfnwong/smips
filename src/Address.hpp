@@ -24,15 +24,15 @@ constexpr int KDATA_END_ADDR   = 0xFFFEFFFF;
 // MIMO area in 0xFFFF0000 -> 0xFFFFFFFF
 
 
-static bool isDataAddr(uint32_t addr)
-{
-    return (addr >= DATA_START_ADDR && addr <= DATA_END_ADDR) ? true  : false;
-}
-
-static bool isTextAddr(uint32_t addr)
-{
-    return (addr >= TEXT_START_ADDR && addr <= TEXT_END_ADDR) ? true  : false;
-}
+//static bool isDataAddr(uint32_t addr)
+//{
+//    return (addr >= DATA_START_ADDR && addr <= DATA_END_ADDR) ? true  : false;
+//}
+//
+//static bool isTextAddr(uint32_t addr)
+//{
+//    return (addr >= TEXT_START_ADDR && addr <= TEXT_END_ADDR) ? true  : false;
+//}
 
 
 

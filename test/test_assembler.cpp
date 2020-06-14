@@ -174,7 +174,7 @@ Program get_for_loop_expected_program(void)
     Program prog;
     Instr   instr;
 
-    // ADD $t0, $gp, $zero
+    // add $t0, $gp, $zero
     instr.adr = 0x00400000;
     instr.ins = 0x20;
     instr.ins = instr.ins | (REG_TEMP_0 << r_instr_rd_offset);
@@ -183,7 +183,7 @@ Program get_for_loop_expected_program(void)
     prog.add(instr);
 
     instr.init();
-    // LW $t1, 4($gp)
+    // lw $t1, 4($gp)
     instr.adr = 0x00400004;
     instr.ins = 35 << i_instr_op_offset;  // I-format opcode
     instr.ins = instr.ins | (REG_TEMP_1  << i_instr_rt_offset);
@@ -192,7 +192,7 @@ Program get_for_loop_expected_program(void)
     prog.add(instr);
 
     instr.init();
-    // SLL $t1, $t1, 2
+    // sll $t1, $t1, 2
     instr.adr = 0x00400008;
     instr.ins = 0x0;
     instr.ins = instr.ins | (REG_TEMP_1 << r_instr_rd_offset);
@@ -201,7 +201,7 @@ Program get_for_loop_expected_program(void)
     prog.add(instr);
 
     instr.init();
-    // ADD $t1, $t1, $gp
+    // add $t1, $t1, $gp
     instr.adr = 0x0040000C;
     instr.ins = 0x20;
     instr.ins = instr.ins | (REG_TEMP_1 << r_instr_rd_offset);
@@ -219,7 +219,7 @@ Program get_for_loop_expected_program(void)
     prog.add(instr);
 
     instr.init();
-    // TOP : SLTU $t3, $t0, $t1
+    // top : sltu $t3, $t0, $t1
     instr.adr = 0x00400014;
     instr.ins = 43;
     instr.ins = instr.ins | (REG_TEMP_3 << r_instr_rd_offset);
@@ -228,7 +228,7 @@ Program get_for_loop_expected_program(void)
     prog.add(instr);
 
     instr.init();
-    // BEQ $t3, $zero, DONE
+    // beq $t3, $zero, done
     instr.adr = 0x00400018;
     instr.ins = 0x4 << i_instr_op_offset;
     instr.ins = instr.ins | (REG_TEMP_3 << i_instr_rt_offset);
@@ -237,7 +237,7 @@ Program get_for_loop_expected_program(void)
     prog.add(instr);
 
     instr.init();
-    // SW $t2 28($t0)
+    // sw $t2 28($t0)
     instr.adr = 0x0040001C;
     instr.ins = 0x2B << i_instr_op_offset;
     instr.ins = instr.ins | (REG_TEMP_2 << i_instr_rt_offset);
@@ -282,7 +282,7 @@ TEST_CASE("test_for_loop", "[classic]")
 
     test_asm.setVerbose(true);
     // get some source info for this program
-    lexer.setVerbose(false);
+    lexer.setVerbose(true);
     lexer.loadFile(test_for_loop_file);
     lexer.lex();
 

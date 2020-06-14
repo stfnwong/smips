@@ -1381,36 +1381,42 @@ void Lexer::resolveLabels(void)
 
             if(label_addr > 0)
             {
-                if(line.opcode.instr == LEX_LUI)
+                uint32_t offset;
+                switch(line.opcode.instr)
                 {
-                    line.type[1] = SYM_LITERAL;
-                    if(line.upper)
-                        line.val[1] = (label_addr & 0xFFFF0000) >> 16;
-                    else
-                        line.val[1] = label_addr;
+                    case LEX_LUI:
+                    {
+                        line.type[1] = SYM_LITERAL;
+                        if(line.upper)
+                            line.val[1] = (label_addr & 0xFFFF0000) >> 16;
+                        else
+                            line.val[1] = label_addr;
+                    }
+                    break;
+
+                    case LEX_ORI:
+                    {
+                        if(line.lower)
+                            line.val[2] = (label_addr & 0x0000FFFF);
+                        else
+                            line.val[2] = (label_addr & 0xFFFF0000) >> 16;
+                    }
+                    break;
+
+                    case LEX_BNE:
+                    {
+                        // convert to offset
+                        offset = label_addr - line.addr;
+                        line.val[2] = (offset & 0x0000FFFF);
+                    }
+                    break;
+
+                    default:
+                        line.type[2] = SYM_LITERAL;
+                        line.val[2] = label_addr;
+                        break;
                 }
-                else if(line.opcode.instr == LEX_ORI)
-                {
-                    if(line.lower)
-                        line.val[2] = (label_addr & 0x0000FFFF);
-                    else
-                        line.val[2] = (label_addr & 0xFFFF0000) >> 16;
-                }
-                else if(line.opcode.instr == LEX_BNE)
-                {
-                    // convert to offset
-                    uint32_t offset = label_addr - line.addr;
-                    line.val[2] = (offset & 0x0000FFFF);
-                }
-                //else if(line.opcode.instr == LEX_J)
-                //{
-                //    line.val[0] = label_addr << 2;
-                //}
-                else
-                {
-                    line.type[2] = SYM_LITERAL;
-                    line.val[2] = label_addr;
-                }
+
                 if(this->verbose)
                 {
                     std::cout << "[" << __func__ << "] updating line " << line.line_num 
