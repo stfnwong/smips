@@ -110,6 +110,7 @@ class Lexer
         // New style parser functions 
         int parseRegister(int argn);
         int parseImmediate(int argn);
+        void branchInstructionArgSwap(void);
         // TODO : no support for floats in the first version
         void parseASCIIZ(void);
         void parseAlign(void);

@@ -861,7 +861,6 @@ BRANCH_END:
  */
 void Lexer::parseMemArgs(void)
 {
-    bool error = false;
     int argn;
     int status;
 
@@ -915,11 +914,6 @@ int Lexer::parseRegister(int argn)
         this->text_info.type[argn+1] = SYM_LITERAL;
     }
 
-    // adjust upper values 
-    if(this->text_info.upper)
-    {
-        this->text_info.val[argn] = (this->text_info.val[argn] << 16);
-    }
 
     return 0;
 }
@@ -935,11 +929,16 @@ int Lexer::parseImmediate(int argn)
     {
         this->text_info.type[argn] = this->cur_token.type;
         if(this->cur_token.type == SYM_LITERAL)
+        {
             this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+            if(this->text_info.upper || this->text_info.lower)
+                this->text_info.val[argn] = this->text_info.val[argn] & 0xFFFF; // truncate down to 16-bits
+        }
         else
         {
             this->text_info.is_symbol = true;
             this->text_info.symbol = std::string(this->cur_token.val);
+
         }
 
         return 0;
@@ -961,7 +960,6 @@ void Lexer::parseRegArgs(const int num_args)
 {
     int argn;
     int status;
-    bool error = false;
 
     for(argn = 0; argn < num_args; ++argn)
     {
@@ -991,6 +989,24 @@ void Lexer::parseRegArgs(const int num_args)
     // which accept a register offset in the right-most position. Or in
     // other words, the register offset becomes the third argument (as a literal)
     //
+}
+
+/*
+ * branchInstructionArgSwap()
+ * Swap arguments in BEQ and BNE instructions 
+ */
+void Lexer::branchInstructionArgSwap(void)
+{
+    TokenType temp_type;
+    int temp_val;
+
+    temp_type = this->text_info.type[2];
+    temp_val  = this->text_info.val[2];
+
+    this->text_info.type[2] = this->text_info.type[1];
+    this->text_info.val[2]  = this->text_info.val[1];
+    this->text_info.type[1] = temp_type;
+    this->text_info.val[1]  = temp_val;
 }
 
 /*
@@ -1214,6 +1230,7 @@ void Lexer::parseLine(void)
             case LEX_BEQ:
             case LEX_BNE:
                 this->parseAddress(2);
+                this->branchInstructionArgSwap();
                 break;
 
             // BGX instructions need to be able to handle symbols as immediate arg
@@ -1299,7 +1316,6 @@ void Lexer::parseLine(void)
                 this->parseRegArgs(2);
                 psuedo_op = true;
                 break;
-
 
             default:
                 this->text_info.error = true;
