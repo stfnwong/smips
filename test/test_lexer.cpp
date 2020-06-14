@@ -413,6 +413,8 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     test_lexer.loadFile(test_mult_add_file);
     test_lexer.lex();
 
+    std::cout << "Running multiply-add test..." << std::endl;
+
     // get the source info
     expected_src_out = get_mult_add_expected_source_info();
     src_out = test_lexer.getSourceInfo();
@@ -640,6 +642,8 @@ TEST_CASE("test_for_loop", "[classic]")
     test_lexer.loadFile(test_for_loop_file);
     test_lexer.lex();
 
+    std::cout << "Running for-loop test..." << std::endl;
+
     // get the source info
     expected_src_out = get_for_loop_expected_source_info();
     src_out = test_lexer.getSourceInfo();
@@ -702,6 +706,8 @@ TEST_CASE("test_array", "[classic]")
     test_lexer.setVerbose(true);
     test_lexer.loadFile(test_array_file);
     test_lexer.lex();
+
+    std::cout << "Running array test..." << std::endl;
 
     // get the source info
     expected_src_out = get_array_expected_source_info();

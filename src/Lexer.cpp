@@ -690,7 +690,7 @@ void Lexer::textSeg(void)
 
 
 
-// ======== INSTRUCTIONS ======== //
+// ======== PARSING ======== //
 
 /*
  * parseBranchZero()
@@ -863,42 +863,94 @@ void Lexer::parseMemArgs(void)
 {
     bool error = false;
     int argn;
+    int status;
 
     for(argn = 0; argn < 2; ++argn)
     {
-        this->nextToken();
-        if(!this->cur_token.isReg())
+        status = this->parseRegister(argn);
+        if(status < 0)  // TODO : an alternative here would be to check text_info.error...
         {
-            error = true;
-            goto ARG_END;
-        }
-        // TODO : debug, remove
-        std::cout << "[" << __func__ << "] got token : " << this->cur_token.toString() << std::endl;
-        this->text_info.type[argn] = this->cur_token.type;
-        this->text_info.val[argn]  = std::stoi(this->cur_token.val); //, nullptr, 10);
+            if(this->verbose)
+            {
+                std::cout << "[" << __func__ << "] " << 
+                    this->text_info.errstr << std::endl;
+            }
 
-        if(argn == 1 && this->cur_token.reg_offset != "\0")
-        {
-            this->text_info.val[2]  = std::stoi(this->cur_token.reg_offset); //, nullptr, 10);
-            this->text_info.type[2] = SYM_LITERAL;
-        }
-    }
-
-ARG_END:
-    if(error)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
-           ") invalid [" + this->cur_token.toString() + "]";
-
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] " << 
-                this->text_info.errstr << std::endl;
+            return;
         }
     }
 }
 
+/*
+ * parseRegister()
+ * Extract a single register argument from the input
+ */
+int Lexer::parseRegister(int argn)
+{
+    this->nextToken();
+    if(!this->cur_token.isReg())
+    {
+        this->text_info.error = true;
+        this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
+           ") - expecting register, got [" + this->cur_token.toString() + "]";
+
+        return -1;
+    }
+    
+    this->text_info.type[argn] = this->cur_token.type;
+    this->text_info.val[argn] = std::stoi(this->cur_token.val);
+
+    // Check if there is an offset 
+    if(this->cur_token.reg_offset != "\0")
+    {
+        if(argn > 1)        // TODO : put an error message here?
+        {
+            this->text_info.error = true;
+            this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
+               ") invalid [" + this->cur_token.toString() + "]";
+
+            return -1;
+        }
+        this->text_info.val[argn+1] = std::stoi(this->cur_token.reg_offset, nullptr, 10);
+        this->text_info.type[argn+1] = SYM_LITERAL;
+    }
+
+    // adjust upper values 
+    if(this->text_info.upper)
+    {
+        this->text_info.val[argn] = (this->text_info.val[argn] << 16);
+    }
+
+    return 0;
+}
+
+/*
+ * parseImmediate()
+ * Extract an immediate or label from the input
+ */
+int Lexer::parseImmediate(int argn)
+{
+    this->nextToken();
+    if(this->cur_token.type == SYM_LITERAL || this->cur_token.type == SYM_LABEL)
+    {
+        this->text_info.type[argn] = this->cur_token.type;
+        if(this->cur_token.type == SYM_LITERAL)
+            this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
+        else
+        {
+            this->text_info.is_symbol = true;
+            this->text_info.symbol = std::string(this->cur_token.val);
+        }
+
+        return 0;
+    }
+
+    this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
+       ") expected literal or symbol, got [" + this->cur_token.toString() + "]";
+    this->text_info.error = true;
+
+    return -1;
+}
 
 /*
  * parseRegArgs()
@@ -908,84 +960,37 @@ ARG_END:
 void Lexer::parseRegArgs(const int num_args)
 {
     int argn;
+    int status;
     bool error = false;
 
     for(argn = 0; argn < num_args; ++argn)
     {
-        this->nextToken();
-        // Offsets can only occur in certain instructions which have immediates.
-        // The rule needs to be that 
-        // 1) IF The instruction is an immediate instruction
-        // 2) AND there is an offset string in the current Token 
-        // 3) THEN we convert that offset string to an int and store it in 
-        // this->text_info.val[num_args+1] as a SYM_LITERAL 
-        // 4) This should work, because there are no 3-argument instructions 
-        // which accept a register offset in the right-most position. Or in
-        // other words, the register offset becomes the third argument (as a literal)
-        //
-        
-        if(this->text_info.is_imm && (argn == num_args-1))  // TODO: reconsider the side effect of using this->text_info.is_imm...
-        {
-            // it is legal for this to be a symbol rather than a literal
-            if(this->cur_token.type == SYM_LABEL)
-            {
-                this->text_info.is_symbol = true;
-                this->text_info.symbol    = std::string(this->cur_token.val);
-                std::cout << "[" << __func__ << "] got label <" << this->text_info.symbol
-                    << "> for argument " << argn+1 << std::endl;
-            }
-            else if(this->cur_token.type == SYM_LITERAL)    // bit of a repeat here...
-            {
-                this->text_info.val[argn]  = std::stoi(this->cur_token.val);
-            }
-            else if(this->cur_token.type == SYM_REGISTER)
-            {
-                this->text_info.val[argn] = std::stoi(this->cur_token.val);
-
-                // Check if there is an offset 
-                if(this->cur_token.reg_offset != "\0")
-                {
-                    this->text_info.val[argn+1] = std::stoi(this->cur_token.reg_offset, nullptr, 10);
-                    this->text_info.type[argn+1] = SYM_LITERAL;
-                }
-
-                // adjust upper values 
-                if(this->text_info.upper)
-                {
-                    this->text_info.val[argn] = (this->text_info.val[argn] << 16);
-                }
-            }
-            else        // we only accept literals, registers, or labels
-            {
-                error = true;
-                goto ARG_ERR;
-            }
-        }
+        if(this->text_info.is_imm && argn == num_args-1)
+            status = this->parseImmediate(argn);
         else
-        {
-            if(!this->cur_token.isReg())
-            {
-                error = true;
-                goto ARG_ERR;
-            }
-        }
-        this->text_info.type[argn] = this->cur_token.type;
-        if(this->cur_token.type != SYM_LABEL)
-            this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-    }
+            status = this->parseRegister(argn);
 
-ARG_ERR:
-    if(error)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Invalid argument " + std::to_string(argn+1) + 
-            " [" + this->cur_token.toString() + "] to instruction " + this->text_info.opcode.toString();
-        if(this->verbose)
+        if(status < 0)
         {
-            std::cout << "[" << __func__ << "] (line " << 
-                this->cur_line << ") " << this->text_info.errstr << std::endl;
+            if(this->verbose)
+            {
+                std::cout << "[" << __func__ << "] " << 
+                    this->text_info.errstr << std::endl;
+            }
+
+            return;
         }
     }
+    // Offsets can only occur in certain instructions which have immediates.
+    // The rule needs to be that 
+    // 1) IF The instruction is an immediate instruction
+    // 2) AND there is an offset string in the current Token 
+    // 3) THEN we convert that offset string to an int and store it in 
+    // this->text_info.val[num_args+1] as a SYM_LITERAL 
+    // 4) This should work, because there are no 3-argument instructions 
+    // which accept a register offset in the right-most position. Or in
+    // other words, the register offset becomes the third argument (as a literal)
+    //
 }
 
 /*
@@ -1190,6 +1195,7 @@ void Lexer::parseLine(void)
 
         this->text_info.opcode = op;
 
+        // TODO : for now just re-write the internals of parseRegArgs(), etc to use the new modular methods
         switch(op.instr)
         {
             case LEX_ADD:
@@ -1260,10 +1266,6 @@ void Lexer::parseLine(void)
                 break;
 
             case LEX_ORI:
-                this->text_info.is_imm = true;
-                this->parseRegArgs(3);
-                break;
-
             case LEX_SLL:
             case LEX_SRL:
                 this->text_info.is_imm = true;

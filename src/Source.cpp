@@ -209,7 +209,7 @@ std::string TextInfo::toString(void) const
         if(this->type[i] == SYM_REGISTER)
         {
             if(this->val[i] == REG_AT)
-                oss << "at" << std::dec << this->val[i] << " ";     
+                oss << "at" << " ";     
             else if(this->val[i] >= REG_ARG_0 && this->val[i] <= REG_ARG_3)
                 oss << "a" << std::dec << this->val[i] << " ";
             else if(this->val[i] == REG_RETURN)
@@ -218,8 +218,6 @@ std::string TextInfo::toString(void) const
                 oss << "RA ";
             else if(this->val[i] == REG_ZERO)
                 oss << "Z ";
-            //else if(this->val[i] == SYM_REG_NUM)
-            //    oss << "$" << this->val[i] << " ";
             else if(this->val[i] == REG_GLOBAL)
                 oss << "G  ";
             else if(this->val[i] == REG_FRAME)
