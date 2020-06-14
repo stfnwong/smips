@@ -127,15 +127,18 @@ class Lexer
         void textSeg(void);
 
     private:
+        void parseInstr(int line_num);
+        void parseDirective(int line_num);
         void resolveLabels(void);
         void parseAddress(int num);
         void parseBranch(void);
         void parseBranchZero(void);
-        void parseMemArgs(void);
+        void parseMemArgs(void); // TODO : drop - just use immediate
         void parseRegArgs(const int num);
         void parseJump(void);
 		void parseLabel(void);
         void parseLine(void);
+
 
     private:
         // psuedo instruction expansion

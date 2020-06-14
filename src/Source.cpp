@@ -154,6 +154,7 @@ void TextInfo::init(void)
     this->is_imm       = false;
     this->upper        = false;
     this->lower        = false;
+    this->psuedo       = false;
     this->opcode.init();
 
     for(int i = 0; i < 3; ++i)
@@ -193,6 +194,10 @@ std::string TextInfo::toString(void) const
         oss << ".";
     if(this->is_imm)
         oss << "i";
+    else
+        oss << ".";
+    if(this->psuedo)
+        oss << "p";
     else
         oss << ".";
     oss << "] ";
@@ -297,6 +302,8 @@ bool TextInfo::operator==(const TextInfo& that) const
         return false;
     if(this->lower != that.lower)
         return false;
+    if(this->psuedo != that.psuedo)
+        return false;
     if(this->opcode != that.opcode)
         return false;
 
@@ -384,6 +391,11 @@ std::string TextInfo::diff(const TextInfo& that) const
         oss << "lower does not match" << std::endl;
         num_err += 1;
     }
+    //if(this->psuedo != that.psuedo)
+    //{
+    //    oss << "psuedo does not match" << std::endl;
+    //    num_err += 1;
+    //}
     if(this->opcode != that.opcode)
     {
         oss << "opcode [" << this->opcode.toString() << 
