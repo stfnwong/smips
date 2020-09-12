@@ -107,6 +107,10 @@ class Lexer
 
     // Assembler directives
     private:
+        // New style parser functions 
+        int parseRegister(int argn);
+        int parseImmediate(int argn);
+        void branchInstructionArgSwap(void);
         // TODO : no support for floats in the first version
         void parseASCIIZ(void);
         void parseAlign(void);
@@ -123,15 +127,18 @@ class Lexer
         void textSeg(void);
 
     private:
+        void parseInstr(int line_num);
+        void parseDirective(int line_num);
         void resolveLabels(void);
         void parseAddress(int num);
         void parseBranch(void);
         void parseBranchZero(void);
-        void parseMemArgs(void);
+        void parseMemArgs(void); // TODO : drop - just use immediate
         void parseRegArgs(const int num);
         void parseJump(void);
 		void parseLabel(void);
         void parseLine(void);
+
 
     private:
         // psuedo instruction expansion

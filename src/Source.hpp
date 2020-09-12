@@ -94,6 +94,7 @@ struct TextInfo
     // NOTE : upper and lower are only required for symbol expansion 
     bool         upper;
     bool         lower;
+    bool         psuedo;
     int          val[3];       // value of literal or register. Register values are as per the register map
     TokenType    type[3];      // record of types for each register
     Opcode       opcode;

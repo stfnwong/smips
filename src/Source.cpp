@@ -154,6 +154,7 @@ void TextInfo::init(void)
     this->is_imm       = false;
     this->upper        = false;
     this->lower        = false;
+    this->psuedo       = false;
     this->opcode.init();
 
     for(int i = 0; i < 3; ++i)
@@ -195,6 +196,10 @@ std::string TextInfo::toString(void) const
         oss << "i";
     else
         oss << ".";
+    if(this->psuedo)
+        oss << "p";
+    else
+        oss << ".";
     oss << "] ";
     oss << std::right << "0x" << std::hex << std::setw(8) << std::setfill('0') << this->addr << " ";
     oss << std::left << std::setw(11) << std::setfill(' ') << this->opcode.mnemonic;
@@ -209,7 +214,7 @@ std::string TextInfo::toString(void) const
         if(this->type[i] == SYM_REGISTER)
         {
             if(this->val[i] == REG_AT)
-                oss << "at" << std::dec << this->val[i] << " ";     
+                oss << "at" << " ";     
             else if(this->val[i] >= REG_ARG_0 && this->val[i] <= REG_ARG_3)
                 oss << "a" << std::dec << this->val[i] << " ";
             else if(this->val[i] == REG_RETURN)
@@ -218,8 +223,6 @@ std::string TextInfo::toString(void) const
                 oss << "RA ";
             else if(this->val[i] == REG_ZERO)
                 oss << "Z ";
-            //else if(this->val[i] == SYM_REG_NUM)
-            //    oss << "$" << this->val[i] << " ";
             else if(this->val[i] == REG_GLOBAL)
                 oss << "G  ";
             else if(this->val[i] == REG_FRAME)
@@ -298,6 +301,8 @@ bool TextInfo::operator==(const TextInfo& that) const
     if(this->upper != that.upper)
         return false;
     if(this->lower != that.lower)
+        return false;
+    if(this->psuedo != that.psuedo)
         return false;
     if(this->opcode != that.opcode)
         return false;
@@ -386,6 +391,11 @@ std::string TextInfo::diff(const TextInfo& that) const
         oss << "lower does not match" << std::endl;
         num_err += 1;
     }
+    //if(this->psuedo != that.psuedo)
+    //{
+    //    oss << "psuedo does not match" << std::endl;
+    //    num_err += 1;
+    //}
     if(this->opcode != that.opcode)
     {
         oss << "opcode [" << this->opcode.toString() << 
