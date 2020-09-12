@@ -25,7 +25,7 @@ class Assembler
     private:
         bool verbose;
         int  num_err;
-        // instruction arg offsets
+        // instruction arg offsets      (TODO : move these to a new common location?)
         const uint8_t j_instr_op_offset = 26;
         const uint8_t i_instr_op_offset = 26;
         const uint8_t r_instr_op_offset = 26;

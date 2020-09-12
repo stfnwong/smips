@@ -116,6 +116,11 @@ class Program
         unsigned int numDataSeg(void) const;
         unsigned int dataSize(void) const;
         std::string toString(void) const;
+        
+        // get a specific instr 
+        unsigned int numInstrs(void) const;
+        Instr getInstr(unsigned int idx) const;
+        // TODO: some iterator over instrs
 
         // disk operations
         int save(const std::string& filename);
