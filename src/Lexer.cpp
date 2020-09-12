@@ -1492,16 +1492,20 @@ void Lexer::expandPsuedo(void)
 {
     Opcode cur_opcode;
     TextInfo ti;
+    uint32_t instr = this->text_info.opcode.instr;
 
     // TODO : a lot of consolidation can happen here...
-    switch(this->text_info.opcode.instr)
+    switch(instr)
     {
         case LEX_BGT:
+        case LEX_BLT:
+        case LEX_BGE:
+        case LEX_BLE:
+        case LEX_BGTU:
             {
-                // Input is [bgt $s, $t, C]
-                // slt $at, $t, $s
+                // slt/sltu $at, $t, $s
                 ti.init();
-                ti.opcode.instr = LEX_SLT;
+                ti.opcode.instr = (instr == LEX_BGTU) ? LEX_SLTU : LEX_SLT;
                 ti.opcode.mnemonic = "slt";
                 ti.addr      = this->text_info.addr;
                 ti.line_num  = this->text_info.line_num;
@@ -1510,19 +1514,36 @@ void Lexer::expandPsuedo(void)
                     ti.type[r] = SYM_REGISTER;
 
                 ti.val[0]    = REG_AT;            
-                ti.val[1]    = this->text_info.val[1];
-                ti.val[2]    = this->text_info.val[0];
+                // order is flipped for BGT, BLE, and BGTU
+                if(instr == LEX_BLT || instr == LEX_BGE)
+                {
+                    ti.val[1] = this->text_info.val[0];
+                    ti.val[2] = this->text_info.val[1];
+                }
+                else
+                {
+                    ti.val[1] = this->text_info.val[1];
+                    ti.val[2] = this->text_info.val[0];
+                }
                 ti.label     = this->text_info.label;
                 ti.is_label  = this->text_info.is_label;
 
-                std::cout << "[" << __func__ << " adding SLT (expanded from BGT)" << std::endl;
+                std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
                 this->source_info.addText(ti);
                 this->incrTextAddr();
                 
-                // bne $at, $zero, C
+                // bne/beq $at, $zero, C
                 ti.init();
-                ti.opcode.instr = LEX_BNE;
-                ti.opcode.mnemonic = "bne";
+                if(instr == LEX_BGE || instr == LEX_BLE)
+                {
+                    ti.opcode.instr = LEX_BEQ;
+                    ti.opcode.mnemonic = "beq";
+                }
+                else
+                {
+                    ti.opcode.instr = LEX_BNE;
+                    ti.opcode.mnemonic = "bne";
+                }
                 ti.addr      = this->text_info.addr + 4;
                 ti.line_num  = this->text_info.line_num;
                 ti.type[0]   = SYM_REGISTER;
@@ -1535,179 +1556,6 @@ void Lexer::expandPsuedo(void)
                 ti.symbol    = this->text_info.symbol;
                 ti.is_symbol = this->text_info.is_symbol;
                 
-                this->source_info.addText(ti);
-                this->incrTextAddr();
-            }
-            
-            break;
-
-        case LEX_BLT:
-            {
-                // Input is [bgt $s, $t, C]
-                // slt $at, $s, $t
-                ti.init();
-                ti.opcode.instr = LEX_SLT;
-                ti.opcode.mnemonic = "slt";
-                ti.addr     = this->text_info.addr;
-                ti.line_num = this->text_info.line_num;
-
-                for(int r = 0; r < 3; ++r)
-                    ti.type[r] = SYM_REGISTER;
-
-                ti.val[0]   = REG_AT;            
-                ti.val[1]   = this->text_info.val[0];
-                ti.val[2]   = this->text_info.val[1];
-                ti.label    = this->text_info.label;
-                ti.is_label = this->text_info.is_label;
-
-                this->source_info.addText(ti);
-                this->incrTextAddr();
-                
-                // bne $at, $zero, C
-                ti.init();
-                ti.opcode.instr = LEX_BNE;
-                ti.opcode.mnemonic = "bne";
-                ti.addr      = this->text_info.addr + 4;
-                ti.line_num  = this->text_info.line_num;
-                ti.type[0]   = SYM_REGISTER;
-                ti.type[1]   = SYM_REGISTER;
-                ti.type[2]   = SYM_LITERAL;
-                ti.val[0]    = REG_ZERO;        // flipped for assembler
-                ti.val[1]    = REG_AT;          // flipped for assembler
-                ti.val[2]    = this->text_info.val[2];
-                ti.is_imm    = this->text_info.is_imm;
-                ti.symbol    = this->text_info.symbol;
-                ti.is_symbol = this->text_info.is_symbol;
-                
-                this->source_info.addText(ti);
-                this->incrTextAddr();
-            }
-            break;
-
-        case LEX_BGE:
-            {
-                // Input is [bge $s $t C]
-                // slt $at $t $t
-                ti.init();
-                ti.opcode.instr = LEX_SLT;
-                ti.opcode.mnemonic = "slt";
-                ti.addr     = this->text_info.addr;
-                ti.line_num = this->text_info.line_num;
-
-                for(int r = 0; r < 3; ++r)
-                    ti.type[r] = SYM_REGISTER;
-
-                ti.val[0]    = REG_AT;            
-                ti.val[1]    = this->text_info.val[0];
-                ti.val[2]    = this->text_info.val[1];
-                ti.label     = this->text_info.label;
-                ti.is_label  = this->text_info.is_label;
-
-                this->source_info.addText(ti);
-                this->incrTextAddr();
-
-                // beq $at $zero C
-                ti.init();
-                ti.opcode.instr = LEX_BEQ;
-                ti.opcode.mnemonic = "beq";
-                ti.addr      = this->text_info.addr + 4;
-                ti.line_num  = this->text_info.line_num;
-                ti.type[0]   = SYM_REGISTER;
-                ti.type[1]   = SYM_REGISTER;
-                ti.type[2]   = SYM_LITERAL;
-                ti.val[0]    = REG_ZERO;
-                ti.val[1]    = REG_AT;
-                ti.val[2]    = this->text_info.val[2];
-                ti.is_imm    = this->text_info.is_imm;
-                ti.symbol    = this->text_info.symbol;
-                ti.is_symbol = this->text_info.is_symbol;
-                ti.is_imm    = this->text_info.is_imm;
-
-                this->source_info.addText(ti);
-                this->incrTextAddr();
-                break;
-            }
-
-        case LEX_BLE:
-            {
-                // Input is [ble $s $t C]
-                // slt $at $t $s
-                ti.init();
-                ti.opcode.instr = LEX_SLT;
-                ti.opcode.mnemonic = "slt";
-                ti.addr     = this->text_info.addr;
-                ti.line_num = this->text_info.line_num;
-
-                for(int r = 0; r < 3; ++r)
-                    ti.type[r] = SYM_REGISTER;
-
-                ti.val[0]   = REG_AT;            
-                ti.val[1]   = this->text_info.val[1];
-                ti.val[2]   = this->text_info.val[0];
-                ti.label    = this->text_info.label;
-                ti.is_label = this->text_info.is_label;
-
-                this->source_info.addText(ti);
-                this->incrTextAddr();
-
-                // beq $at $zero C
-                ti.init();
-                ti.opcode.instr = LEX_BEQ;
-                ti.opcode.mnemonic = "beq";
-                ti.addr     = this->text_info.addr + 4;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REGISTER;
-                ti.type[1]  = SYM_REGISTER;
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[0]   = REG_ZERO;            
-                ti.val[1]   = REG_AT;
-                ti.val[2]   = this->text_info.val[2];
-                ti.label    = this->text_info.label;
-                ti.is_label = this->text_info.is_label;
-                ti.is_imm   = this->text_info.is_imm;
-
-                this->source_info.addText(ti);
-                this->incrTextAddr();
-                break;
-            }
-
-        case LEX_BGTU:
-            {
-                // Input is [bgtu $s $t C]
-                // sltu $at $t $s
-                ti.init();
-                ti.opcode.instr = LEX_SLTU;
-                ti.opcode.mnemonic = "sltu";
-                ti.addr     = this->text_info.addr;
-                ti.line_num = this->text_info.line_num;
-
-                for(int r = 0; r < 3; ++r)
-                    ti.type[r] = SYM_REGISTER;
-
-                ti.val[0]   = REG_AT;            
-                ti.val[1]   = this->text_info.val[1];
-                ti.val[2]   = this->text_info.val[0];
-                ti.label    = this->text_info.label;
-                ti.is_label = this->text_info.is_label;
-
-                this->source_info.addText(ti);
-                this->incrTextAddr();
-
-                // bne $at $zero C
-                ti.init();
-                ti.opcode.instr = LEX_BNE;
-                ti.opcode.mnemonic = "bne";
-                ti.addr     = this->text_info.addr + 4;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REGISTER;
-                ti.type[1]  = SYM_REGISTER;
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[0]   = REG_ZERO;            
-                ti.val[1]   = REG_AT;
-                ti.val[2]   = this->text_info.val[2];
-                ti.label    = this->text_info.label;
-                ti.is_imm   = this->text_info.is_imm;
-
                 this->source_info.addText(ti);
                 this->incrTextAddr();
                 break;
