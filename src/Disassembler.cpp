@@ -14,7 +14,7 @@
 /*
  * disassemble a single I-instruction
  */
-TextInfo Disassembler::dis_i_instr(uint32_t instr, uint32_t addr)
+TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
 {
     TextInfo ti;
 
@@ -76,7 +76,7 @@ TextInfo Disassembler::dis_i_instr(uint32_t instr, uint32_t addr)
 /*
  * disassemble a single R-instruction
  */
-TextInfo Disassembler::dis_r_instr(uint32_t instr, uint32_t addr)
+TextInfo dis_r_instr(uint32_t instr, uint32_t addr)
 {
     TextInfo ti;
     uint8_t func_bits = (instr & 0x3F);
@@ -149,7 +149,7 @@ TextInfo Disassembler::dis_r_instr(uint32_t instr, uint32_t addr)
 /*
  * disassemble a single J-instruction
  */
-TextInfo Disassembler::dis_j_instr(uint32_t instr, uint32_t addr)
+TextInfo dis_j_instr(uint32_t instr, uint32_t addr)
 {
     TextInfo ti;
     uint8_t op_bits;
@@ -169,19 +169,13 @@ TextInfo Disassembler::dis_j_instr(uint32_t instr, uint32_t addr)
 }
 
 
-// TODO : init rmap here?
-Disassembler::Disassembler() 
-{
-    this->verbose = false;
-}
-
 
 // instruction disassembly
 /*
  * dis_instr()
  * Disassemble a single instruction
  */
-TextInfo Disassembler::dis_instr(uint32_t instr, uint32_t addr)
+TextInfo dis_instr(uint32_t instr, uint32_t addr)
 {
     uint8_t op_bits;
 
@@ -207,7 +201,7 @@ TextInfo Disassembler::dis_instr(uint32_t instr, uint32_t addr)
 /*
  * dis_program()
  */
-SourceInfo Disassembler::dis_program(const Program& program)
+SourceInfo dis_program(const Program& program)
 {
     SourceInfo source;
 
@@ -216,20 +210,9 @@ SourceInfo Disassembler::dis_program(const Program& program)
     for(unsigned int idx = 0; idx < program.numInstrs(); ++idx)
     {
         Instr cur_instr = program.getInstr(idx);
-        TextInfo cur_line = this->dis_instr(cur_instr.ins, cur_instr.adr);
+        TextInfo cur_line = dis_instr(cur_instr.ins, cur_instr.adr);
         source.addText(cur_line);
     }
 
     return source;
-}
-
-
-void Disassembler::setVerbose(const bool v)
-{
-    this->verbose = v;
-}
-
-bool Disassembler::getVerbose(void) const
-{
-    return this->verbose;
 }

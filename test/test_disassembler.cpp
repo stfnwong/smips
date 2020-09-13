@@ -151,7 +151,6 @@ SourceInfo get_mult_add_expected_dis(void)
  */
 TEST_CASE("test_dis_mult_add", "[classic]")
 {
-    Disassembler dis;
     Program test_program;   
 
     SourceInfo expected_out = get_mult_add_expected_dis(); 
@@ -165,7 +164,7 @@ TEST_CASE("test_dis_mult_add", "[classic]")
     for(unsigned int idx = 0; idx < test_program.numInstrs(); ++idx)
     {
         cur_instr = test_program.getInstr(idx);
-        TextInfo dis_out = dis.dis_instr(cur_instr.ins, cur_instr.adr);
+        TextInfo dis_out = dis_instr(cur_instr.ins, cur_instr.adr);
         TextInfo exp_out = expected_out.getText(idx);
 
         std::cout << "Line " << std::dec << idx << " expected: " << std::endl;

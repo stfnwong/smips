@@ -232,7 +232,8 @@ std::string TextInfo::toString(void) const
             else if(this->val[i] >= REG_SAVED_0 && this->val[i] <= REG_SAVED_7)
                 oss << "s" << std::dec << this->val[i] << " ";
         }
-        else if(this->type[i] == SYM_LITERAL)       // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
+        // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
+        else if(this->type[i] == SYM_LITERAL)       
             oss << "L  ";
         else
             oss << "   ";
@@ -245,19 +246,19 @@ std::string TextInfo::toString(void) const
     //else if(this->is_imm)
     //    oss << "0x" << std::hex << std::setw(8) << this->val[2];
     else if(!this->is_imm && (this->type[1] == SYM_LITERAL))
-        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
+        oss << " +0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
     else if(!this->is_imm && (this->type[2] == SYM_LITERAL))
-        oss << " +" << std::left << std::dec << std::setw(8) << std::setfill(' ') << this->val[2] << "  ";
+        oss << "   +" << std::left << std::dec << std::setw(8) << std::setfill(' ') << this->val[2] << "  ";
     else if(this->is_imm && this->upper)
         oss << "U 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
     else if(this->is_imm && this->lower)
         oss << "L 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
     else if(this->is_imm && (this->type[1] == SYM_LITERAL))
-        oss << "0x" << std::hex << std::setw(8) << this->val[1];
+        oss << "  0x" << std::hex << std::setw(8) << this->val[1];
     else if(this->is_imm && (this->type[2] == SYM_LITERAL))
-        oss << "0x" << std::hex << std::setw(8) << this->val[2];
+        oss << "  0x" << std::hex << std::setw(8) << this->val[2];
     else
-        oss << "          ";
+        oss << "            ";  // TODO: what spacing options do I have for keeping constant width?
     // spacing chars
     oss << " ";
     // insert error (T/F only, full string may not fit)
