@@ -65,6 +65,7 @@ SourceInfo get_mult_add_expected_dis(void)
     line.type[0] = SYM_REGISTER;
     line.type[1] = SYM_REGISTER;
     line.type[2] = SYM_LITERAL;
+    line.is_imm  = true;
     info.addText(line);
 
     // mult $t0, $t0, $t0
@@ -89,6 +90,7 @@ SourceInfo get_mult_add_expected_dis(void)
     line.type[0] = SYM_REGISTER;
     line.type[1] = SYM_REGISTER;
     line.type[2] = SYM_LITERAL;
+    line.is_imm = true;
     info.addText(line);
 
     // ori $t2, $zero, 3
@@ -101,9 +103,10 @@ SourceInfo get_mult_add_expected_dis(void)
     line.type[0] = SYM_REGISTER;
     line.type[1] = SYM_REGISTER;
     line.type[2] = SYM_LITERAL;
+    line.is_imm = true;
     info.addText(line);
 
-    // mult $t1, $t1, t2
+    // mult $t1, $t1, $t2
     line.init();
     line.addr = 0x00400010;
     line.opcode = Opcode(LEX_MULT, "mult");
@@ -135,6 +138,7 @@ SourceInfo get_mult_add_expected_dis(void)
     line.val[1] = REG_GLOBAL;
     line.type[0] = SYM_REGISTER;
     line.type[1] = SYM_REGISTER;
+    line.is_imm = true;
     info.addText(line);
 
     return info;
@@ -148,8 +152,7 @@ SourceInfo get_mult_add_expected_dis(void)
 TEST_CASE("test_dis_mult_add", "[classic]")
 {
     Disassembler dis;
-    Program test_program;   // TODO : going to use seperate program object here 
-    int status;
+    Program test_program;   
 
     SourceInfo expected_out = get_mult_add_expected_dis(); 
 
@@ -159,16 +162,20 @@ TEST_CASE("test_dis_mult_add", "[classic]")
     std::cout << "[" << __func__ << "] dis output : " << std::endl;
     // disassemble the binary
     Instr cur_instr;
-    TextInfo dis_out;
     for(unsigned int idx = 0; idx < test_program.numInstrs(); ++idx)
     {
         cur_instr = test_program.getInstr(idx);
-        dis_out = dis.dis_instr(cur_instr.ins, cur_instr.adr);
+        TextInfo dis_out = dis.dis_instr(cur_instr.ins, cur_instr.adr);
+        TextInfo exp_out = expected_out.getText(idx);
+
+        std::cout << "Line " << std::dec << idx << " expected: " << std::endl;
+        std::cout << exp_out.toString() << std::endl;
+
+        std::cout << "Got :" << std::endl;
         std::cout << dis_out.toString() << std::endl;
-        //dis_instr = dis.
+
+        REQUIRE(exp_out == dis_out);
     }
 
     // Now check each instruction
 }
-
-

@@ -63,8 +63,8 @@ TextInfo Disassembler::dis_i_instr(uint32_t instr, uint32_t addr)
     }
 
     // arguments 
-    ti.val[0] = (instr & (0x1F << 21));
-    ti.val[1] = (instr & (0x1F << 16));
+    ti.val[0] = (instr & (0x1F << 16)) >> 16;
+    ti.val[1] = (instr & (0x1F << 21)) >> 21;
     ti.val[2] = (instr & 0xFFFF);
     ti.type[0] = SYM_REGISTER;
     ti.type[1] = SYM_REGISTER;
@@ -84,54 +84,64 @@ TextInfo Disassembler::dis_r_instr(uint32_t instr, uint32_t addr)
     ti.addr = addr;
     switch(func_bits)
     {
-        case 32:
+        case 0x20:
             ti.opcode = Opcode(LEX_ADD, "add");
             break;
-        case 33:
+        case 0x21:
             ti.opcode = Opcode(LEX_ADDU, "addu");
             break;
-        case 34:
+        case 0x22:
             ti.opcode = Opcode(LEX_SUB, "sub");
             break;
-        case 35:
+        case 0x23:
             ti.opcode = Opcode(LEX_SUBU, "subu");
             break;
-        case 36:
+        case 0x24:
             ti.opcode = Opcode(LEX_AND, "and");
             break;
-        case 37:
+        case 0x25:
             ti.opcode = Opcode(LEX_OR, "or");
             break;
-        case 39:
+        case 0x27:
             ti.opcode = Opcode(LEX_NOR, "nor");
             break;
-        case 42:
+        case 0x2A:
             ti.opcode = Opcode(LEX_SLT, "slt");
             break;
-        case 43:
+        case 0x2B:
             ti.opcode = Opcode(LEX_SLTU, "sltu");
             break;
-        case 0:
+        case 0x0:
             ti.opcode = Opcode(LEX_SLL, "sll");
             break;
-        case 2:
+        case 0x2:
             ti.opcode = Opcode(LEX_SRL, "srl");
             break;
-        case 4:
+        case 0x4:
             ti.opcode = Opcode(LEX_JR, "jr");
+            break;
+        case 0x18:
+            ti.opcode = Opcode(LEX_MULT, "mult");
+            break;
+        default:
+            std::cerr << "[" << __func__ << "] unknown R-Instruction with func bits 0x" << std::hex
+                << std::setw(2) << std::setfill('0') << func_bits << std::endl;
             break;
     }
     
     // arguments 
-    ti.val[0] = (instr & (0x1F << 26));
-    ti.val[1] = (instr & (0x1F << 21));
+    ti.val[1] = (instr & (0x1F << 21)) >> 21;       // rs 
+    ti.val[0] = (instr & (0x1F << 11)) >> 11;       // rd
     if(ti.opcode.instr == LEX_SLL || ti.opcode.instr == LEX_SRL)
-        ti.val[2] = 10;
+        ti.val[2] = (instr & (0x1F << 6)) >> 6;
     else
-        ti.val[2] = (instr & (0x1F << 16));
+        ti.val[2] = (instr & (0x1F << 16)) >> 16;   // rt 
     ti.type[0] = SYM_REGISTER;
     ti.type[1] = SYM_REGISTER;
-    ti.type[2] = SYM_REGISTER;
+    if(ti.opcode.instr == LEX_SLL || ti.opcode.instr == LEX_SRL)
+        ti.type[2] = SYM_LITERAL;
+    else
+        ti.type[2] = SYM_REGISTER;
 
     return ti;
 }
@@ -142,14 +152,25 @@ TextInfo Disassembler::dis_r_instr(uint32_t instr, uint32_t addr)
 TextInfo Disassembler::dis_j_instr(uint32_t instr, uint32_t addr)
 {
     TextInfo ti;
+    uint8_t op_bits;
 
     ti.addr = addr;
+    op_bits = (instr & 0xFC) >> 26;
 
+    if(op_bits == 0x2)
+        ti.opcode = Opcode(LEX_J, "j");
+    else
+        ti.opcode = Opcode(LEX_JAL, "jal");
+
+    ti.type[0] = SYM_LITERAL;
+    ti.val[0] = instr & 0x02FFFFFF;
 
     return ti;
 }
 
-Disassembler::Disassembler()
+
+// TODO : init rmap here?
+Disassembler::Disassembler() 
 {
     this->verbose = false;
 }
@@ -182,30 +203,25 @@ TextInfo Disassembler::dis_instr(uint32_t instr, uint32_t addr)
     return TextInfo();
 }
 
+
 /*
- * diassemble()
- * Disassemble an entire program (eg: from disk)
+ * dis_program()
  */
-void Disassembler::disassemble(void)
+SourceInfo Disassembler::dis_program(const Program& program)
 {
-    unsigned int i;
-    //uint32_t instr_mask;
-    Instr instr;
+    SourceInfo source;
 
-
-    for(i = 0; i < this->program.size(); ++i)
+    // TODO: ideally we would also be able to handle the data segment 
+    // of the program as well
+    for(unsigned int idx = 0; idx < program.numInstrs(); ++idx)
     {
+        Instr cur_instr = program.getInstr(idx);
+        TextInfo cur_line = this->dis_instr(cur_instr.ins, cur_instr.adr);
+        source.addText(cur_line);
     }
+
+    return source;
 }
-
-
-
-int Disassembler::load(const std::string& filename)
-{
-    return this->program.load(filename);
-}
-
-
 
 
 void Disassembler::setVerbose(const bool v)

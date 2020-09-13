@@ -63,7 +63,7 @@ Instr Assembler::asm_r_instr(const TextInfo& l, const int n) const
     {
         std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
             << " arg " << std::dec << i << " val : " << l.val[i] << std::endl;
-        instr.ins = instr.ins | ((l.val[i] & 0xFFFF) << this->r_instr_offsets[i]);
+        instr.ins = instr.ins | ((l.val[i] & 0xFF) << this->r_instr_offsets[i]);
     }
 
     return instr;
@@ -81,21 +81,7 @@ Instr Assembler::asm_i_instr(const TextInfo& l, const int n) const
     {
         std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
             << " arg " << std::dec << i << " val : " << l.val[i] << std::endl;
-        instr.ins = instr.ins | ((l.val[i] & 0xFFFF) << this->r_instr_offsets[i]);
-        //switch(l.type[i])
-        //{
-        //    case SYM_LITERAL:
-        //        instr.ins = instr.ins | (l.val[i] & 0xFFFF); // << this->i_instr_offsets[i];
-        //        break;
-
-        //    default:
-        //        instr.ins = instr.ins | (l.val[i] << this->i_instr_offsets[i]);
-        //}
-
-        //if(i == 2)
-        //    instr.ins = instr.ins | (l.val[i] & 0xFFFF);
-        //else
-        //    instr.ins = instr.ins | (l.val[i] << this->i_instr_offsets[i]);
+        instr.ins = instr.ins | ((l.val[i] & 0xFFFF) << this->i_instr_offsets[i]);
     }
 
     return instr;

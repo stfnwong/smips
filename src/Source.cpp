@@ -180,7 +180,7 @@ std::string TextInfo::toString(void) const
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    oss << "Line  Type   Addr      Mnemonic   Opcode   Arguments   literal   error" << std::endl;
+    oss << "Line  Type   Addr       Mnemonic   Opcode   Arguments   literal   error" << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";

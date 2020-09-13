@@ -23,6 +23,12 @@ class Disassembler
         bool verbose;
 
     private:
+        // NOTE: really the only reason that we have an object here is
+        // so that we can carry this map around without having to
+        // statically initialize it. If not for that, these could just 
+        // be regular functions.
+        //
+        // TODO : consider making these regular functions.
         RegisterMap rmap;
 
     private:
@@ -30,19 +36,12 @@ class Disassembler
         TextInfo dis_r_instr(uint32_t instr, uint32_t addr);
         TextInfo dis_j_instr(uint32_t instr, uint32_t addr);
 
-    private:
-        Program    program;
-        SourceInfo source;
-        TextInfo   cur_line;
-
     public:
         Disassembler();
-        TextInfo dis_instr(uint32_t instr, uint32_t addr);
 
-        void disassemble(void);
-        // TODO : we can always have a seperate Program obeject.
-        // If we wamt to hold project state here then this makes sense,
-        int  load(const std::string& filename);
+        // TODO : these can probably be const functions
+        TextInfo dis_instr(uint32_t instr, uint32_t addr);
+        SourceInfo dis_program(const Program& program);
 
         void setVerbose(const bool v);
         bool getVerbose(void) const;
