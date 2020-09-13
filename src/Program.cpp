@@ -368,16 +368,12 @@ int Program::load(const std::string& filename)
 
     this->instructions.clear();
 
-    // TODO : debug, remove 
-    std::cout << "[" << __func__ << "] trying to open file [%s]..." << std::endl;
     try {
         infile.open(filename, std::ios::binary);
     }
     catch(std::ios_base::failure& e) {
         std::cerr << "[" << __func__ << "] " << e.what() << std::endl;
     }
-
-    std::cout << "[" << __func__ << "] reading number of records..." << std::endl;
 
     // find how many records are in the file
     infile.read(reinterpret_cast<char*>(&num_records), sizeof(uint32_t));
@@ -386,9 +382,6 @@ int Program::load(const std::string& filename)
         std::cerr << "[" << __func__ << "] no records in file " << 
             filename << std::endl;
     }
-
-    std::cout << "[" << __func__ << "] found " << std::dec 
-        << num_records << " records in file [" << filename << "]" << std::endl;
 
     // load the first address pointer 
     infile.read(reinterpret_cast<char*>(&addr), sizeof(uint32_t));
@@ -401,7 +394,7 @@ int Program::load(const std::string& filename)
                 sizeof(uint32_t)
         );
         instr.adr = addr;
-        addr++;
+        addr += 4;          // TODO : maybe make this a global const?
         this->instructions.push_back(instr);
     }
     infile.close();
