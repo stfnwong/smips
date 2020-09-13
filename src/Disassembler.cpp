@@ -63,8 +63,8 @@ TextInfo Disassembler::dis_i_instr(uint32_t instr, uint32_t addr)
     }
 
     // arguments 
-    ti.val[0] = (instr & (0x1F << 16)) >> 16;
-    ti.val[1] = (instr & (0x1F << 21)) >> 21;
+    ti.val[0] = (instr & (0x1F << 16)) >> 16;       // rs
+    ti.val[1] = (instr & (0x1F << 21)) >> 21;       // rt
     ti.val[2] = (instr & 0xFFFF);
     ti.type[0] = SYM_REGISTER;
     ti.type[1] = SYM_REGISTER;
