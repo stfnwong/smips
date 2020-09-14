@@ -165,6 +165,8 @@ Instr Assembler::assembleText(const TextInfo& line)
     }
     instr.adr = line.addr;
 
+    std::cout << "[" << __func__ << "] output instr: " << instr.toString() << std::endl;
+
     return instr;
 }
 
