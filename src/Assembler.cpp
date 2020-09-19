@@ -55,10 +55,11 @@ void Assembler::init_instr_to_code_map(void)
  * asm_r_instr()
  * Assemble the arguments for an R-format instruction
  */
-Instr Assembler::asm_r_instr(const TextInfo& l, const int n) const
+Instr Assembler::asm_r_instr(const TextInfo& l, const int n) 
 {
     Instr instr;
 
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
     for(int i = 0; i < n; ++i)
     {
         std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
@@ -73,10 +74,11 @@ Instr Assembler::asm_r_instr(const TextInfo& l, const int n) const
  * asm_i_instr()
  * Assemble the arguments for an I-format instruction
  */
-Instr Assembler::asm_i_instr(const TextInfo& l, const int n) const
+Instr Assembler::asm_i_instr(const TextInfo& l, const int n) 
 {
     Instr instr;
 
+    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->i_instr_op_offset);
     for(int i = 0; i < n; ++i)
     {
         std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
@@ -91,10 +93,11 @@ Instr Assembler::asm_i_instr(const TextInfo& l, const int n) const
  * asm_j_instr()
  * Assemble the arguments for a J-format instruction
  */
-Instr Assembler::asm_j_instr(const TextInfo& l) const
+Instr Assembler::asm_j_instr(const TextInfo& l) 
 {
     Instr instr;
 
+    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->j_instr_op_offset);
     instr.ins = l.val[2];       // TODO : maybe change this in lexer...?
     std::cout << "[" << __func__ << "] set J instr val to " << instr.toString() << std::endl;
 
@@ -130,7 +133,6 @@ Instr Assembler::assembleText(const TextInfo& line)
         case LEX_SUB:
         case LEX_SUBU:
             instr = this->asm_r_instr(line, 3);
-            instr.ins = instr.ins | this->instr_to_code[line.opcode.instr];
             break;
 
         // I-format instructions 
@@ -143,13 +145,11 @@ Instr Assembler::assembleText(const TextInfo& line)
         case LEX_ORI:
         case LEX_SW:
             instr = this->asm_i_instr(line, 3);
-            instr.ins = instr.ins | (this->instr_to_code[line.opcode.instr] << this->i_instr_op_offset);
             break;
 
         // J-format instructions 
         case LEX_J:
             instr = this->asm_j_instr(line);
-            instr.ins = instr.ins | (this->instr_to_code[line.opcode.instr] << this->j_instr_op_offset);
             break;
 
         default:

@@ -44,7 +44,9 @@ class Assembler
         // 
         // Note that for an instruction with OP rs, IMM(rs) format, the lexer 
         // LineInfo order will be 
-        // rs[0] rt[1], imm[2]
+        // 0 -> rs 
+        // 1 -> rt
+        // 2 -> imm
         // hence the below ordering
         const uint8_t i_instr_offsets[3] = {
             16,     // rt   (dest))
@@ -68,9 +70,9 @@ class Assembler
 
     // assemble by instruction type
     private:
-        Instr asm_r_instr(const TextInfo& l, const int n) const;
-        Instr asm_i_instr(const TextInfo& l, const int n) const;
-        Instr asm_j_instr(const TextInfo& l) const;
+        Instr asm_r_instr(const TextInfo& l, const int n) ;
+        Instr asm_i_instr(const TextInfo& l, const int n) ;
+        Instr asm_j_instr(const TextInfo& l) ;
 
     // disable copy and move construction, 
     private:

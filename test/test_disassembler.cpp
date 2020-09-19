@@ -197,6 +197,7 @@ SourceInfo get_for_loop_expected_dis(void)
     line.type[0] = SYM_REGISTER;
     line.type[1] = SYM_REGISTER;
     line.type[2] = SYM_LITERAL;
+    line.is_imm = true;
     info.addText(line);
 
     // sll $t1, $t1, 2
@@ -318,6 +319,15 @@ TEST_CASE("test_dis_for_loop", "[classic]")
         std::cout << "Got :" << std::endl;
         std::cout << dis_out.toString() << std::endl;
 
-        //REQUIRE(exp_out == dis_out);
+        if(exp_out != dis_out)
+        {
+            std::cout << "Line " << std::dec << idx + 1 <<  "/" << 
+                std::dec << expected_out.getTextInfoSize() << 
+                " mismatch" << std::endl;
+            std::cout << std::endl << "    diff : " << std::endl;
+            std::cout << exp_out.diff(dis_out) << std::endl;
+        }
+        REQUIRE(exp_out == dis_out);
+        std::cout << "    [OK]" << std::endl;
     }
 }
