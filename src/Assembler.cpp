@@ -118,6 +118,8 @@ Instr Assembler::assembleText(const TextInfo& line)
         << " which has code [" << std::hex << unsigned(this->instr_to_code[line.opcode.instr])
         << "]" << std::endl;
 
+    std::cout << "[" << __func__ << "] " << line.toInstrString() << std::endl;
+
     switch(line.opcode.instr)
     {
         // R-format instructions

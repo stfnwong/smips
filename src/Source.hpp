@@ -109,9 +109,8 @@ struct TextInfo
 
         // string formatting
         std::string toString(void) const;
+        std::string toInstrString(void) const;
         std::string diff(const TextInfo& that) const;
-        // TODO: fomats the TextInfo like an instruction
-        //std::string toInstrString(void) const;
 };
 
 

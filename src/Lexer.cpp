@@ -857,8 +857,12 @@ void Lexer::parseInstr(int line_num)
             this->text_info.is_imm = true;
             this->text_info.upper = true;
             this->parseRegArgs(2);
+            // TODO: try switching the argument order here
+            this->text_info.val[2] = this->text_info.val[1];
+            this->text_info.type[2] = this->text_info.type[1];
+            this->text_info.val[1] = 0;
+            this->text_info.type[1] = SYM_NONE;
             break;
-            this->text_info.psuedo = true;
 
         case LEX_MULT:
             this->parseRegArgs(3);
@@ -1611,10 +1615,11 @@ void Lexer::expandPsuedo(void)
                 ti.opcode.mnemonic = "lui";
                 ti.addr      = this->text_info.addr;
                 ti.line_num  = this->text_info.line_num;
-                ti.type[0]   = this->text_info.type[0];
                 ti.val[0]    = this->text_info.val[0];
-                ti.type[1]   = SYM_LITERAL;
-                ti.val[1]    = this->text_info.val[1];
+                ti.val[2]    = this->text_info.val[1];
+                ti.type[0]   = this->text_info.type[0];
+                ti.type[1]   = SYM_NONE;
+                ti.type[2]   = SYM_LITERAL;
                 ti.is_imm    = true;
                 ti.upper     = true;   
                 ti.is_symbol = this->text_info.is_symbol;
@@ -1655,9 +1660,10 @@ void Lexer::expandPsuedo(void)
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
                 ti.type[0]  = this->text_info.type[0];
-                ti.type[1]  = SYM_LITERAL;
+                ti.type[1]  = SYM_NONE;
+                ti.type[2]  = SYM_LITERAL;
                 ti.val[0]   = this->text_info.val[0];
-                ti.val[1]   = this->text_info.val[1] & 0xFFFF0000;
+                ti.val[2]   = this->text_info.val[1] & 0xFFFF0000;
                 ti.is_imm   = true;
                 ti.upper    = true;
 

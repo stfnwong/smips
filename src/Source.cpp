@@ -277,6 +277,29 @@ std::string TextInfo::toString(void) const
 }
 
 /*
+ * toInstrString()
+ */
+std::string TextInfo::toInstrString(void) const
+{
+    std::ostringstream oss;
+
+    oss << this->opcode.mnemonic << " ";
+    for(int i = 0; i < 3; ++i)
+    {
+        if(this->type[i] == SYM_REGISTER)
+            oss << mips_reg_types[this->val[i]].repr;
+        if(this->is_imm && this->type[i] == SYM_LITERAL)
+            oss << std::dec << this->val[i];
+        if(i == 2)
+            oss << " ";
+        else
+            oss << ", ";
+    }
+
+    return oss.str();
+}
+
+/*
  * TextInfo::==()
  */
 bool TextInfo::operator==(const TextInfo& that) const
