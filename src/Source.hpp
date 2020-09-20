@@ -46,6 +46,39 @@ typedef enum TokenType
     SYM_REGISTER,
 } TokenType;
 
+
+static std::string TokenToString(const TokenType& type)
+{
+    switch(type)
+    {
+        case SYM_NONE:
+            return "NONE";
+        case SYM_EOF:
+            return "EOF";
+        case SYM_LABEL:
+            return "LABEL";
+        case SYM_INSTR:
+            return "INSTR";
+        case SYM_LITERAL:
+            return "LITERAL";
+        case SYM_DIRECTIVE:
+            return "DIRECTIVE";
+        case SYM_CHAR:
+            return "CHAR";
+        case SYM_STRING:
+            return "STRING";
+        case SYM_SYSCALL:
+            return "SYSCALL";
+        case SYM_REGISTER:
+            return "REGISTER";
+        default:
+            return "NULL";
+    }
+
+}
+
+
+
 /*
  * Token
  * Represents a single token from the source stream.
@@ -75,6 +108,31 @@ struct Token
 
 
 /*
+ * Argument
+ * Represents a single argument to an instruction 
+ */
+struct Argument
+{
+    TokenType type;
+    int       val;
+
+    public:
+        Argument();
+        Argument(const TokenType& t, int v);
+        Argument(const Argument& that) = default;
+
+        void init(void);
+
+        bool operator==(const Argument& that) const;
+        bool operator!=(const Argument& that) const;
+        std::string toString(void) const;
+
+        // assignment
+        Argument& operator=(const Argument& that) = default;
+};
+
+
+/*
  * TextInfo
  * Information about a single line of assembly source. This object is a kind of 
  * intermediate representation for text section data.
@@ -95,6 +153,7 @@ struct TextInfo
     bool         upper;
     bool         lower;
     bool         psuedo;
+    Argument     args[3];
     int          val[3];       // value of literal or register. Register values are as per the register map
     TokenType    type[3];      // record of types for each register
     Opcode       opcode;

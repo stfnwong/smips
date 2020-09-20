@@ -27,6 +27,7 @@
 
 
 
+// ================ TOKEN ================ //
 /* 
  * TOKEN
  */
@@ -128,7 +129,43 @@ bool Token::operator!=(const Token& that) const
     return true;
 }
 
+// ================ ARGUMENT ================ //
+Argument::Argument() : type(SYM_NONE), val(0) {} 
 
+Argument::Argument(const TokenType& t, int v) : type(t), val(v) {} 
+
+void Argument::init(void)
+{
+    this->type = SYM_NONE;
+    this->val = 0;
+}
+
+bool Argument::operator==(const Argument& that) const
+{
+    if(this->type != that.type)
+        return false;
+    if(this->val != that.val)
+        return false;
+
+    return true;
+}
+
+bool Argument::operator!=(const Argument& that) const
+{
+    return !(*this == that);
+}
+
+std::string Argument::toString(void) const
+{
+    std::ostringstream oss;
+
+    oss << TokenToString(this->type) << " " << this->val; 
+
+    return oss.str();
+}
+
+
+// ================ TEXTINFO ================ //
 /*
  * TextInfo
  */

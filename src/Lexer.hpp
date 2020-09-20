@@ -108,8 +108,35 @@ class Lexer
     // Assembler directives
     private:
         // New style parser functions 
-        int parseRegister(int argn);
-        int parseImmediate(int argn);
+        /*
+         *
+         * Re-write the instruction parsing to be more like 
+        case LEX_LW:
+            this->arg[0] = this->parseRegister();   // returns some Argument object
+            this->arg[1] = this->parseRegister();
+
+
+
+        case LEX_LUI:
+            this->arg[0] = this->parseRegister();
+            this->arg[2] = this->parseImmediate();
+
+            One issue is how to handle symbols, but I think the best thing is to 
+            just return a new TextInfo each time rather than re-use the same one 
+            again and again
+
+            It may also be that we just have a 'wrapper' method which 
+            returns a fully formed TextInfo (with error strings, symbols, and 
+            whatever else would be valid for that input) and inside that wrapper 
+            function is where we deal with handling the correspondence between 
+            each Argument structure and the TextInfo. For instance, if we try to
+            parse and Immediate we should also set is_imm.
+        */
+        Argument parseRegister(int argn);
+        Argument parseImmediate(int argn);  // could be literal or symbol
+        //int parseRegister(int argn);
+        //int parseImmediate(int argn);  // could be literal or symbol
+
         void branchInstructionArgSwap(void);
         // TODO : no support for floats in the first version
         void parseASCIIZ(void);

@@ -1140,8 +1140,10 @@ void Lexer::parseMemArgs(void)
  * parseRegister()
  * Extract a single register argument from the input
  */
-int Lexer::parseRegister(int argn)
+Argument Lexer::parseRegister(int argn)
 {
+    Argument arg;
+
     this->nextToken();
     if(!this->cur_token.isReg())
     {
@@ -1149,7 +1151,7 @@ int Lexer::parseRegister(int argn)
         this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
            ") - expecting register, got [" + this->cur_token.toString() + "]";
 
-        return -1;
+        return arg;     // TODO : shut compiler up
     }
     
     this->text_info.type[argn] = this->cur_token.type;
@@ -1164,21 +1166,23 @@ int Lexer::parseRegister(int argn)
             this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
                ") invalid [" + this->cur_token.toString() + "]";
 
-            return -1;
+            return arg;     // TODO ; shut compiler up
         }
         this->text_info.val[argn+1] = std::stoi(this->cur_token.reg_offset, nullptr, 10);
         this->text_info.type[argn+1] = SYM_LITERAL;
     }
 
-    return 0;
+    return arg; // TODO: shut compiler up
 }
 
 /*
  * parseImmediate()
  * Extract an immediate or label from the input
  */
-int Lexer::parseImmediate(int argn)
+Argument Lexer::parseImmediate(int argn)
 {
+    Argument arg;
+
     this->nextToken();
     if(this->cur_token.type == SYM_LITERAL || this->cur_token.type == SYM_LABEL)
     {
@@ -1196,14 +1200,14 @@ int Lexer::parseImmediate(int argn)
 
         }
 
-        return 0;
+        return arg;     // TODO : just to shut compiler up
     }
 
     this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
        ") expected literal or symbol, got [" + this->cur_token.toString() + "]";
     this->text_info.error = true;
 
-    return -1;
+    return arg;     // shut compiler up
 }
 
 /*
