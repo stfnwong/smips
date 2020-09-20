@@ -59,12 +59,9 @@ SourceInfo get_mult_add_expected_dis(void)
     line.init();
     line.addr = 0x00400000;
     line.opcode = Opcode(LEX_LW, "lw");
-    line.val[0] = REG_TEMP_0;
-    line.val[1] = REG_GLOBAL;
-    line.val[2] = 4;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);
+    line.args[2] = Argument(SYM_LITERAL, 4);
     line.is_imm  = true;
     info.addText(line);
 
@@ -72,24 +69,18 @@ SourceInfo get_mult_add_expected_dis(void)
     line.init();
     line.addr = 0x00400004;
     line.opcode = Opcode(LEX_MULT, "mult");
-    line.val[0] = REG_TEMP_0;
-    line.val[1] = REG_TEMP_0;
-    line.val[2] = REG_TEMP_0;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_REGISTER;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_0);
     info.addText(line);
 
     // lw $t1 4($gp)
     line.init();
     line.addr = 0x00400008;
     line.opcode = Opcode(LEX_LW, "lw");
-    line.val[0] = REG_TEMP_1;
-    line.val[1] = REG_GLOBAL;
-    line.val[2] = 4;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);
+    line.args[2] = Argument(SYM_LITERAL, 4);
     line.is_imm = true;
     info.addText(line);
 
@@ -97,12 +88,9 @@ SourceInfo get_mult_add_expected_dis(void)
     line.init();
     line.addr = 0x0040000C;
     line.opcode = Opcode(LEX_ORI, "ori");
-    line.val[0] = REG_TEMP_2;
-    line.val[1] = REG_ZERO;
-    line.val[2] = 3;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
+    line.args[1] = Argument(SYM_REGISTER, REG_ZERO);
+    line.args[2] = Argument(SYM_LITERAL, 3);
     line.is_imm = true;
     info.addText(line);
 
@@ -110,34 +98,27 @@ SourceInfo get_mult_add_expected_dis(void)
     line.init();
     line.addr = 0x00400010;
     line.opcode = Opcode(LEX_MULT, "mult");
-    line.val[0] = REG_TEMP_1;
-    line.val[1] = REG_TEMP_1;
-    line.val[2] = REG_TEMP_2;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_REGISTER;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_2);
     info.addText(line);
 
     // add $t2, $t0, $t1
     line.init();
     line.addr = 0x00400014;
     line.opcode = Opcode(LEX_ADD, "add");
-    line.val[0] = REG_TEMP_2;
-    line.val[1] = REG_TEMP_0;
-    line.val[2] = REG_TEMP_1;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_REGISTER;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_1);
     info.addText(line);
 
     // sw $t2, $0($gp)
     line.init();
     line.addr = 0x00400018;
     line.opcode = Opcode(LEX_SW, "sw");
-    line.val[0] = REG_TEMP_2;
-    line.val[1] = REG_GLOBAL;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
+    line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);
+    line.args[2] = Argument(SYM_LITERAL, 0);
     line.is_imm = true;
     info.addText(line);
 
@@ -179,24 +160,18 @@ SourceInfo get_for_loop_expected_dis(void)
     // add $t0, $gp, $zero 
     line.addr = 0x00400000;
     line.opcode = Opcode(LEX_ADD, "add");
-    line.val[0] = REG_TEMP_0;
-    line.val[1] = REG_GLOBAL;
-    line.val[2] = REG_ZERO;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_REGISTER;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);
+    line.args[2] = Argument(SYM_REGISTER, REG_ZERO);
     info.addText(line);
 
     // lw $t1, 4($gp)
     line.init();
     line.addr = 0x00400004;
     line.opcode = Opcode(LEX_LW, "lw");
-    line.val[0] = REG_TEMP_1;
-    line.val[1] = REG_GLOBAL;
-    line.val[2] = 4;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);
+    line.args[2] = Argument(SYM_LITERAL, 4);
     line.is_imm = true;
     info.addText(line);
 
@@ -204,92 +179,70 @@ SourceInfo get_for_loop_expected_dis(void)
     line.init();
     line.addr = 0x00400008;
     line.opcode = Opcode(LEX_SLL, "sll");
-    line.val[0] = REG_TEMP_1;
-    line.val[1] = REG_TEMP_1;
-    line.val[2] = 2;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[2] = Argument(SYM_LITERAL, 2);
     info.addText(line);
     
     // add $t1, $t1, $gp
     line.init();
     line.addr = 0x0040000C;
     line.opcode = Opcode(LEX_ADD, "add");
-    line.val[0] = REG_TEMP_1;
-    line.val[1] = REG_TEMP_1;
-    line.val[2] = 2;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[2] = Argument(SYM_REGISTER, REG_GLOBAL);
     info.addText(line);
 
     // ori $t2, $zero, 256
     line.init();
     line.addr = 0x00400010;
     line.opcode = Opcode(LEX_ORI, "ori");
-    line.val[0] = REG_TEMP_2;
-    line.val[1] = REG_ZERO;
-    line.val[2] = 256;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
+    line.args[1] = Argument(SYM_REGISTER, REG_ZERO);
+    line.args[2] = Argument(SYM_LITERAL, 256);
     info.addText(line);
 
     // sltu $t3, $t0, $t1
     line.init();
     line.addr = 0x00400014;
     line.opcode = Opcode(LEX_SLTU, "sltu");
-    line.val[0] = REG_TEMP_3;
-    line.val[1] = REG_TEMP_0;
-    line.val[2] = REG_TEMP_1;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_REGISTER;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_3);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_1);
     info.addText(line);
 
     // beq $t3, $zero, done 
     line.init();
     line.addr = 0x00400018;
     line.opcode = Opcode(LEX_BEQ, "beq");
-    line.val[0] = REG_TEMP_3;
-    line.val[1] = REG_ZERO;
-    line.val[2] = 0xC;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_3);
+    line.args[1] = Argument(SYM_REGISTER, REG_ZERO);
+    line.args[2] = Argument(SYM_LITERAL, 0xC);
     info.addText(line);
 
     // sw $t2, 28($t0)
     line.init();
     line.addr = 0x0040001C;
     line.opcode = Opcode(LEX_SW, "sw");
-    line.val[0] = REG_TEMP_2;
-    line.val[1] = REG_TEMP_0;
-    line.val[2] = 28;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[2] = Argument(SYM_LITERAL, 28);
     info.addText(line);
 
     // addi $t0, $t0 ,4
     line.init();
     line.addr = 0x00400020;
     line.opcode = Opcode(LEX_ADDI, "addi");
-    line.val[0] = REG_TEMP_0;
-    line.val[1] = REG_TEMP_0;
-    line.val[2] = 4;
-    line.type[0] = SYM_REGISTER;
-    line.type[1] = SYM_REGISTER;
-    line.type[2] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[2] = Argument(SYM_LITERAL, 4);
     info.addText(line);
 
     // j top
     line.init();
     line.addr = 0x00400024;
     line.opcode = Opcode(LEX_J, "j");
-    line.val[0] = -4;
-    line.type[0] = SYM_LITERAL;
+    line.args[0] = Argument(SYM_LITERAL, -4);
     info.addText(line);
 
     return info;

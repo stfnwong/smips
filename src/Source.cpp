@@ -66,36 +66,7 @@ bool Token::isOffset(void) const
  */
 std::string Token::toString(void) const
 {
-    switch(this->type)
-    {
-        case SYM_NONE:
-            return "NONE <" + this->val + ">";
-        case SYM_EOF:
-            return "EOF <" + this->val + ">";
-        case SYM_LABEL:
-            return "LABEL <" + this->val + ">";
-        case SYM_INSTR:
-            return "INSTR <" + this->val + ">";
-        case SYM_LITERAL:
-            return "LITERAL <" + this->val + ">";
-        case SYM_DIRECTIVE:
-            return "DIRECTIVE <" + this->val + ">";
-        case SYM_CHAR:
-            return "CHAR <" + this->val + ">";
-        case SYM_STRING:
-            return "STRING <" + this->val + ">";
-        case SYM_SYSCALL:
-            return "SYSCALL";
-        // Registers
-        case SYM_REGISTER:
-            {
-                if(this->reg_offset != "\0")
-                    return "REGISTER <" + this->val + ">[" + this->reg_offset + "]";
-                return "REGISTER <" + this->val + ">";
-            }
-        default:
-            return "NULL <" + this->val + ">";
-    }
+    return TokenToString(this->type) + "<" + this->val + ">";
 }
 
 
@@ -130,14 +101,15 @@ bool Token::operator!=(const Token& that) const
 }
 
 // ================ ARGUMENT ================ //
-Argument::Argument() : type(SYM_NONE), val(0) {} 
+Argument::Argument() : type(SYM_NONE), val(0), offset(-1)  {} 
 
-Argument::Argument(const TokenType& t, int v) : type(t), val(v) {} 
+Argument::Argument(const TokenType& t, int v) : type(t), val(v), offset(-1) {} 
 
 void Argument::init(void)
 {
     this->type = SYM_NONE;
     this->val = 0;
+    this->offset = -1;
 }
 
 bool Argument::operator==(const Argument& that) const
@@ -145,6 +117,9 @@ bool Argument::operator==(const Argument& that) const
     if(this->type != that.type)
         return false;
     if(this->val != that.val)
+        return false;
+    // don't do this check unless our side has a real offset
+    if(this->offset > -1 && (this->offset != that.offset))
         return false;
 
     return true;
@@ -159,7 +134,11 @@ std::string Argument::toString(void) const
 {
     std::ostringstream oss;
 
-    oss << TokenToString(this->type) << " " << this->val; 
+    oss << TokenToString(this->type) << " ";
+    if(this->offset > -1)
+        oss << std::dec << this->offset << "(" << this->val << ")";
+    else
+        oss << this->val;
 
     return oss.str();
 }
@@ -195,10 +174,7 @@ void TextInfo::init(void)
     this->opcode.init();
 
     for(int i = 0; i < 3; ++i)
-    {
-        this->val[i]    = 0;
-        this->type[i]   = SYM_NONE;
-    }
+        this->args[i].init();
 }
 
 /*
@@ -246,31 +222,31 @@ std::string TextInfo::toString(void) const
     for(auto i = 0; i < 3; ++i)
     {
         // TODO : come back to this... temp registers are in two places in register map
-        //if(this->type[i] == SYM_REG_TEMP)
-        //    oss << "t" << this->val[i] << " ";
-        if(this->type[i] == SYM_REGISTER)
+        //if(this->args[i].type == SYM_REG_TEMP)
+        //    oss << "t" << this->args[i].val << " ";
+        if(this->args[i].type == SYM_REGISTER)
         {
-            if(this->val[i] == REG_AT)
+            if(this->args[i].val == REG_AT)
                 oss << "at" << " ";     
-            else if(this->val[i] >= REG_ARG_0 && this->val[i] <= REG_ARG_3)
-                oss << "a" << std::dec << this->val[i] << " ";
-            else if(this->val[i] == REG_RETURN)
-                oss << "r" << std::dec << this->val[i] << " ";
-            else if(this->val[i] == REG_RETURN)
+            else if(this->args[i].val >= REG_ARG_0 && this->args[i].val <= REG_ARG_3)
+                oss << "a" << std::dec << this->args[i].val << " ";
+            else if(this->args[i].val == REG_RETURN)
+                oss << "r" << std::dec << this->args[i].val << " ";
+            else if(this->args[i].val == REG_RETURN)
                 oss << "RA ";
-            else if(this->val[i] == REG_ZERO)
+            else if(this->args[i].val == REG_ZERO)
                 oss << "Z ";
-            else if(this->val[i] == REG_GLOBAL)
+            else if(this->args[i].val == REG_GLOBAL)
                 oss << "G  ";
-            else if(this->val[i] == REG_FRAME)
-                oss << "F+" << std::dec << this->val[i];
-            else if(this->val[i] == REG_STACK)
-                oss << "S+" << std::dec << this->val[i];
-            else if(this->val[i] >= REG_SAVED_0 && this->val[i] <= REG_SAVED_7)
-                oss << "s" << std::dec << this->val[i] << " ";
+            else if(this->args[i].val == REG_FRAME)
+                oss << "F+" << std::dec << this->args[i].val;
+            else if(this->args[i].val == REG_STACK)
+                oss << "S+" << std::dec << this->args[i].val;
+            else if(this->args[i].val >= REG_SAVED_0 && this->args[i].val <= REG_SAVED_7)
+                oss << "s" << std::dec << this->args[i].val << " ";
         }
         // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
-        else if(this->type[i] == SYM_LITERAL)       
+        else if(this->args[i].type == SYM_LITERAL)       
             oss << "L  ";
         else
             oss << "   ";
@@ -279,21 +255,21 @@ std::string TextInfo::toString(void) const
     // TODO : maybe add the 'symbol' first, then print the correct value
     // literal (if applicable)
     if(this->is_symbol)
-        oss << "0x" << std::hex << std::setw(8) << this->val[2];
+        oss << "0x" << std::hex << std::setw(8) << this->args[2].val;
     //else if(this->is_imm)
-    //    oss << "0x" << std::hex << std::setw(8) << this->val[2];
-    else if(!this->is_imm && (this->type[1] == SYM_LITERAL))
-        oss << " +0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
-    else if(!this->is_imm && (this->type[2] == SYM_LITERAL))
-        oss << "   +" << std::left << std::dec << std::setw(8) << std::setfill(' ') << this->val[2] << "  ";
+    //    oss << "0x" << std::hex << std::setw(8) << this->args[2].val;
+    else if(!this->is_imm && (this->args[1].type == SYM_LITERAL))
+        oss << " +0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
+    else if(!this->is_imm && (this->args[2].type == SYM_LITERAL))
+        oss << "   +" << std::left << std::dec << std::setw(8) << std::setfill(' ') << this->args[2].val << "  ";
     else if(this->is_imm && this->upper)
-        oss << "U 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
+        oss << "U 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
     else if(this->is_imm && this->lower)
-        oss << "L 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
-    else if(this->is_imm && (this->type[1] == SYM_LITERAL))
-        oss << "  0x" << std::hex << std::setw(8) << this->val[1];
-    else if(this->is_imm && (this->type[2] == SYM_LITERAL))
-        oss << "  0x" << std::hex << std::setw(8) << this->val[2];
+        oss << "L 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
+    else if(this->is_imm && (this->args[1].type == SYM_LITERAL))
+        oss << "  0x" << std::hex << std::setw(8) << this->args[1].val;
+    else if(this->is_imm && (this->args[2].type == SYM_LITERAL))
+        oss << "  0x" << std::hex << std::setw(8) << this->args[2].val;
     else
         oss << "            ";  // TODO: what spacing options do I have for keeping constant width?
     // spacing chars
@@ -323,10 +299,10 @@ std::string TextInfo::toInstrString(void) const
     oss << this->opcode.mnemonic << " ";
     for(int i = 0; i < 3; ++i)
     {
-        if(this->type[i] == SYM_REGISTER)
-            oss << mips_reg_types[this->val[i]].repr;
-        if(this->is_imm && this->type[i] == SYM_LITERAL)
-            oss << std::dec << this->val[i];
+        if(this->args[i].type == SYM_REGISTER)
+            oss << mips_reg_types[this->args[i].val].repr;
+        if(this->is_imm && this->args[i].type == SYM_LITERAL)
+            oss << std::dec << this->args[i].val;
         if(i == 2)
             oss << " ";
         else
@@ -370,7 +346,7 @@ bool TextInfo::operator==(const TextInfo& that) const
 
     for(int i = 0; i < 3; ++i)
     {
-        if(this->val[i] != that.val[i])
+        if(this->args[i].val != that.args[i].val)
             return false;
     }
 
@@ -468,10 +444,10 @@ std::string TextInfo::diff(const TextInfo& that) const
     // create one error for each mismatched argument
     for(int i = 0; i < 3; ++i)
     {
-        if(this->val[i] != that.val[i])
+        if(this->args[i].val != that.args[i].val)
         {
-            oss << "val " << i << " [" << this->val[i] << 
-                "] does not match [" << that.val[i] << 
+            oss << "val " << i << " [" << this->args[i].val << 
+                "] does not match [" << that.args[i].val << 
                 "]" << std::endl;
             num_err += 1;
         }

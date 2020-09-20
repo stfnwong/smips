@@ -131,11 +131,21 @@ class Lexer
             function is where we deal with handling the correspondence between 
             each Argument structure and the TextInfo. For instance, if we try to
             parse and Immediate we should also set is_imm.
+
+            How are offsets going to work? We could just put in the Argument. Since we
+            know which instruction we are checking we can just pull it out only if its
+            and instruction which we know accepts offsets.
         */
-        Argument parseRegister(int argn);
-        Argument parseImmediate(int argn);  // could be literal or symbol
-        //int parseRegister(int argn);
-        //int parseImmediate(int argn);  // could be literal or symbol
+        // parser helpers 
+        void parse_i(void);
+        void parse_r(void);
+        void parse_rr(void);
+        void parse_ri(void);
+        void parse_rri(void);
+        void parse_rrr(void);
+
+        Argument parseRegister(void);
+        Argument parseImmediate(void);  // could be literal or symbol
 
         void branchInstructionArgSwap(void);
         // TODO : no support for floats in the first version

@@ -115,6 +115,7 @@ struct Argument
 {
     TokenType type;
     int       val;
+    int       offset;  
 
     public:
         Argument();
@@ -154,8 +155,6 @@ struct TextInfo
     bool         lower;
     bool         psuedo;
     Argument     args[3];
-    int          val[3];       // value of literal or register. Register values are as per the register map
-    TokenType    type[3];      // record of types for each register
     Opcode       opcode;
 
     public:

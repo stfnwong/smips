@@ -41,8 +41,8 @@ TEST_CASE("init_text_info", "[classic]")
     Opcode    blank_opcode;
     for(int i = 0; i < 3; ++i)
     {
-        REQUIRE(0 == test_info.val[i]);
-        REQUIRE(blank_token_type == test_info.type[i]);
+        REQUIRE(0 == test_info.args[i].val);
+        REQUIRE(blank_token_type == test_info.args[i].type);
     }
     REQUIRE(blank_opcode == test_info.opcode);
 }
