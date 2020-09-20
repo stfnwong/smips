@@ -827,6 +827,7 @@ void Lexer::parseInstr(int line_num)
         
         case LEX_LUI:
             this->text_info.is_imm = true;
+            this->text_info.upper = true;
             this->parse_ri();
             break;
 
@@ -1092,30 +1093,6 @@ void Lexer::parseInstr(int line_num)
 //}
 
 
-/*
- * parseMemArgs()
- */
-void Lexer::parseMemArgs(void)
-{
-    int argn;
-    int status;
-
-    for(argn = 0; argn < 2; ++argn)
-    {
-        //status = this->parseRegister(argn);
-        if(status < 0)  // TODO : an alternative here would be to check text_info.error...
-        {
-            if(this->verbose)
-            {
-                std::cout << "[" << __func__ << "] " << 
-                    this->text_info.errstr << std::endl;
-            }
-
-            return;
-        }
-    }
-}
-
 // parse a single register
 void Lexer::parse_r(void)
 {
@@ -1127,7 +1104,10 @@ void Lexer::parse_i(void)
 {
     this->text_info.args[0] = this->parseImmediate();
     if(this->text_info.args[0].type == SYM_LABEL)
+    {
         this->text_info.is_symbol = true;
+        this->text_info.symbol = this->cur_token.val;
+    }
     else
         this->text_info.is_symbol = false;
 }
@@ -1142,8 +1122,16 @@ void Lexer::parse_rr(void)
 void Lexer::parse_ri(void)
 {
     this->text_info.args[0] = this->parseRegister();
-    this->text_info.args[1] = this->parseImmediate();
-    if(!(this->text_info.args[1].type == SYM_LITERAL || this->text_info.args[1].type == SYM_LABEL))
+    this->text_info.args[1] = Argument(SYM_NONE, 0);
+    this->text_info.args[2] = this->parseImmediate();
+
+    // immediate must be either a symbol (label) or literal
+    if(this->text_info.args[2].type == SYM_LABEL)
+    {
+        this->text_info.is_symbol = true;
+        this->text_info.symbol = this->cur_token.val;
+    }
+    else if(this->text_info.args[2].type != SYM_LITERAL)
     {
         this->text_info.errstr = "Argument (1) expected literal or symbol, got [" + 
             TokenToString(this->text_info.args[2].type) + 
@@ -1162,9 +1150,13 @@ void Lexer::parse_rri(void)
     else
         this->text_info.args[2] = this->parseImmediate();
 
-    this->text_info.is_symbol = (this->text_info.args[2].type == SYM_LABEL) ? true : false;
-
-    if(!(this->text_info.args[2].type == SYM_LITERAL || this->text_info.args[2].type == SYM_LABEL))
+    // immediate must be either a symbol (label) or literal
+    if(this->text_info.args[2].type == SYM_LABEL)
+    {
+        this->text_info.is_symbol = true;
+        this->text_info.symbol = this->cur_token.val;
+    }
+    else if(this->text_info.args[2].type != SYM_LITERAL)
     {
         this->text_info.errstr = "Argument (2) expected literal or symbol, got [" + 
             TokenToString(this->text_info.args[2].type) + 
@@ -1231,77 +1223,21 @@ Argument Lexer::parseRegister(void)
  */
 Argument Lexer::parseImmediate(void)
 {
-    Argument arg;
-
     this->nextToken();
-
-    if(this->cur_token.type == SYM_LITERAL || this->cur_token.type == SYM_LABEL)
+    if(this->cur_token.type == SYM_LITERAL)
     {
-        arg.type = this->cur_token.type;
-        if(arg.type == SYM_LITERAL)
-            arg.val = std::stoi(this->cur_token.val, nullptr, 10);
+        std::cout << "[" << __func__ << "] val = " 
+            << std::stoi(this->cur_token.val, nullptr, 10) 
+            << std::endl;
 
-
-        //this->text_info.type[argn] = this->cur_token.type;
-        //if(this->cur_token.type == SYM_LITERAL)
-        //{
-        //    this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-        //    if(this->text_info.upper || this->text_info.lower)
-        //        this->text_info.val[argn] = this->text_info.val[argn] & 0xFFFF; // truncate down to 16-bits
-        //}
-        //else
-        //{
-        //    this->text_info.is_symbol = true;
-        //    this->text_info.symbol = std::string(this->cur_token.val);
-
-        //}
-
-        //return arg;     // TODO : just to shut compiler up
+        return Argument(SYM_LITERAL, std::stoi(this->cur_token.val, nullptr, 10));
     }
+    if(this->cur_token.type == SYM_LABEL)
+        return Argument(SYM_LABEL, 0);
 
-
-    return arg;     // shut compiler up
+    return Argument();
 }
 
-/*
- * parseRegArgs()
- * Parse some number of register arguments, eg for arithmetic
- * and logic instructions
- */
-void Lexer::parseRegArgs(const int num_args)
-{
-    int argn;
-    int status;
-
-    for(argn = 0; argn < num_args; ++argn)
-    {
-        //if(this->text_info.is_imm && argn == num_args-1)
-        //    status = this->parseImmediate(argn);
-        //else
-        //    status = this->parseRegister(argn);
-
-        //if(status < 0)
-        //{
-        //    if(this->verbose)
-        //    {
-        //        std::cout << "[" << __func__ << "] " << 
-        //            this->text_info.errstr << std::endl;
-        //    }
-
-        //    return;
-        //}
-    }
-    // Offsets can only occur in certain instructions which have immediates.
-    // The rule needs to be that 
-    // 1) IF The instruction is an immediate instruction
-    // 2) AND there is an offset string in the current Token 
-    // 3) THEN we convert that offset string to an int and store it in 
-    // this->text_info.val[num_args+1] as a SYM_LITERAL 
-    // 4) This should work, because there are no 3-argument instructions 
-    // which accept a register offset in the right-most position. Or in
-    // other words, the register offset becomes the third argument (as a literal)
-    //
-}
 
 /*
  * branchInstructionArgSwap()
@@ -1476,11 +1412,11 @@ void Lexer::resolveLabels(void)
                 {
                     case LEX_LUI:
                     {
-                        line.args[1].type = SYM_LITERAL;
+                        line.args[1] = Argument();  
                         if(line.upper)
-                            line.args[1].val = (label_addr & 0xFFFF0000) >> 16;
+                            line.args[2] = Argument(SYM_LITERAL, (label_addr & 0xFFFF0000) >> 16);
                         else
-                            line.args[1].val = label_addr;
+                            line.args[2] = Argument(SYM_LITERAL, label_addr & 0x0000FFFF);
                     }
                     break;
 

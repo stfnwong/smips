@@ -174,8 +174,8 @@ SourceInfo get_array_expected_source_info(void)
     line.addr       = 0x00400000;
     line.opcode     = Opcode(LEX_LUI, "lui");
     line.args[0]    = Argument(SYM_REGISTER, REG_SAVED_0);
-    line.args[1]    = Argument(SYM_LITERAL, (DATA_START_ADDR & 0xFFFF0000) >> 16);
-    line.args[2]    = Argument();
+    line.args[1]    = Argument();
+    line.args[2]    = Argument(SYM_LITERAL, (DATA_START_ADDR & 0xFFFF0000) >> 16);
     line.is_symbol  = true;
     line.is_imm     = true;
     line.upper      = true;
@@ -823,7 +823,7 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.addr      = 0x00400014;
     line.opcode    = Opcode(LEX_LUI, "lui");
     line.args[0]   = Argument(SYM_REGISTER, REG_TEMP_0);
-    line.args[1]   = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1]   = Argument(SYM_NONE, 0);
     line.args[2]   = Argument(SYM_LITERAL, 75000 & 0x0000FFFF);
     line.upper     = true;
     line.is_imm    = true;
@@ -1089,15 +1089,16 @@ SourceInfo get_instr_test_source_info(void)
 
     // lui $t0 ten
     line.init();
-    line.line_num        = 9;
-    line.addr            = 0x00400000;
-    line.opcode = Opcode(LEX_LUI, "lui");
-    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
-    line.args[1] = Argument(SYM_LITERAL, (DATA_START_ADDR & 0xFFFF0000) >> 16); 
-    line.is_imm          = true;
-    line.is_symbol       = true;
-    line.upper           = true;
-    line.symbol          = "ten";
+    line.line_num  = 9;
+    line.addr      = 0x00400000;
+    line.opcode    = Opcode(LEX_LUI, "lui");
+    line.args[0]   = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1]   = Argument(SYM_NONE, 0);
+    line.args[2]   = Argument(SYM_LITERAL, (DATA_START_ADDR & 0xFFFF0000) >> 16); 
+    line.is_imm    = true;
+    line.is_symbol = true;
+    line.upper     = true;
+    line.symbol    = "ten";
     info.addText(line);
 
     // lui $at 4096
@@ -1105,8 +1106,9 @@ SourceInfo get_instr_test_source_info(void)
     line.line_num = 10;
     line.addr     = 0x00400004;
     line.opcode   = Opcode(LEX_LUI, "lui");
-    line.args[0]  = Argument(SYM_REGISTER, REG_TEMP_0);
-    line.args[1]  = Argument(SYM_LITERAL, 4096);
+    line.args[0]  = Argument(SYM_REGISTER, REG_AT);
+    line.args[1]  = Argument(SYM_NONE, 0);
+    line.args[2]  = Argument(SYM_LITERAL, 4096);
     line.is_imm   = true;
     line.upper    = true;
     info.addText(line);

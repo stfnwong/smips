@@ -256,8 +256,6 @@ std::string TextInfo::toString(void) const
     // literal (if applicable)
     if(this->is_symbol)
         oss << "0x" << std::hex << std::setw(8) << this->args[2].val;
-    //else if(this->is_imm)
-    //    oss << "0x" << std::hex << std::setw(8) << this->args[2].val;
     else if(!this->is_imm && (this->args[1].type == SYM_LITERAL))
         oss << " +0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
     else if(!this->is_imm && (this->args[2].type == SYM_LITERAL))
@@ -346,7 +344,7 @@ bool TextInfo::operator==(const TextInfo& that) const
 
     for(int i = 0; i < 3; ++i)
     {
-        if(this->args[i].val != that.args[i].val)
+        if(this->args[i] != that.args[i])
             return false;
     }
 
@@ -444,11 +442,11 @@ std::string TextInfo::diff(const TextInfo& that) const
     // create one error for each mismatched argument
     for(int i = 0; i < 3; ++i)
     {
-        if(this->args[i].val != that.args[i].val)
+        if(this->args[i] != that.args[i])
         {
-            oss << "val " << i << " [" << this->args[i].val << 
-                "] does not match [" << that.args[i].val << 
-                "]" << std::endl;
+            oss << "arg " << i << "[" << this->args[i].toString() << "]" 
+                << " does not match [" << that.args[i].toString() << "]" 
+                << std::endl;
             num_err += 1;
         }
     }

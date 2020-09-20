@@ -170,15 +170,9 @@ class Lexer
         void parseAddress(int num);
         void parseBranch(void);
         void parseBranchZero(void);
-        void parseMemArgs(void); // TODO : drop - just use immediate
-        void parseRegArgs(const int num);
         void parseJump(void);
 		void parseLabel(void);
         void parseLine(void);
-
-
-    private:
-        // psuedo instruction expansion
 
     private:
         // update instruction addresses when expanding psuedo ops
