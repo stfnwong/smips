@@ -66,7 +66,7 @@ bool Token::isOffset(void) const
  */
 std::string Token::toString(void) const
 {
-    return TokenToString(this->type) + "<" + this->val + ">";
+    return TokenToString(this->type) + " <" + this->val + ">";
 }
 
 

@@ -63,8 +63,8 @@ Instr Assembler::asm_r_instr(const TextInfo& l, const int n)
     for(int i = 0; i < n; ++i)
     {
         std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
-            << " arg " << std::dec << i << " val : " << l.val[i] << std::endl;
-        instr.ins = instr.ins | ((l.val[i] & 0xFF) << this->r_instr_offsets[i]);
+            << " arg " << std::dec << i << " val : " << l.args[i].val << std::endl;
+        instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i]);
     }
 
     return instr;
@@ -82,8 +82,8 @@ Instr Assembler::asm_i_instr(const TextInfo& l, const int n)
     for(int i = 0; i < n; ++i)
     {
         std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
-            << " arg " << std::dec << i << " val : " << l.val[i] << std::endl;
-        instr.ins = instr.ins | ((l.val[i] & 0xFFFF) << this->i_instr_offsets[i]);
+            << " arg " << std::dec << i << " val : " << l.args[i].val << std::endl;
+        instr.ins = instr.ins | ((l.args[i].val & 0xFFFF) << this->i_instr_offsets[i]);
     }
 
     return instr;
@@ -98,7 +98,7 @@ Instr Assembler::asm_j_instr(const TextInfo& l)
     Instr instr;
 
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->j_instr_op_offset);
-    instr.ins = l.val[2];       // TODO : maybe change this in lexer...?
+    //instr.ins = l.args.val[2];       // TODO : maybe change this in lexer...?
     std::cout << "[" << __func__ << "] set J instr val to " << instr.toString() << std::endl;
 
     return instr;

@@ -63,12 +63,9 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
     }
 
     // arguments 
-    ti.val[0] = (instr & (0x1F << 16)) >> 16;       // rs
-    ti.val[1] = (instr & (0x1F << 21)) >> 21;       // rt
-    ti.val[2] = (instr & 0xFFFF);
-    ti.type[0] = SYM_REGISTER;
-    ti.type[1] = SYM_REGISTER;
-    ti.type[2] = SYM_LITERAL;
+    ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
+    ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
+    ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));
 
     return ti;
 }
@@ -130,18 +127,12 @@ TextInfo dis_r_instr(uint32_t instr, uint32_t addr)
     }
     
     // arguments 
-    ti.val[1] = (instr & (0x1F << 21)) >> 21;       // rs 
-    ti.val[0] = (instr & (0x1F << 11)) >> 11;       // rd
+    ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rs 
+    ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);       // rd
     if(ti.opcode.instr == LEX_SLL || ti.opcode.instr == LEX_SRL)
-        ti.val[2] = (instr & (0x1F << 6)) >> 6;
+        ti.args[2] = Argument(SYM_LITERAL, (instr & (0x1F << 6)) >> 6);      // rt
     else
-        ti.val[2] = (instr & (0x1F << 16)) >> 16;   // rt 
-    ti.type[0] = SYM_REGISTER;
-    ti.type[1] = SYM_REGISTER;
-    if(ti.opcode.instr == LEX_SLL || ti.opcode.instr == LEX_SRL)
-        ti.type[2] = SYM_LITERAL;
-    else
-        ti.type[2] = SYM_REGISTER;
+        ti.args[2] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
 
     return ti;
 }
@@ -162,8 +153,7 @@ TextInfo dis_j_instr(uint32_t instr, uint32_t addr)
     else
         ti.opcode = Opcode(LEX_JAL, "jal");
 
-    ti.type[0] = SYM_LITERAL;
-    ti.val[0] = instr & 0x02FFFFFF;
+    ti.args[2] = Argument(SYM_LITERAL, instr & 0x02FFFFFF);
 
     return ti;
 }
