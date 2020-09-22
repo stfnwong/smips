@@ -284,6 +284,7 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         // We handle offsets here so that any number of parens 
         // can appear before the register name. Offsets only occur
         // before a '$' character
+        out_token.reg_offset = "0";
         if(std::isdigit(token[tok_ptr]))
         {
             out_token = this->extractLiteral(token, tok_ptr, end_offset);
@@ -864,8 +865,9 @@ void Lexer::parseInstr(int line_num)
         case LEX_BGE:
         case LEX_BLE:
         case LEX_BGTU:
+            this->text_info.is_imm = true;
             this->text_info.psuedo = true;
-            this->parse_rrr();
+            this->parse_rri();
             break;
 
         case LEX_BEQZ:
@@ -883,10 +885,6 @@ void Lexer::parseInstr(int line_num)
 
         // psudo-ops 
         case LEX_LA:
-            this->parse_r();
-            this->text_info.psuedo = true;
-            break;
-
         case LEX_LI:
             this->text_info.is_imm = true;
             this->parse_ri();
@@ -1375,6 +1373,9 @@ void Lexer::parseLine(void)
         this->text_info.addr     = this->text_addr;
         this->source_info.addText(this->text_info);
     }
+
+    std::cout << "[" << __func__ << "] there are " << std::dec << 
+        this->source_info.getTextInfoSize() << " entries in text section" << std::endl;
 }
 
 /*
@@ -1422,6 +1423,7 @@ void Lexer::resolveLabels(void)
 
                     case LEX_ORI:
                     {
+                        line.args[2].type = SYM_LITERAL;
                         if(line.lower)
                             line.args[2].val = (label_addr & 0x0000FFFF);
                         else
@@ -1433,7 +1435,17 @@ void Lexer::resolveLabels(void)
                     {
                         // convert to offset
                         offset = label_addr - line.addr;
-                        line.args[2].val = (offset & 0x0000FFFF);
+                        line.args[2].type = SYM_LITERAL;
+                        line.args[2].val  = (offset & 0x0000FFFF);
+                    }
+                    break;
+
+                    case LEX_J:
+                    {
+                        // same as default, except we also reset arg[0]
+                        line.args[2].type = SYM_LITERAL;
+                        line.args[2].val = label_addr;
+                        line.args[0] = Argument();
                     }
                     break;
 
@@ -1537,8 +1549,8 @@ void Lexer::expandPsuedo(void)
                     ti.opcode = Opcode(LEX_BNE, "bne");
                 ti.addr      = this->text_info.addr + 4;
                 ti.line_num  = this->text_info.line_num;
-                ti.args[0]   = Argument(SYM_REGISTER, REG_ZERO);
-                ti.args[1]   = Argument(SYM_REGISTER, REG_AT);
+                ti.args[0]   = Argument(SYM_REGISTER, REG_AT);
+                ti.args[1]   = Argument(SYM_REGISTER, REG_ZERO);
                 ti.args[2]   = this->text_info.args[2];
                 ti.is_imm    = this->text_info.is_imm;
                 ti.symbol    = this->text_info.symbol;
@@ -1603,13 +1615,16 @@ void Lexer::expandPsuedo(void)
                 ti.addr      = this->text_info.addr + 4;
                 ti.line_num  = this->text_info.line_num;
                 ti.args[0]   = this->text_info.args[0];
-                ti.args[1]   = this->text_info.args[1];
-                ti.args[2]   = this->text_info.args[1];
+                ti.args[1]   = this->text_info.args[0];
+                ti.args[2]   = Argument(
+                        this->text_info.args[2].type,
+                        this->text_info.args[2].val & 0x0000FFFF
+                        );
                 ti.is_imm    = true;
                 ti.is_symbol = true;
                 ti.lower     = true;
-                ti.symbol    = this->text_info.symbol;
                 ti.is_symbol = this->text_info.is_symbol;
+                ti.symbol    = this->text_info.symbol;
 
                 this->source_info.addText(ti);
                 this->incrTextAddr();
@@ -1621,12 +1636,16 @@ void Lexer::expandPsuedo(void)
             // 32-bit immediate (2 instrs)
             if(this->text_info.args[1].val > ((1 << 16)-1))
             {
-                ti.opcode = Opcode(LEX_LUI, "lui");
+                ti.opcode   = Opcode(LEX_LUI, "lui");
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
                 ti.args[0]  = this->text_info.args[0];
                 ti.args[1]  = Argument(SYM_NONE, 0);
-                ti.args[2]  = this->text_info.args[1];  // val & 0xFFFF0000  TODO: come back and implement bitwise ops?
+                ti.args[2]  = Argument(
+                        this->text_info.args[1].type, 
+                        this->text_info.args[1].val & 0xFFFF0000
+                        );
+                //ti.args[2]  = this->text_info.args[1];  // val & 0xFFFF0000  TODO: come back and implement bitwise ops?
                 ti.is_imm   = true;
                 ti.upper    = true;
 
@@ -1634,12 +1653,16 @@ void Lexer::expandPsuedo(void)
                 this->incrTextAddr();
 
                 ti.init();
-                ti.opcode = Opcode(LEX_ORI, "ori");
+                ti.opcode   = Opcode(LEX_ORI, "ori");
                 ti.addr     = this->text_info.addr + 4;
                 ti.line_num = this->text_info.line_num;
                 ti.args[0]  = this->text_info.args[0];
-                ti.args[1]  = Argument(SYM_NONE, 0);
-                ti.args[2]  = this->text_info.args[1];  // val & 0x0000FFFF
+                ti.args[1]  = this->text_info.args[0];
+                ti.args[2]  = Argument(
+                        this->text_info.args[2].type,
+                        this->text_info.args[2].val & 0x0000FFFF
+                        );
+                //ti.args[2]  = this->text_info.args[1];  // val & 0x0000FFFF
                 ti.is_imm   = true;
                 ti.lower    = true;
 
@@ -1649,12 +1672,12 @@ void Lexer::expandPsuedo(void)
             // 16-bit immediate (1 instr)
             else
             {
-                ti.opcode = Opcode(LEX_ORI, "ori");
+                ti.opcode   = Opcode(LEX_ORI, "ori");
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
                 ti.args[0]  = this->text_info.args[0];
                 ti.args[1]  = Argument(SYM_REGISTER, REG_ZERO);
-                ti.args[2]  = this->text_info.args[1];
+                ti.args[2]  = Argument(SYM_LITERAL, (this->text_info.args[2].val & 0x0000FFFF));
                 ti.is_imm   = true;
 
                 this->source_info.addText(ti);

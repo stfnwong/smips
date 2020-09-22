@@ -183,7 +183,8 @@ SourceInfo get_array_expected_source_info(void)
     info.addText(line);
     // [ori $s0 $s0, list]
     line.init();
-
+    line.line_num   = 10;
+    line.addr       = 0x00400004;
     line.opcode    = Opcode(LEX_ORI, "ori");
     line.args[0]   = Argument(SYM_REGISTER, REG_SAVED_0);
     line.args[1]   = Argument(SYM_REGISTER, REG_SAVED_0);
@@ -233,7 +234,6 @@ SourceInfo get_array_expected_source_info(void)
     line.is_label = true;
     line.label    = "loop";
     info.addText(line);
-
     // [bne $at, $zero, end_loop]
     // TODO : some args are flippped to pass a test.. but actually its better if we 
     // don't need to do this because its confusing...
@@ -242,7 +242,7 @@ SourceInfo get_array_expected_source_info(void)
     line.addr      = 0x00400014;
     line.opcode    = Opcode(LEX_BNE, "bne");
     line.args[0]   = Argument(SYM_REGISTER, REG_AT);
-    line.args[1]   = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1]   = Argument(SYM_REGISTER, REG_ZERO);
     line.args[2]   = Argument(SYM_LITERAL, 0x1C);
     // the immediate here is the offset to the address of end_loop
     line.is_symbol = true;
@@ -259,6 +259,7 @@ SourceInfo get_array_expected_source_info(void)
     line.opcode   = Opcode(LEX_LW, "lw");
     line.args[0]  = Argument(SYM_REGISTER, REG_ARG_0);
     line.args[1]  = Argument(SYM_REGISTER, REG_SAVED_0);
+    line.args[2]  = Argument(SYM_LITERAL, 0);
     info.addText(line);
 
     // line 18
@@ -626,7 +627,16 @@ TEST_CASE("test_array", "[classic]")
             std::cout << "     " << sym << " " << 
                 cur_sym.toString() << std::endl;
         }
+
     }
+    // TODO : remove 
+    // dump the output 
+    for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
+    {
+        TextInfo out_line = src_out.getText(line);
+        std::cout << std::dec << line+1 << std::endl << out_line.toString() << std::endl;
+    }
+    std::cout << std::endl;
 
     // Check each line in turn
     TextInfo expected_line;
@@ -647,6 +657,9 @@ TEST_CASE("test_array", "[classic]")
         }
         REQUIRE(expected_line == output_line);      
     }
+    REQUIRE(expected_src_out.getTextInfoSize() == src_out.getTextInfoSize());
+    REQUIRE(expected_src_out.getDataInfoSize() == src_out.getDataInfoSize());
+
 
     std::cout << "Error strings : " << std::endl << std::endl;
     std::cout << src_out.errString() << std::endl;
