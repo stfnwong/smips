@@ -1514,25 +1514,32 @@ void Lexer::expandPsuedo(void)
             {
                 // slt/sltu $at, $t, $s
                 ti.init();
-                ti.opcode.instr = (instr == LEX_BGTU) ? LEX_SLTU : LEX_SLT;
-                ti.opcode.mnemonic = "slt";
+                //ti.opcode.instr = (instr == LEX_BGTU) ? LEX_SLTU : LEX_SLT;
+
+                ti.opcode = (instr == LEX_BGTU) ? Opcode(LEX_SLTU, "sltu") : Opcode(LEX_SLT, "slt");
+                //ti.opcode.mnemonic = "slt";
                 ti.addr      = this->text_info.addr;
                 ti.line_num  = this->text_info.line_num;
 
-                for(int r = 0; r < 3; ++r)
-                    ti.args[r].type = SYM_REGISTER;
+                //for(int r = 0; r < 3; ++r)
+                //    ti.args[r].type = SYM_REGISTER;
 
-                ti.args[0].val = REG_AT;            
+                //ti.args[0].val = REG_AT;            
+                ti.args[0] = Argument(SYM_REGISTER, REG_AT);
                 // order is flipped for BGT, BLE, and BGTU
                 if(instr == LEX_BLT || instr == LEX_BGE)
                 {
-                    ti.args[1].val = this->text_info.args[0].val;
-                    ti.args[2].val = this->text_info.args[1].val;
+                    ti.args[1] = this->text_info.args[0];
+                    ti.args[2] = this->text_info.args[1];
+                    //ti.args[1].val = this->text_info.args[0].val;
+                    //ti.args[2].val = this->text_info.args[1].val;
                 }
                 else
                 {
-                    ti.args[1].val = this->text_info.args[1].val;
-                    ti.args[2].val = this->text_info.args[0].val;
+                    ti.args[1] = this->text_info.args[1];
+                    ti.args[2] = this->text_info.args[0];
+                    //ti.args[1].val = this->text_info.args[1].val;
+                    //ti.args[2].val = this->text_info.args[0].val;
                 }
                 ti.label     = this->text_info.label;
                 ti.is_label  = this->text_info.is_label;
@@ -1552,7 +1559,7 @@ void Lexer::expandPsuedo(void)
                 ti.args[0]   = Argument(SYM_REGISTER, REG_AT);
                 ti.args[1]   = Argument(SYM_REGISTER, REG_ZERO);
                 ti.args[2]   = this->text_info.args[2];
-                ti.is_imm    = this->text_info.is_imm;
+                ti.is_imm    = true;
                 ti.symbol    = this->text_info.symbol;
                 ti.is_symbol = this->text_info.is_symbol;
                 
@@ -1571,12 +1578,12 @@ void Lexer::expandPsuedo(void)
                 ti.line_num  = this->text_info.line_num;
                 ti.args[0]   = this->text_info.args[0];
                 ti.args[1]   = Argument(SYM_REGISTER, REG_ZERO);
-                ti.args[2]   = this->text_info.args[1];
+                ti.args[2]   = this->text_info.args[2];
                 ti.label     = this->text_info.label;
                 ti.is_label  = this->text_info.is_label;
                 ti.symbol    = this->text_info.symbol;
                 ti.is_symbol = this->text_info.is_symbol;
-                ti.is_imm    = this->text_info.is_imm;
+                ti.is_imm    = true;
 
                 this->source_info.addText(ti);
                 this->incrTextAddr();
@@ -1601,7 +1608,10 @@ void Lexer::expandPsuedo(void)
                 ti.line_num  = this->text_info.line_num;
                 ti.args[0]   = this->text_info.args[0];
                 ti.args[1]   = Argument(SYM_NONE, 0);
-                ti.args[2]   = this->text_info.args[1];
+                ti.args[2]   = Argument(
+                        this->text_info.args[2].type,
+                        (this->text_info.args[2].val & 0xFFFF0000) >> 16
+                        );
                 ti.is_imm    = true;
                 ti.upper     = true;   
                 ti.is_symbol = this->text_info.is_symbol;
@@ -1634,7 +1644,7 @@ void Lexer::expandPsuedo(void)
         case LEX_LI:
             ti.init();
             // 32-bit immediate (2 instrs)
-            if(this->text_info.args[1].val > ((1 << 16)-1))
+            if(this->text_info.args[2].val > ((1 << 16)-1))
             {
                 ti.opcode   = Opcode(LEX_LUI, "lui");
                 ti.addr     = this->text_info.addr;
@@ -1642,8 +1652,8 @@ void Lexer::expandPsuedo(void)
                 ti.args[0]  = this->text_info.args[0];
                 ti.args[1]  = Argument(SYM_NONE, 0);
                 ti.args[2]  = Argument(
-                        this->text_info.args[1].type, 
-                        this->text_info.args[1].val & 0xFFFF0000
+                        this->text_info.args[2].type, 
+                        (this->text_info.args[2].val & 0xFFFF0000) >> 16
                         );
                 //ti.args[2]  = this->text_info.args[1];  // val & 0xFFFF0000  TODO: come back and implement bitwise ops?
                 ti.is_imm   = true;

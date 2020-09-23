@@ -629,14 +629,6 @@ TEST_CASE("test_array", "[classic]")
         }
 
     }
-    // TODO : remove 
-    // dump the output 
-    for(unsigned int line = 0; line < expected_src_out.getTextInfoSize(); ++line)
-    {
-        TextInfo out_line = src_out.getText(line);
-        std::cout << std::dec << line+1 << std::endl << out_line.toString() << std::endl;
-    }
-    std::cout << std::endl;
 
     // Check each line in turn
     TextInfo expected_line;
@@ -773,9 +765,9 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.line_num = 8;
     line.addr     = 0x00400000;
     line.opcode   = Opcode(LEX_SLT, "slt");
-    line.args[0]  = Argument(SYM_REGISTER, REG_SAVED_0);
+    line.args[0]  = Argument(SYM_REGISTER, REG_AT);
     line.args[1]  = Argument(SYM_REGISTER, REG_TEMP_1);
-    line.args[2]  = Argument(SYM_LITERAL, 8);
+    line.args[2]  = Argument(SYM_REGISTER, REG_SAVED_0);
     info.addText(line);
     // bne $at, $zero, 8
     // NOTE : args flipped for assembler
@@ -799,25 +791,25 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.addr     = 0x00400008;
     line.opcode   = Opcode(LEX_ORI, "ori");
     line.args[0]  = Argument(SYM_REGISTER, REG_TEMP_2);
-    line.args[1]  = Argument(SYM_NONE, 0);
+    line.args[1]  = Argument(SYM_REGISTER, REG_ZERO);
     line.args[2]  = Argument(SYM_LITERAL, 5);
     line.is_imm   = true;
     info.addText(line);
 
     // li $t1, 75000
     // 32-bit immedaite, therefore we need two instructions
-    // lui $t0,  7500 & (0xFFFF0000)
+    // lui $t0,  75000 & (0xFFFF0000)
     line.init();
     line.line_num = 10;
     line.addr     = 0x0040000C;
     line.opcode   = Opcode(LEX_LUI, "lui");
-    line.args[0]  = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[0]  = Argument(SYM_REGISTER, REG_TEMP_0);
     line.args[1]  = Argument(SYM_NONE, 0);
-    line.args[2]  = Argument(SYM_LITERAL, 75000 & 0xFFFF0000);
+    line.args[2]  = Argument(SYM_LITERAL, (75000 & 0xFFFF0000) >> 16);
     line.is_imm   = true;
     line.upper    = true;
     info.addText(line);
-    // ori $t0, $t0, 7500 & (0x0000FFFF)
+    // ori $t0, $t0, 75000 & (0x0000FFFF)
     line.init();
     line.line_num = 10;
     line.addr     = 0x00400010;
@@ -835,16 +827,16 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.line_num  = 11;
     line.addr      = 0x00400014;
     line.opcode    = Opcode(LEX_LUI, "lui");
-    line.args[0]   = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[0]   = Argument(SYM_REGISTER, REG_TEMP_1);
     line.args[1]   = Argument(SYM_NONE, 0);
-    line.args[2]   = Argument(SYM_LITERAL, 75000 & 0x0000FFFF);
+    line.args[2]   = Argument(SYM_LITERAL, (DATA_START_ADDR & 0xFFFF0000) >> 16);
     line.upper     = true;
     line.is_imm    = true;
     line.is_symbol = true;
     line.symbol    = "arr";
     info.addText(line);
 
-    // ori  $t1, $t1, 0x00400018 & (0x0000FFFF)
+    // ori  $t1, $t1, DATA_START_ADDR & (0x0000FFFF)
     line.init();
     line.line_num  = 11;
     line.addr      = 0x00400018;
@@ -964,8 +956,8 @@ SourceInfo get_psuedo_instr_source_info(void)
     line.line_num = 21;
     line.addr     = 0x00400040;
     line.opcode   = Opcode(LEX_BEQ, "beq");
-    line.args[0]  = Argument(SYM_REGISTER, REG_ZERO);
-    line.args[1]  = Argument(SYM_REGISTER, REG_AT);
+    line.args[0]  = Argument(SYM_REGISTER, REG_AT);
+    line.args[1]  = Argument(SYM_REGISTER, REG_ZERO);
     line.args[2]  = Argument(SYM_LITERAL, 0xA);
     line.is_imm   = true;
     info.addText(line);
