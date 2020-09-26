@@ -668,11 +668,11 @@ SourceInfo get_paren_expected_source_info(void)
     // line 4
     // lw $t1, ($gp)
     line.init();
-    line.line_num        = 4;
-    line.addr            = 0x00400000;
-    line.opcode = Opcode(LEX_LW, "lw");
-    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
-    line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);
+    line.line_num = 4;
+    line.addr     = 0x00400000;
+    line.opcode   = Opcode(LEX_LW, "lw");
+    line.args[0]  = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[1]  = Argument(SYM_REGISTER, REG_GLOBAL);
     info.addText(line);
 
     // line 5

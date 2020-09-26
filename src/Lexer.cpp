@@ -272,6 +272,7 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
 
     tok_ptr = start_offset;
     
+    out_token.reg_offset = "0";
     while(tok_ptr < token.length())
     {
         if(token[tok_ptr] == '(')
@@ -284,7 +285,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         // We handle offsets here so that any number of parens 
         // can appear before the register name. Offsets only occur
         // before a '$' character
-        out_token.reg_offset = "0";
         if(std::isdigit(token[tok_ptr]))
         {
             out_token = this->extractLiteral(token, tok_ptr, end_offset);
@@ -823,7 +823,7 @@ void Lexer::parseInstr(int line_num)
         // memory access with offsets
         case LEX_LW:
         case LEX_SW:
-            this->parse_rri();
+            this->parse_rr();
             break;
         
         case LEX_LUI:
@@ -1115,6 +1115,10 @@ void Lexer::parse_rr(void)
 {
     this->text_info.args[0] = this->parseRegister();
     this->text_info.args[1] = this->parseRegister();
+    // if the second register has an offset then add 
+    // an immediate in index 2 to reflect that
+    if(this->text_info.args[1].offset > 0)
+        this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
 }
 
 void Lexer::parse_ri(void)
