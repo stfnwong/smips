@@ -470,7 +470,7 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.opcode    = Opcode(LEX_BEQ, "beq");
     line.args[0]   = Argument(SYM_REGISTER, REG_TEMP_3);
     line.args[1]   = Argument(SYM_REGISTER, REG_ZERO);
-    line.args[2]   = Argument(SYM_LITERAL, 0x00400028);
+    line.args[2]   = Argument(SYM_LITERAL, 0x00400028 - 0x00400018);
     line.is_symbol = true;
     line.symbol    = "done";
     line.is_imm    = true;
@@ -673,6 +673,7 @@ SourceInfo get_paren_expected_source_info(void)
     line.opcode   = Opcode(LEX_LW, "lw");
     line.args[0]  = Argument(SYM_REGISTER, REG_TEMP_1);
     line.args[1]  = Argument(SYM_REGISTER, REG_GLOBAL);
+    line.args[2]  = Argument(SYM_LITERAL, 0);
     info.addText(line);
 
     // line 5

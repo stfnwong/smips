@@ -142,6 +142,7 @@ class Lexer
         void parse_rr(void);
         void parse_ri(void);
         void parse_rri(void);
+        void parse_rro(void);
         void parse_rrr(void);
 
         Argument parseRegister(void);

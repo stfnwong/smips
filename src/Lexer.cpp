@@ -272,7 +272,7 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
 
     tok_ptr = start_offset;
     
-    out_token.reg_offset = "0";
+    out_token.reg_offset = "-1";
     while(tok_ptr < token.length())
     {
         if(token[tok_ptr] == '(')
@@ -816,6 +816,7 @@ void Lexer::parseInstr(int line_num)
         case LEX_ORI:
         case LEX_SLTI:
         case LEX_SLTIU:
+        case LEX_SLL:
             this->text_info.is_imm = true;
             this->parse_rri();
             break;
@@ -823,7 +824,7 @@ void Lexer::parseInstr(int line_num)
         // memory access with offsets
         case LEX_LW:
         case LEX_SW:
-            this->parse_rr();
+            this->parse_rro();
             break;
         
         case LEX_LUI:
@@ -855,7 +856,7 @@ void Lexer::parseInstr(int line_num)
         case LEX_BNE:
             this->text_info.is_imm = true;
             this->parse_rri();
-            this->branchInstructionArgSwap();
+            //this->branchInstructionArgSwap();
             break;
 
         // BGX instructions need to be able to handle symbols as immediate arg
@@ -1142,13 +1143,32 @@ void Lexer::parse_ri(void)
     }
 }
 
+void Lexer::parse_rro(void)
+{
+    this->text_info.args[0] = this->parseRegister();
+    this->text_info.args[1] = this->parseRegister();
+    if(this->text_info.args[1].offset > -1)
+    {
+        std::cout << "[" << __func__ << "] got offset in args[1] " << std::dec 
+            << this->text_info.args[1].offset << std::endl;
+        this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+    }
+    else
+        this->text_info.args[2] = Argument(SYM_LITERAL, 0);
+
+}
+
 // parse register, register, immediate
 void Lexer::parse_rri(void)
 {
     this->text_info.args[0] = this->parseRegister();
     this->text_info.args[1] = this->parseRegister();
     if(this->text_info.args[1].offset > -1)
+    {
+        std::cout << "[" << __func__ << "] got offset in args[1] " << std::dec 
+            << this->text_info.args[1].offset << std::endl;
         this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+    }
     else
         this->text_info.args[2] = this->parseImmediate();
 
@@ -1436,6 +1456,7 @@ void Lexer::resolveLabels(void)
                     break;
 
                     case LEX_BNE:
+                    case LEX_BEQ:
                     {
                         // convert to offset
                         offset = label_addr - line.addr;
@@ -1507,7 +1528,9 @@ void Lexer::expandPsuedo(void)
     TextInfo ti;
     uint32_t instr = this->text_info.opcode.instr;
 
-    // TODO : a lot of consolidation can happen here...
+    // TODO : debug, show the psuedo op before expansion 
+    std::cout << "[" << __func__ << "] expanding psuedo op : " << std::endl;
+    std::cout << this->text_info.toString() << std::endl;
     switch(instr)
     {
         case LEX_BGT:
@@ -1516,39 +1539,27 @@ void Lexer::expandPsuedo(void)
         case LEX_BLE:
         case LEX_BGTU:
             {
+                std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
                 // slt/sltu $at, $t, $s
                 ti.init();
-                //ti.opcode.instr = (instr == LEX_BGTU) ? LEX_SLTU : LEX_SLT;
-
-                ti.opcode = (instr == LEX_BGTU) ? Opcode(LEX_SLTU, "sltu") : Opcode(LEX_SLT, "slt");
-                //ti.opcode.mnemonic = "slt";
+                ti.opcode    = (instr == LEX_BGTU) ? Opcode(LEX_SLTU, "sltu") : Opcode(LEX_SLT, "slt");
                 ti.addr      = this->text_info.addr;
                 ti.line_num  = this->text_info.line_num;
 
-                //for(int r = 0; r < 3; ++r)
-                //    ti.args[r].type = SYM_REGISTER;
-
-                //ti.args[0].val = REG_AT;            
                 ti.args[0] = Argument(SYM_REGISTER, REG_AT);
-                // order is flipped for BGT, BLE, and BGTU
                 if(instr == LEX_BLT || instr == LEX_BGE)
                 {
                     ti.args[1] = this->text_info.args[0];
                     ti.args[2] = this->text_info.args[1];
-                    //ti.args[1].val = this->text_info.args[0].val;
-                    //ti.args[2].val = this->text_info.args[1].val;
                 }
                 else
                 {
                     ti.args[1] = this->text_info.args[1];
                     ti.args[2] = this->text_info.args[0];
-                    //ti.args[1].val = this->text_info.args[1].val;
-                    //ti.args[2].val = this->text_info.args[0].val;
                 }
                 ti.label     = this->text_info.label;
                 ti.is_label  = this->text_info.is_label;
 
-                std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
                 this->source_info.addText(ti);
                 this->incrTextAddr();
                 
