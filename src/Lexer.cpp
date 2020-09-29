@@ -837,7 +837,7 @@ void Lexer::parseInstr(int line_num)
         case LEX_DIVU:
         case LEX_MULT:
         case LEX_MULTU:
-            this->parse_rr();
+            this->parse_rrr();
             break;
 
         case LEX_ADD:

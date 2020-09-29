@@ -375,6 +375,8 @@ TEST_CASE("test_lex_mult_add", "[classic]")
             std::cout << "Line " << std::dec << line + 1 <<  "/" << 
                 std::dec << expected_src_out.getTextInfoSize() << 
                 " mismatch" << std::endl;
+            std::cout << "Expecting :" << std::endl << expected_line.toString() << std::endl;
+            std::cout << "Got :" << std::endl << output_line.toString() << std::endl;
             std::cout << std::endl << "    diff : " << std::endl;
             std::cout << expected_line.diff(output_line) << std::endl;
         }
