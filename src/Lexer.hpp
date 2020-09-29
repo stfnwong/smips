@@ -119,7 +119,6 @@ class Lexer
         Argument parseRegister(void);
         Argument parseImmediate(void);  // could be literal or symbol
 
-        void branchInstructionArgSwap(void);
         // TODO : no support for floats in the first version
         void parseASCIIZ(void);
         void parseAlign(void);
@@ -139,7 +138,6 @@ class Lexer
         void parseInstr(int line_num);
         void parseDirective(int line_num);
         void resolveLabels(void);
-		void parseLabel(void);
         void parseLine(void);
 
     private:

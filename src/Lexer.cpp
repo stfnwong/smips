@@ -1070,38 +1070,6 @@ Argument Lexer::parseImmediate(void)
 
 
 /*
- * branchInstructionArgSwap()
- * Swap arguments in BEQ and BNE instructions 
- */
-void Lexer::branchInstructionArgSwap(void)
-{
-    Argument temp_arg = this->text_info.args[2];
-
-    this->text_info.args[2] = this->text_info.args[1];
-    this->text_info.args[1] = temp_arg;
-}
-
-
-/*
- * parseLabel()
- */
-void Lexer::parseLabel(void)
-{
-    // We are expecting there to be a label here...
-    this->nextToken();
-    if(this->cur_token.type != SYM_LABEL)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Expected LABEL";
-        if(this->verbose)
-            std::cout << "[" << __func__ << "] " << this->text_info.errstr << std::endl;
-    }
-    this->text_info.is_symbol = true;
-    this->text_info.symbol = this->cur_token.val;
-}
-
-
-/*
  * parseLine()
  * TODO : consider a more functional design where we return a TextInfo .
  * The problem with that is that we would need to call it twice to expand psuedo-ops...
