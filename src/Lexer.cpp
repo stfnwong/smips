@@ -924,174 +924,6 @@ void Lexer::parseInstr(int line_num)
     }
 }
 
-
-
-
-// TODO : get rid of this method
-/*
- * parseBranchZero()
- * Parse branch instructions where the comparison is done 
- * against zero.
- */
-//void Lexer::parseBranchZero(void)
-//{
-//    bool error = false;
-//
-//    this->nextToken();
-//    if(!this->cur_token.isReg())
-//    {
-//        error = true;
-//        goto BRANCH_ZERO_END;
-//    }
-//
-//    this->text_info.type[0] = this->cur_token.type;
-//    this->text_info.val[0]  = std::stoi(this->cur_token.val);
-//    // if we have an offset, convert it here 
-//    if(this->cur_token.reg_offset != "\0")
-//    {
-//        this->text_info.val[1] = std::stoi(this->cur_token.reg_offset, nullptr, 10);
-//        this->text_info.type[1] = SYM_LITERAL;
-//    }
-//
-//    // Next token must be a symbol  (TODO : could also be a literal?)
-//    this->nextToken();
-//    if(this->cur_token.type != SYM_LABEL)
-//    {
-//        error = true;
-//        goto BRANCH_ZERO_END;
-//    }
-//    this->text_info.is_symbol = true;
-//    this->text_info.symbol    = this->cur_token.val;
-//
-//BRANCH_ZERO_END:
-//    if(error)
-//    {
-//        this->text_info.error = true;
-//        this->text_info.errstr = "Invalid argument " + 
-//            this->cur_token.toString() + " for instruction " + 
-//            this->text_info.opcode.toString();
-//
-//        if(this->verbose)
-//        {
-//            std::cout << "[" << __func__ << "] " << 
-//                this->text_info.errstr << std::endl;
-//        }
-//    }
-//}
-
-/*
- * parseAddress()
- * Parse arguments to la instruction
- */
-//void Lexer::parseAddress(int num_reg_args)
-//{
-//    bool error = false;
-//    int r;
-//
-//    for(r = 0; r < num_reg_args; ++r)
-//    {
-//        this->nextToken();
-//        if(!this->cur_token.isReg())
-//        {
-//            error = true;
-//            goto ADDRESS_END;
-//        }
-//        this->text_info.type[r] = this->cur_token.type;
-//        this->text_info.val[r] = std::stoi(this->cur_token.val);
-//    }
-//
-//    // Finally, there should be one label or constant token at the end
-//    this->nextToken();
-//    if(this->cur_token.type == SYM_LABEL)
-//    {
-//        this->text_info.type[num_reg_args] = SYM_LABEL;
-//        this->text_info.is_imm = true;
-//        this->text_info.is_symbol = true;
-//        this->text_info.symbol    = this->cur_token.val;
-//    }
-//    else if(cur_token.type == SYM_LITERAL)
-//    {
-//        this->text_info.type[num_reg_args] = SYM_LITERAL;
-//        this->text_info.is_imm = true;
-//        this->text_info.val[num_reg_args] = std::stoi(this->cur_token.val, nullptr, 10);
-//    }
-//    else
-//    {
-//        error = true;
-//        goto ADDRESS_END;
-//    }
-//
-//ADDRESS_END:
-//    if(error)
-//    {
-//        this->text_info.error = true;
-//        this->text_info.errstr = "Argument (" + std::to_string(r+1) + ") [" + 
-//            this->cur_token.toString() + "] for instruction " + 
-//            this->text_info.opcode.toString();
-//
-//        if(this->verbose)
-//        {
-//            std::cout << "[" << __func__ << "] " << 
-//                this->text_info.errstr << std::endl;
-//        }
-//    }
-//}
-
-/*
- * parseBranch()
- * Parse a branch instruction
- */
-//void Lexer::parseBranch(void)
-//{
-//    int argn;
-//    bool error = false;
-//
-//    for(argn = 0; argn < 2; ++argn)
-//    {
-//        this->nextToken();
-//        if(!this->cur_token.isReg())
-//        {
-//            error = true;
-//            goto BRANCH_END;
-//        }
-//        this->text_info.type[argn] = this->cur_token.type;
-//        this->text_info.val[argn] = std::stoi(this->cur_token.val);
-//    }
-//
-//    // Finally, there should be one label or constant token at the end
-//    this->nextToken();
-//    if(this->cur_token.type == SYM_LABEL)
-//    {
-//        this->text_info.is_symbol = true;
-//        this->text_info.symbol    = this->cur_token.val;
-//    }
-//    else if(cur_token.type == SYM_LITERAL)
-//    {
-//        this->text_info.val[2] = std::stoi(this->cur_token.val, nullptr, 10);
-//    }
-//    else
-//    {
-//        error = true;
-//        goto BRANCH_END;
-//    }
-//
-//BRANCH_END:
-//    if(error)
-//    {
-//        this->text_info.error = true;
-//        this->text_info.errstr = "Invalid argument " + 
-//            this->cur_token.toString() + " for instruction " + 
-//            this->text_info.opcode.toString();
-//
-//        if(this->verbose)
-//        {
-//            std::cout << "[" << __func__ << "] " << 
-//                this->text_info.errstr << std::endl;
-//        }
-//    }
-//}
-
-
 // parse a single register
 void Lexer::parse_r(void)
 {
@@ -1205,38 +1037,14 @@ Argument Lexer::parseRegister(void)
 
     this->nextToken();
     if(!this->cur_token.isReg())
-    {
-        // TODO: set the error elsewhere
-        //this->text_info.error = true;
-        //this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
-        //   ") - expecting register, got [" + this->cur_token.toString() + "]";
-
         return arg;     
-    }
+
     arg.type = this->cur_token.type;
     arg.val  = std::stoi(this->cur_token.val);
     if(this->cur_token.isOffset())
         arg.offset = std::stoi(this->cur_token.reg_offset, nullptr, 10);
-    
-    //this->text_info.type[argn] = this->cur_token.type;
-    //this->text_info.val[argn] = std::stoi(this->cur_token.val);
 
-    //// Check if there is an offset 
-    //if(this->cur_token.reg_offset != "\0")
-    //{
-    //    if(argn > 1)        
-    //    {
-    //        this->text_info.error = true;
-    //        this->text_info.errstr = "Argument (" + std::to_string(argn+1) + 
-    //           ") invalid [" + this->cur_token.toString() + "]";
-
-    //        return arg;     // TODO ; shut compiler up
-    //    }
-    //    this->text_info.val[argn+1] = std::stoi(this->cur_token.reg_offset, nullptr, 10);
-    //    this->text_info.type[argn+1] = SYM_LITERAL;
-    //}
-
-    return arg; // TODO: shut compiler up
+    return arg; 
 }
 
 /*
@@ -1273,41 +1081,6 @@ void Lexer::branchInstructionArgSwap(void)
     this->text_info.args[1] = temp_arg;
 }
 
-/*
- * parseJump()
- * Jump instructions only have labels
- * TODO: update to allow for an immediate to be used 
- * as well as a symbol?  This is presumably legal, but 
- * probably mostly useless except in very small programs
- */
-void Lexer::parseJump(void)
-{
-    bool error = false;
-
-    this->nextToken();
-    if(this->cur_token.type != SYM_LABEL)   // TODO : add support for imm as well..
-    {
-        error = true;
-    }
-    else
-    {
-        this->text_info.is_symbol = true;
-        this->text_info.symbol    = this->cur_token.val;
-    }
-
-    if(error)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Invalid argument " + 
-            this->cur_token.toString();
-
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] " << 
-                this->text_info.errstr << std::endl;
-        }
-    }
-}
 
 /*
  * parseLabel()
