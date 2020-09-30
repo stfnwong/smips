@@ -404,13 +404,13 @@ Program get_array_expected_program(void)
     instr.ins = instr.ins | (REG_AT << R_INSTR_RD_OFFSET);
     instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RS_OFFSET);
     instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | 42;
     prog.add(instr);
-
     instr.init();
     instr.adr = 0x00400014;
     instr.ins = 0x5 << I_INSTR_OP_OFFSET;
-    instr.ins = instr.ins | (REG_AT << I_INSTR_RS_OFFSET);
-    instr.ins = instr.ins | (REG_ZERO << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_AT << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
     instr.ins = instr.ins | 0x1C;   // offset to end_loop label
     prog.add(instr);
 
@@ -462,7 +462,7 @@ Program get_array_expected_program(void)
     instr.init();
     instr.adr = 0x0040002C;
     instr.ins = 0x2 << J_INSTR_OP_OFFSET;
-    instr.ins = instr.ins | 0x00400010;
+    instr.ins = instr.ins | ((0x00400010 & 0x0FFFFFFC) >> 2);
     prog.add(instr);
     
     // end_loop
