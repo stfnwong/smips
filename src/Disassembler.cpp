@@ -125,7 +125,7 @@ TextInfo dis_r_instr(uint32_t instr, uint32_t addr)
                 << std::setw(2) << std::setfill('0') << func_bits << std::endl;
             break;
     }
-    
+
     // arguments 
     ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rs 
     ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);       // rd
@@ -146,14 +146,21 @@ TextInfo dis_j_instr(uint32_t instr, uint32_t addr)
     uint8_t op_bits;
 
     ti.addr = addr;
-    op_bits = (instr & 0xFC) >> 26;
+    op_bits = (instr & 0xFC000000) >> 26;
+
+    std::cout << "[" << __func__ << "] instr :" << std::hex 
+        << instr << std::endl;
+    std::cout << "[" << __func__ << "] j op bits 0x" << std::hex 
+        << unsigned(op_bits) << std::endl;
 
     if(op_bits == 0x2)
         ti.opcode = Opcode(LEX_J, "j");
     else
         ti.opcode = Opcode(LEX_JAL, "jal");
 
-    ti.args[2] = Argument(SYM_LITERAL, instr & 0x02FFFFFF);
+    // this ensures the output is such that if we put it back in
+    // the lexer we'd be able to assemble the same program again
+    ti.args[2] = Argument(SYM_LITERAL, (instr & 0x02FFFFFF) << 2);
 
     return ti;
 }

@@ -71,6 +71,33 @@ Instr Assembler::asm_r_instr(const TextInfo& l, const int n)
     return instr;
 }
 
+
+/*
+ * asm_r_instr_shamt()
+ * Assemble the arguments for an R-format instruction which accepts 
+ * a shift argument.
+ */
+Instr Assembler::asm_r_instr_shamt(const TextInfo& l, const int n)
+{
+    Instr instr;
+
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
+    for(int i = 0; i < n; ++i)
+    {
+        std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
+            << " arg " << std::dec << i << " val : " << l.args[i].val 
+            << " (offsetting by " << std::dec << unsigned(this->r_instr_offsets[i]) << ")" << std::endl;
+
+        if(i == 2)
+            instr.ins = instr.ins | (l.args[i].val & 0xFF) << 6;
+        else
+            instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i]);
+    }
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
+
+    return instr;
+}
+
 /*
  * asm_i_instr()
  * Assemble the arguments for an I-format instruction
@@ -91,6 +118,7 @@ Instr Assembler::asm_i_instr(const TextInfo& l, const int n)
     return instr;
 }
 
+
 /*
  * asm_j_instr()
  * Assemble the arguments for a J-format instruction
@@ -101,7 +129,6 @@ Instr Assembler::asm_j_instr(const TextInfo& l)
 
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->j_instr_op_offset);
     instr.ins = instr.ins | ((l.args[2].val & 0x0FFFFFFC) >> 2);
-    //instr.ins = l.args.val[2];       // TODO : maybe change this in lexer...?
     std::cout << "[" << __func__ << "] set J instr val to " << instr.toString() << std::endl;
 
     return instr;
@@ -132,12 +159,16 @@ Instr Assembler::assembleText(const TextInfo& line)
         case LEX_JR:
         case LEX_MULT:
         case LEX_OR:
-        case LEX_SLL:
         case LEX_SLT:
         case LEX_SLTU:
         case LEX_SUB:
         case LEX_SUBU:
             instr = this->asm_r_instr(line, 3);
+            break;
+
+        case LEX_SLL:
+        case LEX_SRL:
+            instr = this->asm_r_instr_shamt(line, 3);
             break;
 
         // I-format instructions 
@@ -154,6 +185,7 @@ Instr Assembler::assembleText(const TextInfo& line)
 
         // J-format instructions 
         case LEX_J:
+        case LEX_JAL:
             instr = this->asm_j_instr(line);
             break;
 

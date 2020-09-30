@@ -151,7 +151,6 @@ TEST_CASE("test_dis_mult_add", "[classic]")
 
 
 
-
 SourceInfo get_for_loop_expected_dis(void)
 {
     SourceInfo info;
@@ -200,6 +199,7 @@ SourceInfo get_for_loop_expected_dis(void)
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1] = Argument(SYM_REGISTER, REG_ZERO);
     line.args[2] = Argument(SYM_LITERAL, 256);
+    line.is_imm  = true;
     info.addText(line);
 
     // sltu $t3, $t0, $t1
@@ -217,7 +217,8 @@ SourceInfo get_for_loop_expected_dis(void)
     line.opcode = Opcode(LEX_BEQ, "beq");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_3);
     line.args[1] = Argument(SYM_REGISTER, REG_ZERO);
-    line.args[2] = Argument(SYM_LITERAL, 0xC);
+    line.args[2] = Argument(SYM_LITERAL, 0x00400028 - 0x00400018);
+    line.is_imm  = true;
     info.addText(line);
 
     // sw $t2, 28($t0)
@@ -227,6 +228,7 @@ SourceInfo get_for_loop_expected_dis(void)
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
     line.args[2] = Argument(SYM_LITERAL, 28);
+    line.is_imm  = true;
     info.addText(line);
 
     // addi $t0, $t0 ,4
@@ -236,13 +238,20 @@ SourceInfo get_for_loop_expected_dis(void)
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
     line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
     line.args[2] = Argument(SYM_LITERAL, 4);
+    line.is_imm  = true;
     info.addText(line);
 
     // j top
     line.init();
     line.addr = 0x00400024;
     line.opcode = Opcode(LEX_J, "j");
-    line.args[0] = Argument(SYM_LITERAL, -4);
+    line.args[2]   = Argument(SYM_LITERAL, 0x00400014);
+    info.addText(line);
+    // dummy instr
+    line.init();
+    line.addr      = 0x00400028;
+    //line.is_label  = true;
+    //line.label     = "done";
     info.addText(line);
 
     return info;
@@ -257,7 +266,7 @@ TEST_CASE("test_dis_for_loop", "[classic]")
     SourceInfo expected_out = get_for_loop_expected_dis(); 
 
     test_program = assem(test_for_loop_file);
-    //REQUIRE(test_program.numInstrs() == expected_out.getTextInfoSize());
+    REQUIRE(test_program.numInstrs() == expected_out.getTextInfoSize());
 
     Instr cur_instr;
     for(unsigned int idx = 0; idx < test_program.numInstrs(); ++idx)
