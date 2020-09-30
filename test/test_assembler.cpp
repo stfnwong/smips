@@ -235,7 +235,7 @@ Program get_for_loop_expected_program(void)
     instr.ins = 0x4 << I_INSTR_OP_OFFSET;
     instr.ins = instr.ins | (REG_TEMP_3 << I_INSTR_RT_OFFSET);
     instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
-    instr.ins = instr.ins | (0x0040028 & 0x0000FFFF); 
+    instr.ins = instr.ins | ((0x0040028 - 0x00400018) & 0x0000FFFF); 
     prog.add(instr);
 
     instr.init();
@@ -260,7 +260,7 @@ Program get_for_loop_expected_program(void)
     // J TOP 
     instr.adr = 0x00400024;
     instr.ins = 0x02 << J_INSTR_OP_OFFSET;
-    instr.ins = instr.ins | 0x00400014;
+    instr.ins = instr.ins | ((0x00400014 & 0x0FFFFFFC) >> 2);
     prog.add(instr);
     
     instr.init();
