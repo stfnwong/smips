@@ -20,8 +20,12 @@ before_install:
 # Ubuntu's packaging on travis
 script:
     - make clean && make all
-    - ./test/run_tests.sh
-      #- ./bin/test/test_lexer
-      #- ./bin/test/test_assembler
-      #- ./bin/test/test_opcode
-      #- ./bin/test/test_elf
+      #- ./test/run_tests.sh
+      # Skip program tests until I decide what to do with #include <filesystem>
+    - ./bin/test/test_lexer
+    - ./bin/test/test_assembler
+    - ./bin/test/test_opcode
+    - ./bin/test/test_elf
+    - ./bin/test/test_disassembler
+    - ./bin/test/test_register
+    - ./bin/test/test_source
