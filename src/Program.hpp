@@ -75,13 +75,12 @@ class Program
         Instr null_instr;
         DataSeg null_data;
 
-    // TODO : does it make sense to have a copy constructor for Program objects?
     private:
-        //Program(const Program& that) = delete;
         Program operator==(const Program& that) = delete;
 
     public:
         Program();
+        Program(const Program& that) = default;
 
         /*
          * init()

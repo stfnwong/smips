@@ -582,7 +582,6 @@ void Lexer::parseHalf(void)
         this->data_info.addByte(word);
         word_idx++;         // NOTE: only using this value for debugging... remove in final version
         this->incrDataAddr();
-        //this->data_addr++;
     }
 }
 
@@ -1421,7 +1420,6 @@ void Lexer::expandPsuedo(void)
                         this->text_info.args[2].type, 
                         (this->text_info.args[2].val & 0xFFFF0000) >> 16
                         );
-                //ti.args[2]  = this->text_info.args[1];  // val & 0xFFFF0000  TODO: come back and implement bitwise ops?
                 ti.is_imm   = true;
                 ti.upper    = true;
 
@@ -1438,7 +1436,6 @@ void Lexer::expandPsuedo(void)
                         this->text_info.args[2].type,
                         this->text_info.args[2].val & 0x0000FFFF
                         );
-                //ti.args[2]  = this->text_info.args[1];  // val & 0x0000FFFF
                 ti.is_imm   = true;
                 ti.lower    = true;
 
