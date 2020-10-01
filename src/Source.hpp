@@ -29,7 +29,6 @@ typedef enum DirectiveType
 } DirectiveType;
 
 
-// TODO : just have one type for registers, use map to get register number
 typedef enum TokenType
 {
     // null token

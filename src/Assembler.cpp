@@ -62,9 +62,6 @@ Instr Assembler::asm_r_instr(const TextInfo& l, const int n)
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
     for(int i = 0; i < n; ++i)
     {
-        std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
-            << " arg " << std::dec << i << " val : " << l.args[i].val 
-            << " (offsetting by " << std::dec << unsigned(this->r_instr_offsets[i]) << ")" << std::endl;
         instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i]);
     }
 
@@ -84,10 +81,6 @@ Instr Assembler::asm_r_instr_shamt(const TextInfo& l, const int n)
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
     for(int i = 0; i < n; ++i)
     {
-        std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
-            << " arg " << std::dec << i << " val : " << l.args[i].val 
-            << " (offsetting by " << std::dec << unsigned(this->r_instr_offsets[i]) << ")" << std::endl;
-
         if(i == 2)
             instr.ins = instr.ins | (l.args[i].val & 0xFF) << 6;
         else
@@ -109,9 +102,6 @@ Instr Assembler::asm_i_instr(const TextInfo& l, const int n)
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->i_instr_op_offset);
     for(int i = 0; i < n; ++i)
     {
-        std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
-            << " arg " << std::dec << i << " val : " << l.args[i].val 
-            << " (offsetting by " << std::dec << unsigned(this->i_instr_offsets[i]) << ")" << std::endl;
         instr.ins = instr.ins | ((l.args[i].val & 0xFFFF) << this->i_instr_offsets[i]);
     }
 
@@ -129,7 +119,6 @@ Instr Assembler::asm_j_instr(const TextInfo& l)
 
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->j_instr_op_offset);
     instr.ins = instr.ins | ((l.args[2].val & 0x0FFFFFFC) >> 2);
-    std::cout << "[" << __func__ << "] set J instr val to " << instr.toString() << std::endl;
 
     return instr;
 }
@@ -144,19 +133,16 @@ Instr Assembler::assembleText(const TextInfo& line)
 {
     Instr instr;
 
-    std::cout << "[" << __func__ << "] assembling " << line.opcode.toString() 
-        << " which has code [" << std::hex << unsigned(this->instr_to_code[line.opcode.instr])
-        << "]" << std::endl;
-
-    std::cout << "[" << __func__ << "] " << line.toInstrString() << std::endl;
+    if(this->verbose)
+    {
+        std::cout << "[" << __func__ << "] assembling " << line.opcode.toString() 
+            << " which has code [" << std::hex << unsigned(this->instr_to_code[line.opcode.instr])
+            << "]" << std::endl;
+        std::cout << "[" << __func__ << "] " << line.toInstrString() << std::endl;
+    }
 
     switch(line.opcode.instr)
     {
-        // No-op
-        //case LEX_NULL:      
-        //    instr = Instr(line.addr, 0x00000000);
-        //    break;
-
         // R-format instructions
         case LEX_ADD:
         case LEX_ADDU:
@@ -207,7 +193,8 @@ Instr Assembler::assembleText(const TextInfo& line)
     }
     instr.adr = line.addr;
 
-    std::cout << "[" << __func__ << "] output instr: " << instr.toString() << std::endl;
+    if(this->verbose)
+        std::cout << "[" << __func__ << "] output instr: " << instr.toString() << std::endl;
 
     return instr;
 }

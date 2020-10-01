@@ -37,12 +37,11 @@ TEST_CASE("init_text_info", "[classic]")
     REQUIRE(false == test_info.upper);
     REQUIRE(false == test_info.lower);
 
-    TokenType blank_token_type;
     Opcode    blank_opcode;
     for(int i = 0; i < 3; ++i)
     {
         REQUIRE(0 == test_info.args[i].val);
-        REQUIRE(blank_token_type == test_info.args[i].type);
+        REQUIRE(SYM_NONE == test_info.args[i].type);
     }
     REQUIRE(blank_opcode == test_info.opcode);
 }
