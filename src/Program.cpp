@@ -116,8 +116,6 @@ DataSeg& DataSeg::operator=(const DataSeg& that)
         this->data.clear();
         this->adr  = that.adr;
         this->data = that.data;
-        //for(unsigned int i = 0; i < that.data.size(); ++i)
-        //    this->data.push_back(that.data[i]);
     }
 
     return *this;
@@ -150,7 +148,9 @@ bool DataSeg::operator!=(const DataSeg& that) const
     return !(*this == that);
 }
 
-// TODO : diff
+/*
+ * diff()
+ */
 std::string DataSeg::diff(const DataSeg& that) const
 {
     std::ostringstream oss;
