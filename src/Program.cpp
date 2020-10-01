@@ -337,16 +337,21 @@ int Program::save(const std::string& filename)
         return -1;
     }
 
+    // TODO : figure out what a proper header should look like
     // write instruction segment
-    N = (uint32_t) this->instructions.size();
-    outfile.write(reinterpret_cast<char*>(&N), sizeof(uint32_t));
+    //N = (uint32_t) this->instructions.size();
+    //outfile.write(reinterpret_cast<char*>(&N), sizeof(uint32_t));
 
-    outfile.write(
-            reinterpret_cast<char*>(&this->instructions[0].adr),
-            sizeof(uint32_t)
-    );
+    //outfile.write(
+    //        reinterpret_cast<char*>(&this->instructions[0].adr),
+    //        sizeof(uint32_t)
+    //);
     for(unsigned int idx = 0; idx < this->instructions.size(); ++idx)
     {
+        std::cout << "[" << __func__ << "] writing instr (" << std::dec
+            << idx + 1 << "/" << this->instructions.size() << ") 0x" 
+            << std::hex << std::setw(8) << std::setfill('0') 
+            << unsigned(this->instructions[idx].ins) << std::endl;
         outfile.write(
                 reinterpret_cast<char*>(&this->instructions[idx].ins),
                 sizeof(uint32_t)

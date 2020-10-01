@@ -115,6 +115,7 @@ class Lexer
         void parse_rri(void);
         void parse_rro(void);
         void parse_rrr(void);
+        void add_noop(void);
 
         Argument parseRegister(void);
         Argument parseImmediate(void);  // could be literal or symbol

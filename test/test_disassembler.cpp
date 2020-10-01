@@ -247,6 +247,7 @@ SourceInfo get_for_loop_expected_dis(void)
     line.opcode = Opcode(LEX_J, "j");
     line.args[2]   = Argument(SYM_LITERAL, 0x00400014);
     info.addText(line);
+
     // dummy instr
     line.init();
     line.addr      = 0x00400028;
@@ -266,6 +267,8 @@ TEST_CASE("test_dis_for_loop", "[classic]")
     SourceInfo expected_out = get_for_loop_expected_dis(); 
 
     test_program = assem(test_for_loop_file);
+    int status = test_program.save("bin/test_for_loop.bin");
+    REQUIRE(status == 0);
     REQUIRE(test_program.numInstrs() == expected_out.getTextInfoSize());
 
     Instr cur_instr;

@@ -176,6 +176,15 @@ TextInfo dis_instr(uint32_t instr, uint32_t addr)
 {
     uint8_t op_bits;
 
+    // TODO : add disassembly for no-op
+    if(instr == 0x00000000)
+    {
+        TextInfo noop;
+        noop.addr = addr;
+
+        return noop;
+    }
+
     op_bits = (instr & 0xFC000000) >> 26;
     switch(op_bits)
     {

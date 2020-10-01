@@ -892,6 +892,11 @@ void Lexer::parseInstr(int line_num)
             this->text_info.psuedo = true;
             break;
 
+            // no-op
+        case LEX_NULL:
+            this->add_noop();
+            break;
+
         default:
             this->text_info.error = true;
             this->text_info.errstr = "Invalid instruction " + this->cur_token.val;
@@ -1025,6 +1030,11 @@ void Lexer::parse_rrr(void)
     this->text_info.args[0] = this->parseRegister();
     this->text_info.args[1] = this->parseRegister();
     this->text_info.args[2] = this->parseRegister();
+}
+
+void Lexer::add_noop(void)
+{
+    this->text_info.opcode = Opcode(LEX_NULL, 0x0);
 }
 
 /*

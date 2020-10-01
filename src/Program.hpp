@@ -26,7 +26,8 @@ struct Instr
     public:
         Instr();
         Instr(const uint32_t adr, const uint32_t ins);
-        Instr(const Instr& that);
+        Instr(const Instr& that);       // TODO : what is the issue with the default copy ctor?
+        //Instr(const Instr&& that) noexcept : adr(std::move(that.adr), ins(std::move(that.ins) {} 
 
         // TODO: will the default move constructor be sufficient here?
         bool operator==(const Instr& that) const;

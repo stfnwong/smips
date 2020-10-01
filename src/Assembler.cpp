@@ -152,6 +152,11 @@ Instr Assembler::assembleText(const TextInfo& line)
 
     switch(line.opcode.instr)
     {
+        // No-op
+        //case LEX_NULL:      
+        //    instr = Instr(line.addr, 0x00000000);
+        //    break;
+
         // R-format instructions
         case LEX_ADD:
         case LEX_ADDU:
@@ -194,7 +199,8 @@ Instr Assembler::assembleText(const TextInfo& line)
             {
                 std::cout << "[" << __func__ << "] (line " << 
                     std::dec << line.line_num << 
-                    ") unknown opcode " << line.opcode.toString() << std::endl;
+                    ") unknown opcode " << line.opcode.toString() << 
+                    " inserting NOOP" << std::endl;
             }
             // TODO : I will emit NO-OPS here, which may 
             // prove later to be a bad idea
