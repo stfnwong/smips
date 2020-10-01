@@ -42,7 +42,7 @@ TEST_CASE("init_text_info", "[classic]")
     for(int i = 0; i < 3; ++i)
     {
         REQUIRE(0 == test_info.args[i].val);
-        REQUIRE(blank_token_type == test_info.args[i].type);
+        REQUIRE(SYM_NONE == test_info.args[i].type);
     }
     REQUIRE(blank_opcode == test_info.opcode);
 }
