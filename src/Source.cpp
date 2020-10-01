@@ -294,7 +294,22 @@ std::string TextInfo::toInstrString(void) const
 {
     std::ostringstream oss;
 
+    if(this->opcode.instr == 0x0)
+    {
+        oss << "NOOP";
+        return oss.str();
+    }
+
     oss << this->opcode.mnemonic << " ";
+    // Jump is just the address in args[2]
+    if(this->opcode.mnemonic == "j" || this->opcode.mnemonic == "jal")
+    {
+        oss << "0x" << std::hex << std::setw(8) << std::setfill('0')
+            << this->args[2].val;
+        return oss.str();
+    }
+
+    // Everything else
     for(int i = 0; i < 3; ++i)
     {
         if(this->args[i].type == SYM_REGISTER)

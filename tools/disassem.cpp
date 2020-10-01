@@ -95,18 +95,22 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    std::cout << "Found " << prog.numDataSeg() << " data segments in program [" 
+        << dis_opts.infile << "]" << std::endl;
     std::cout << "Found " << prog.numInstrs() << " instructions in program [" 
         << dis_opts.infile << "]" << std::endl;
 
     // Dump representation to console
     // TODO: data segment
-    //for(unsigned int idx = 0; idx < prog.numInstrs(); ++idx)
-    //{
-    //    Instr cur_instr = prog.getInstr(idx);
-    //    TextInfo dis_out = dis_instr(cur_instr.ins, cur_instr.adr);
+    for(unsigned int idx = 0; idx < prog.numInstrs(); ++idx)
+    {
+        Instr cur_instr = prog.getInstr(idx);
+        TextInfo dis_out = dis_instr(cur_instr.ins, cur_instr.adr);
 
-    //    std::cout << dis_out.toInstrString() << std::endl;
-    //}
+        std::cout << "[0x" << std::hex << std::setw(8) << std::setfill('0')
+            << dis_out.addr << "] ";
+        std::cout << dis_out.toInstrString() << std::endl;
+    }
 
     return 0;
 }
