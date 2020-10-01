@@ -13,7 +13,7 @@
 #include <vector>
 #include <string>
 // for file cleanup
-#include <filesystem>
+//#include <filesystem>
 
 // unit(s) under test 
 #include "Program.hpp"
@@ -80,5 +80,5 @@ TEST_CASE("test_program_save_load", "[classic]")
         REQUIRE(src_instr == tst_instr);
     }
 
-    REQUIRE(std::filesystem::remove(test_load_filename) == true);
+    //REQUIRE(std::filesystem::remove(test_load_filename) == true);
 }
