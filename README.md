@@ -10,6 +10,11 @@ MIPS emulator and binary tools
 - The actual emulation.
 - An RTL verison with simulations, etc.
 
+## Instructions 
+TODO : a list of all the instructions implemented as an appendix.
+
+This assembler implements psuedo-instructions as per [this](https://github.com/MIPT-ILab/mipt-mips/wiki/MIPS-pseudo-instructions) page.
+
 ## TODOS
 - Finish binary tools
 - Write MIPS emulation core

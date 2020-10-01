@@ -5,12 +5,13 @@
  * Stefan Wong 2019
  */
 
-#ifndef __LEXER_HPP
-#define __LEXER_HPP
+#ifndef __SMIPS_LEXER_HPP
+#define __SMIPS_LEXER_HPP
 
 #include <string>
 #include "Opcode.hpp"
 #include "Source.hpp"
+#include "Register.hpp"
 
 // Give some kind of named identifier to the Lexer mode
 enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};
@@ -31,6 +32,10 @@ class Lexer
         OpcodeTable psuedo_op_table;
         void init_psuedo_op_table(void);
 
+    //  Register mapping
+    private:
+        RegisterMap reg_map;
+
     // Assembler directives 
     private:
         OpcodeTable directive_code_table;
@@ -42,9 +47,9 @@ class Lexer
         int   line_buf_size;
         char* token_buf;
         char* line_buf;
-        int   start_addr;
+        int   text_start_addr;
+        int   data_start_addr;
         bool  verbose;
-        bool  expand_psuedo;
 
     private:
         void  alloc_mem(void);
@@ -63,6 +68,9 @@ class Lexer
         SymbolTable  sym_table;
         unsigned int text_addr;
         unsigned int data_addr;
+        void incrTextAddr(void);
+        void incrDataAddr(void);
+
 
     // Segments 
     private:
@@ -72,8 +80,8 @@ class Lexer
 
     // Motion through source file
     private:
-        bool exhausted(void) const;
         void advance(void);
+        bool exhausted(void) const;
         void skipWhitespace(void);
         void skipComment(void);
         void skipSeperators(void);
@@ -99,6 +107,19 @@ class Lexer
 
     // Assembler directives
     private:
+        // parser helpers 
+        void parse_i(void);
+        void parse_r(void);
+        void parse_rr(void);
+        void parse_ri(void);
+        void parse_rri(void);
+        void parse_rro(void);
+        void parse_rrr(void);
+        void add_noop(void);
+
+        Argument parseRegister(void);
+        Argument parseImmediate(void);  // could be literal or symbol
+
         // TODO : no support for floats in the first version
         void parseASCIIZ(void);
         void parseAlign(void);
@@ -115,18 +136,10 @@ class Lexer
         void textSeg(void);
 
     private:
+        void parseInstr(int line_num);
+        void parseDirective(int line_num);
         void resolveLabels(void);
-        void parseBranch(void);
-        void parseBranchZero(void);
-        void parseMemArgs(void);
-        void parseRegArgs(const int num);
-        void parseJump(void);
-		void parseLabel(void);
         void parseLine(void);
-        TokenType getRegType(const char& reg_char) const;
-
-    private:
-        // psuedo instruction expansion
 
     private:
         // update instruction addresses when expanding psuedo ops
@@ -146,15 +159,12 @@ class Lexer
         int   loadFile(const std::string& filename);
         // getters 
         bool  getVerbose(void) const;
-        bool  getExpandPsuedo(void) const;
         const SourceInfo& getSourceInfo(void) const;
         const SymbolTable& getSymTable(void) const;
-        int   getStartAddr(void) const;
+        int   getTextStartAddr(void) const;
+        int   getDataStartAddr(void) const;
         // setters 
         void  setVerbose(const bool v);
-        void  setExpandPsuedo(const bool v);
-        void  setStartAddr(int a);
-
 };
 
-#endif /*__LEXER_HPP*/
+#endif /*__SMIPS_LEXER_HPP*/

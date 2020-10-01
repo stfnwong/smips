@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <sstream>
 #include "Source.hpp"
+#include "Register.hpp"
 
 /*
  * TODO: 
@@ -18,104 +19,54 @@
  * or text segment, and that segment would contain the IR for the actual assembly 
  * inside of it.
  *
+ * TODO  for TODO : go back to ELF file specification and think some more about
+ * how that should be reperesented. Eg - should the parser hold different section 'types' 
+ * for the sections in the ELF file?
+ *
  */
 
+
+
+// ================ TOKEN ================ //
 /* 
  * TOKEN
  */
-Token::Token()
-{
-    this->init();
-}
+Token::Token() : type(SYM_NONE), val("\0"), reg_offset("\0") {} 
 
-Token::Token(const TokenType& t, const std::string& v)
-{
-    this->type = t;
-    this->val = v;
-}
+Token::Token(const TokenType& t, const std::string& v) : type(t), val(v), reg_offset("\0") {} 
 
+/*
+ * Token::init()
+ */
 void Token::init(void)
 {
-    this->type   = SYM_NONE;
-    this->val    = "\0";
-    this->offset = "\0";
+    this->type       = SYM_NONE;
+    this->val        = "\0";
+    this->reg_offset = "\0";
 }
 
+/*
+ * Token::isReg()
+ */
 bool Token::isReg(void) const
 {
-    switch(this->type)
-    {
-        case SYM_REG_TEMP:
-        case SYM_REG_SAVED:
-        case SYM_REG_ARG:
-        case SYM_REG_RET:
-        case SYM_REG_RET_ADR:
-        case SYM_REG_ZERO:
-        case SYM_REG_GLOBAL:
-        case SYM_REG_FRAME:
-            return true;
-        default:
-            return false;
-    }
-
-    // If we somehow get here, then this is clearly not 
-    // the value that we are looking for
-    return false;
+    return (this->type == SYM_REGISTER) ? true : false;
 }
 
+/*
+ * Token::isOffset()
+ */
 bool Token::isOffset(void) const
 {
-    if(this->type == SYM_REG_GLOBAL || this->type == SYM_REG_FRAME)
-        return true;
-
-    return false;
+    return (this->reg_offset != "\0") ? true : false;
 }
 
+/*
+ * Token::toString()
+ */
 std::string Token::toString(void) const
 {
-    switch(this->type)
-    {
-        case SYM_NONE:
-            return "NONE <" + this->val + ">";
-        case SYM_EOF:
-            return "EOF <" + this->val + ">";
-        case SYM_LABEL:
-            return "LABEL <" + this->val + ">";
-        case SYM_INSTR:
-            return "INSTR <" + this->val + ">";
-        case SYM_LITERAL:
-            return "LITERAL <" + this->val + ">";
-        case SYM_DIRECTIVE:
-            return "DIRECTIVE <" + this->val + ">";
-        case SYM_CHAR:
-            return "CHAR <" + this->val + ">";
-        case SYM_STRING:
-            return "STRING <" + this->val + ">";
-        case SYM_SYSCALL:
-            return "SYSCALL";
-
-        // Registers
-        case SYM_REG_AT:
-            return "AT <" + this->val + ">";
-        case SYM_REG_TEMP:
-            return "R_TEMP <" + this->val + ">";
-        case SYM_REG_SAVED:
-            return "R_SAVED <" + this->val + ">";
-        case SYM_REG_ARG:
-            return "R_ARG <" + this->val + ">";
-        case SYM_REG_RET:
-            return "R_RET <" + this->val + ">";
-        case SYM_REG_RET_ADR:
-            return "R_RET_ADR <" + this->val + ">";
-        case SYM_REG_ZERO:
-            return "R_ZERO <" + this->val + ">";
-        case SYM_REG_NUM:
-            return "R_NUM <" + this->val + ">";
-        case SYM_REG_GLOBAL:
-            return "R_GLOBAL <" + this->val + ">";
-        default:
-            return "NULL <" + this->val + ">";
-    }
+    return TokenToString(this->type) + " <" + this->val + ">";
 }
 
 
@@ -128,7 +79,7 @@ bool Token::operator==(const Token& that) const
         return false;
     if(this->val != that.val)
         return false;
-    if(this->offset != that.offset)
+    if(this->reg_offset != that.reg_offset)
         return false;
 
     return true;
@@ -143,25 +94,57 @@ bool Token::operator!=(const Token& that) const
         return false;
     if(this->val == that.val)
         return false;
-    if(this->offset != that.offset)
+    if(this->reg_offset != that.reg_offset)
         return false;
 
     return true;
 }
 
-// assignment 
-Token& Token::operator=(const Token& that)
-{
-    if(this != &that)
-    {
-        this->type   = that.type;
-        this->val    = that.val;
-        this->offset = that.offset;
-    }
+// ================ ARGUMENT ================ //
+Argument::Argument() : type(SYM_NONE), val(0), offset(-1)  {} 
 
-    return *this;
+Argument::Argument(const TokenType& t, int v) : type(t), val(v), offset(-1) {} 
+
+void Argument::init(void)
+{
+    this->type = SYM_NONE;
+    this->val = 0;
+    this->offset = -1;
 }
 
+bool Argument::operator==(const Argument& that) const
+{
+    if(this->type != that.type)
+        return false;
+    if(this->val != that.val)
+        return false;
+    // don't do this check unless our side has a real offset
+    if(this->offset > -1 && (this->offset != that.offset))
+        return false;
+
+    return true;
+}
+
+bool Argument::operator!=(const Argument& that) const
+{
+    return !(*this == that);
+}
+
+std::string Argument::toString(void) const
+{
+    std::ostringstream oss;
+
+    oss << TokenToString(this->type) << " ";
+    if(this->offset > -1)
+        oss << std::dec << this->offset << "(" << this->val << ")";
+    else
+        oss << this->val;
+
+    return oss.str();
+}
+
+
+// ================ TEXTINFO ================ //
 /*
  * TextInfo
  */
@@ -170,6 +153,9 @@ TextInfo::TextInfo()
     this->init();
 }
 
+/*
+ * TextInfo::init()
+ */
 void TextInfo::init(void)
 {
     this->label        = "\0";
@@ -183,26 +169,31 @@ void TextInfo::init(void)
     this->is_directive = false;
     this->is_imm       = false;
     this->upper        = false;
+    this->lower        = false;
+    this->psuedo       = false;
     this->opcode.init();
 
     for(int i = 0; i < 3; ++i)
-    {
-        this->val[i]    = 0;
-        this->type[i]   = SYM_NONE;
-    }
+        this->args[i].init();
 }
 
+/*
+ * TextInfo::hasOp()
+ */
 bool TextInfo::hasOp(void) const
 {
     return (this->opcode.instr == 0) ? true : false;
 }
 
+/*
+ * TextInfo::toString()
+ */
 std::string TextInfo::toString(void) const
 {
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    oss << "Line  Type   Addr  Mnemonic   Opcode   Arguments   literal   error" << std::endl;
+    oss << "Line  Type   Addr       Mnemonic   Opcode   Arguments   literal   error" << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
@@ -218,58 +209,67 @@ std::string TextInfo::toString(void) const
         oss << "i";
     else
         oss << ".";
+    if(this->psuedo)
+        oss << "p";
+    else
+        oss << ".";
     oss << "] ";
-    oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
-    oss << std::left << std::setw(12) << std::setfill(' ') << this->opcode.mnemonic;
+    oss << std::right << "0x" << std::hex << std::setw(8) << std::setfill('0') << this->addr << " ";
+    oss << std::left << std::setw(11) << std::setfill(' ') << this->opcode.mnemonic;
     oss << "0x" << std::right << std::hex << std::setw(4) << std::setfill('0') << this->opcode.instr << "  ";
 
     // Insert arg/register chars
     for(auto i = 0; i < 3; ++i)
     {
-        if(this->type[i] == SYM_REG_TEMP)
-            oss << "t" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_AT)
-            oss << "at" << this->val[i] << " ";     // TODO : what do the values for $at look like?
-        else if(this->type[i] == SYM_REG_SAVED)
-            oss << "s" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_ARG)
-            oss << "a" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_RET)
-            oss << "r" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_RET_ADR)
-            oss << "RA ";
-        else if(this->type[i] == SYM_REG_ZERO)
-            oss << "Z  ";
-        else if(this->type[i] == SYM_REG_NUM)
-            oss << "$" << this->val[i] << " ";
-        else if(this->type[i] == SYM_REG_GLOBAL)
-            //oss << "G+" << this->val[i] << " ";
-            oss << "G  ";
-        else if(this->type[i] == SYM_REG_FRAME)
-            oss << "F+" << this->val[i];
-        else if(this->type[i] == SYM_LITERAL)       // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
+        // TODO : come back to this... temp registers are in two places in register map
+        //if(this->args[i].type == SYM_REG_TEMP)
+        //    oss << "t" << this->args[i].val << " ";
+        if(this->args[i].type == SYM_REGISTER)
+        {
+            if(this->args[i].val == REG_AT)
+                oss << "at" << " ";     
+            else if(this->args[i].val >= REG_ARG_0 && this->args[i].val <= REG_ARG_3)
+                oss << "a" << std::dec << this->args[i].val << " ";
+            else if(this->args[i].val == REG_RETURN)
+                oss << "r" << std::dec << this->args[i].val << " ";
+            else if(this->args[i].val == REG_RETURN)
+                oss << "RA ";
+            else if(this->args[i].val == REG_ZERO)
+                oss << "Z ";
+            else if(this->args[i].val == REG_GLOBAL)
+                oss << "G  ";
+            else if(this->args[i].val == REG_FRAME)
+                oss << "F+" << std::dec << this->args[i].val;
+            else if(this->args[i].val == REG_STACK)
+                oss << "S+" << std::dec << this->args[i].val;
+            else if(this->args[i].val >= REG_SAVED_0 && this->args[i].val <= REG_SAVED_7)
+                oss << "s" << std::dec << this->args[i].val << " ";
+        }
+        // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
+        else if(this->args[i].type == SYM_LITERAL)       
             oss << "L  ";
         else
             oss << "   ";
     }
     oss << "  "; 
+    // TODO : maybe add the 'symbol' first, then print the correct value
     // literal (if applicable)
     if(this->is_symbol)
-        oss << "0x" << std::hex << std::setw(8) << this->val[2];
-    //else if(this->is_imm)
-    //    oss << "0x" << std::hex << std::setw(8) << this->val[2];
-    else if(!this->is_imm && (this->type[1] == SYM_LITERAL))
-        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
-    else if(!this->is_imm && (this->type[2] == SYM_LITERAL))
-        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[2] << "  ";
+        oss << "0x" << std::hex << std::setw(8) << this->args[2].val;
+    else if(!this->is_imm && (this->args[1].type == SYM_LITERAL))
+        oss << " +0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
+    else if(!this->is_imm && (this->args[2].type == SYM_LITERAL))
+        oss << "   +" << std::left << std::dec << std::setw(8) << std::setfill(' ') << this->args[2].val << "  ";
     else if(this->is_imm && this->upper)
-        oss << "U 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->val[1] << "  ";
-    else if(this->is_imm && (this->type[1] == SYM_LITERAL))
-        oss << "0x" << std::hex << std::setw(8) << this->val[1];
-    else if(this->is_imm && (this->type[2] == SYM_LITERAL))
-        oss << "0x" << std::hex << std::setw(8) << this->val[2];
+        oss << "U 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
+    else if(this->is_imm && this->lower)
+        oss << "L 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
+    else if(this->is_imm && (this->args[1].type == SYM_LITERAL))
+        oss << "  0x" << std::hex << std::setw(8) << this->args[1].val;
+    else if(this->is_imm && (this->args[2].type == SYM_LITERAL))
+        oss << "  0x" << std::hex << std::setw(8) << this->args[2].val;
     else
-        oss << "          ";
+        oss << "            ";  // TODO: what spacing options do I have for keeping constant width?
     // spacing chars
     oss << " ";
     // insert error (T/F only, full string may not fit)
@@ -287,6 +287,32 @@ std::string TextInfo::toString(void) const
     return oss.str();
 }
 
+/*
+ * toInstrString()
+ */
+std::string TextInfo::toInstrString(void) const
+{
+    std::ostringstream oss;
+
+    oss << this->opcode.mnemonic << " ";
+    for(int i = 0; i < 3; ++i)
+    {
+        if(this->args[i].type == SYM_REGISTER)
+            oss << mips_reg_types[this->args[i].val].repr;
+        if(this->is_imm && this->args[i].type == SYM_LITERAL)
+            oss << std::dec << this->args[i].val;
+        if(i == 2)
+            oss << " ";
+        else
+            oss << ", ";
+    }
+
+    return oss.str();
+}
+
+/*
+ * TextInfo::==()
+ */
 bool TextInfo::operator==(const TextInfo& that) const
 {
     if(this->label != that.label)
@@ -309,23 +335,33 @@ bool TextInfo::operator==(const TextInfo& that) const
         return false;
     if(this->upper != that.upper)
         return false;
+    if(this->lower != that.lower)
+        return false;
+    if(this->psuedo != that.psuedo)
+        return false;
     if(this->opcode != that.opcode)
         return false;
 
     for(int i = 0; i < 3; ++i)
     {
-        if(this->val[i] != that.val[i])
+        if(this->args[i] != that.args[i])
             return false;
     }
 
     return true;
 }
 
+/*
+ * TextInfo::!=()
+ */
 bool TextInfo::operator!=(const TextInfo& that) const
 {
     return !(*this == that);
 }
 
+/*
+ * TextInfo::diff()
+ */
 std::string TextInfo::diff(const TextInfo& that) const
 {
     std::ostringstream oss;
@@ -385,6 +421,16 @@ std::string TextInfo::diff(const TextInfo& that) const
         oss << "upper does not match" << std::endl;
         num_err += 1;
     }
+    if(this->lower != that.lower)
+    {
+        oss << "lower does not match" << std::endl;
+        num_err += 1;
+    }
+    //if(this->psuedo != that.psuedo)
+    //{
+    //    oss << "psuedo does not match" << std::endl;
+    //    num_err += 1;
+    //}
     if(this->opcode != that.opcode)
     {
         oss << "opcode [" << this->opcode.toString() << 
@@ -396,11 +442,11 @@ std::string TextInfo::diff(const TextInfo& that) const
     // create one error for each mismatched argument
     for(int i = 0; i < 3; ++i)
     {
-        if(this->val[i] != that.val[i])
+        if(this->args[i] != that.args[i])
         {
-            oss << "arg " << i << " [" << this->val[i] << 
-                "] does not match [" << that.val[i] << 
-                "]" << std::endl;
+            oss << "arg " << i << "[" << this->args[i].toString() << "]" 
+                << " does not match [" << that.args[i].toString() << "]" 
+                << std::endl;
             num_err += 1;
         }
     }
@@ -431,7 +477,7 @@ void DataInfo::init(void)
 }
 
 /*
- * dirTypeString()
+ * DataInfo::dirTypeString()
  */
 std::string DataInfo::dirTypeString(void) const
 {
@@ -465,16 +511,17 @@ std::string DataInfo::dirTypeString(void) const
 }
 
 /*
- * toString()
+ * DataInfo::toString()
  * Convert DataInfo to a std::string
  */
 std::string DataInfo::toString(void) const
 {
     std::ostringstream oss;
 
+    // TODO : how to print data segment (in cases where its more than 5 bytes)?
     oss << "---------------------------------------------------------------------" << std::endl;
     // extend to the right as needed
-    oss << "Line  Type   Addr  Directive  Label    Error Data                    " << std::endl;
+    oss << "Line  Type   Addr      Directive  Label    Len  Error  Data                    " << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
@@ -488,7 +535,7 @@ std::string DataInfo::toString(void) const
         oss << ".";
 
     oss << "] ";
-    oss << std::right << "0x" << std::hex << std::setw(4) << std::setfill('0') << this->addr << " ";
+    oss << std::right << "0x" << std::hex << std::setw(8) << std::setfill('0') << this->addr << " ";
     oss << "   ";
     // directive
     if(this->directive != SYM_DIR_NONE)
@@ -501,7 +548,10 @@ std::string DataInfo::toString(void) const
         oss << std::left << std::setw(10) << std::setfill(' ') << this->label;
     else
         oss << std::left << std::setw(9) << std::setfill(' ') << " ";
+    // len
+    oss << std::dec << std::setw(4) << this->data.size();
 
+    // error 
     if(this->error)
         oss << "  YES  ";
     else
@@ -525,7 +575,7 @@ std::string DataInfo::toString(void) const
 }
 
 /*
- * ==
+ * DataInfo::==
  */
 bool DataInfo::operator==(const DataInfo& that) const
 {
@@ -558,15 +608,16 @@ bool DataInfo::operator==(const DataInfo& that) const
 }
 
 /*
- * !=
+ * DataInfo::!=
  */
 bool DataInfo::operator!=(const DataInfo& that) const
 {
     return !(*this == that);
 }
 
+// TODO: can probably default this..
 /*
- * =
+ * DataInfo::=
  */
 DataInfo& DataInfo::operator=(const DataInfo& that)
 {
@@ -588,13 +639,16 @@ DataInfo& DataInfo::operator=(const DataInfo& that)
 
 
 /*
- * addBytes
+ * DataInfo::addBytes()
  */
 void DataInfo::addByte(const uint8_t byte)
 {
     this->data.push_back(byte);
 }
 
+/*
+ * DataInfo::addHalf()
+ */
 void DataInfo::addHalf(const uint16_t half)
 {
     uint8_t byte;
@@ -605,6 +659,9 @@ void DataInfo::addHalf(const uint16_t half)
     this->data.push_back(byte);
 }
 
+/*
+ * DataInfo::addWord()
+ */
 void DataInfo::addWord(const uint32_t word)
 {
     uint8_t byte;
@@ -619,16 +676,52 @@ void DataInfo::addWord(const uint32_t word)
     this->data.push_back(byte);
 }
 
+/*
+ * DataInfo::size()
+ */
+unsigned int DataInfo::size(void) const
+{
+    return this->data.size();
+}
 
 /*
- * Symbol
+ * Symbol::Symbol
  */
-Symbol::Symbol()
+Symbol::Symbol() : addr(0), label("\0"), section(0) {} 
+
+/*
+ * Symbol::==
+ */
+bool Symbol::operator==(const Symbol& that) const
+{
+    if(this->addr != that.addr)
+        return false;
+    if(this->label != that.label)
+        return false;
+    return true;
+}
+
+/*
+ * Symbol::!=
+ */
+bool Symbol::operator!=(const Symbol& that) const
+{
+    return !(*this == that);
+}
+
+/*
+ * Symbol::init()
+ */
+void Symbol::init(void)
 {
     this->addr = 0;
     this->label = "\0";
+    this->section = 0;
 }
 
+/*
+ * Symbol::toString()
+ */
 std::string Symbol::toString(void) const
 {
     std::ostringstream oss;
@@ -639,31 +732,13 @@ std::string Symbol::toString(void) const
     return oss.str();
 }
 
-bool Symbol::operator==(const Symbol& that) const
-{
-    if(this->addr != that.addr)
-        return false;
-    if(this->label != that.label)
-        return false;
-    return true;
-}
-
-bool Symbol::operator!=(const Symbol& that) const
-{
-    if(this->addr == that.addr)
-        return false;
-    if(this->label == that.label)
-        return false;
-    return true;
-}
-
 /*
  * SymbolTable
  */
 SymbolTable::SymbolTable() {} 
 
 /*
- * add()
+ * SymbolTable::add()
  */
 void SymbolTable::add(const Symbol& s)
 {
@@ -671,7 +746,7 @@ void SymbolTable::add(const Symbol& s)
 }
 
 /*
- * update()
+ * SymbolTable::update()
  */
 void SymbolTable::update(const unsigned int idx, const Symbol& s)
 {
@@ -680,7 +755,7 @@ void SymbolTable::update(const unsigned int idx, const Symbol& s)
 }
 
 /*
- * get()
+ * SymbolTable::get()
  */
 Symbol& SymbolTable::get(const unsigned int idx) 
 {
@@ -691,7 +766,7 @@ Symbol& SymbolTable::get(const unsigned int idx)
 }
 
 /*
- * getAddr()
+ * SymbolTable::getAddr()
  */
 uint32_t SymbolTable::getAddr(const std::string& label) const
 {
@@ -705,7 +780,7 @@ uint32_t SymbolTable::getAddr(const std::string& label) const
 }
 
 /*
- * size()
+ * SymbolTable::size()
  */
 unsigned int SymbolTable::size(void) const
 {
@@ -713,7 +788,7 @@ unsigned int SymbolTable::size(void) const
 }
 
 /*
- * init()
+ * SymbolTable::init()
  */
 void SymbolTable::init(void)
 {
@@ -727,7 +802,7 @@ void SymbolTable::init(void)
 SourceInfo::SourceInfo() {}
 
 /*
- * addText()
+ * SourceInfo::addText()
  */
 void SourceInfo::addText(const TextInfo& l)
 {
@@ -735,7 +810,7 @@ void SourceInfo::addText(const TextInfo& l)
 }
 
 /*
- * addData()
+ * SourceInfo::addData()
  */
 void SourceInfo::addData(const DataInfo& d)
 {
@@ -743,7 +818,7 @@ void SourceInfo::addData(const DataInfo& d)
 }
 
 /*
- * update()
+ * SourceInfo::update()
  */
 void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 {
@@ -752,7 +827,7 @@ void SourceInfo::update(const unsigned int idx, const TextInfo& l)
 }
 
 /*
- * insert()
+ * SourceInfo::insert()
  */
 void SourceInfo::insert(const unsigned int idx, const TextInfo& l)
 {
@@ -760,7 +835,7 @@ void SourceInfo::insert(const unsigned int idx, const TextInfo& l)
 }
 
 /*
- * getdata()
+ * SourceInfo::getdata()
  */
 DataInfo& SourceInfo::getData(const unsigned int idx)
 {
@@ -771,7 +846,7 @@ DataInfo& SourceInfo::getData(const unsigned int idx)
 }
 
 /*
- * getText()
+ * SourceInfo::getText()
  */
 TextInfo& SourceInfo::getText(const unsigned int idx)
 {
@@ -782,7 +857,7 @@ TextInfo& SourceInfo::getText(const unsigned int idx)
 }
 
 /*
- * getLineNum()
+ * SourceInfo::getLineNum()
  */
 unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 {
@@ -793,7 +868,7 @@ unsigned int SourceInfo::getLineNum(const unsigned int idx) const
 }
 
 /*
- * getNumErr()
+ * SourceInfo::getNumErr()
  */
 unsigned int SourceInfo::getNumErr(void) const
 {
@@ -805,7 +880,7 @@ unsigned int SourceInfo::getNumErr(void) const
 }
 
 /*
- * getNumLines()
+ * SourceInfo::getNumLines()
  */
 unsigned int SourceInfo::getNumLines(void) const
 {
@@ -813,7 +888,7 @@ unsigned int SourceInfo::getNumLines(void) const
 }
 
 /*
- * hasError()
+ * SourceInfo::hasError()
  */
 bool SourceInfo::hasError(void) const
 {
@@ -827,7 +902,7 @@ bool SourceInfo::hasError(void) const
 }
 
 /*
- * getTextInfoSize()
+ * SourceInfo::getTextInfoSize()
  */
 unsigned int SourceInfo::getTextInfoSize(void) const
 {
@@ -835,16 +910,37 @@ unsigned int SourceInfo::getTextInfoSize(void) const
 }
 
 /*
- * getDataInfoSize()
+ * SourceInfo::getDataInfoSize()
  */
 unsigned int SourceInfo::getDataInfoSize(void) const
 {
     return this->data_info.size();
 }
 
+/*
+ * SourceInfo::getDataByAddr()
+ */
+uint8_t SourceInfo::getDataByAddr(const uint32_t addr)
+{
+    // TODO : for now we just search linearly through all addresses. 
+    // If this turns out to be a bottleneck then we can make a dictionary
+    // of pointers or something like that.
+    for(unsigned int a = 0; a < this->data_info.size(); ++a)
+    {
+        if(this->data_info[a].addr == addr)
+        {
+            if(this->data_info[a].size() > 0)
+                return this->data_info[a].data[0];
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
 
 /*
- * toString()
+ * SourceInfo::toString()
  */
 std::string SourceInfo::toString(void) const
 {
@@ -860,7 +956,7 @@ std::string SourceInfo::toString(void) const
 }
 
 /*
- * errString()
+ * SourceInfo::errString()
  */
 std::string SourceInfo::errString(void) const
 {
@@ -889,6 +985,4 @@ std::string SourceInfo::errString(void) const
     }
 
     return oss.str();
-
-
 }

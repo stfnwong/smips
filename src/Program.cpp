@@ -100,6 +100,12 @@ DataSeg::DataSeg(uint32_t adr, const std::vector<uint8_t> d)
     this->data = d;
 }
 
+void DataSeg::init(void)
+{
+    this->adr = 0;
+    this->data.clear();
+}
+
 /*
  * assignment
  */
@@ -136,13 +142,47 @@ bool DataSeg::operator==(const DataSeg& that) const
     return true;
 }
 
-
 /*
  * !=
  */
 bool DataSeg::operator!=(const DataSeg& that) const
 {
     return !(*this == that);
+}
+
+// TODO : diff
+std::string DataSeg::diff(const DataSeg& that) const
+{
+    std::ostringstream oss;
+    int num_err = 0;
+
+    // Address
+    if(this->adr != that.adr)
+    {
+        oss << "adr [" << this->adr << "] does not match [" << that.adr << "]" << std::endl;
+        num_err += 1;
+    }
+
+    // Size of segment vector
+    if(this->data.size() != that.data.size())
+    {
+        oss << "data.size() [" << this->data.size() << "] does not match [" << that.data.size() << "]" << std::endl;
+        num_err += 1;
+    }
+
+    // Segments 
+    for(unsigned int d = 0; d < this->data.size(); ++d)
+    {
+        if(this->data[d] != that.data[d])
+        {
+            oss << "element (" << std::dec << d << ") in segment data [" << 
+                std::hex << this->data[d] << "] does not match [" << 
+                that.data[d] << "]" << std::endl;
+            num_err += 1;
+        }
+    }
+
+    return oss.str();
 }
 
 /*
@@ -158,9 +198,8 @@ std::string DataSeg::toString(void) const
         << this->adr << "]  " << std::endl;
     for(unsigned int i = 0; i < this->data.size(); ++i)
     {
-        oss << std::hex << this->data[i] << " ";
+        oss << std::hex << unsigned(this->data[i]) << " ";
     }
-    oss << std::endl;
 
     return oss.str();
 }
@@ -168,7 +207,10 @@ std::string DataSeg::toString(void) const
 
 
 // ======== PROGRAM ======== //
-Program::Program() {} 
+Program::Program()
+{
+    this->init();
+}
 
 /*
  * init()
@@ -176,6 +218,7 @@ Program::Program() {}
 void Program::init(void)
 {
     this->instructions.clear();
+    this->data_segments.clear();
 }
 
 /*
@@ -196,12 +239,24 @@ void Program::add(const DataSeg& d)
     this->data_segments.push_back(d);
 }
 
-Instr& Program::get(const unsigned int idx) 
+/*
+ * getInstr()
+ * Return the instruction at index idx
+ */
+Instr& Program::getInstr(const unsigned int idx) 
 {
     if(idx < this->instructions.size())
         return this->instructions[idx];
 
     return this->null_instr;
+}
+
+DataSeg& Program::getData(const unsigned int idx) 
+{
+    if(idx < this->data_segments.size())
+        return this->data_segments[idx];
+
+    return this->null_data;
 }
 
 void Program::writeMem(const uint32_t addr, const uint32_t val)
@@ -217,6 +272,23 @@ unsigned int Program::size(void) const
     return this->instructions.size();
 }
 
+unsigned int Program::numDataSeg(void) const
+{
+    return this->data_segments.size();
+}
+
+unsigned int Program::dataSize(void) const
+{
+    unsigned int size = 0;
+    for(unsigned int idx = 0; idx < this->data_segments.size(); ++idx)
+    {
+        size += this->data_segments[idx].data.size();
+    }
+
+    return size;
+}
+
+
 std::string Program::toString(void) const
 {
     std::ostringstream oss;
@@ -230,6 +302,24 @@ std::string Program::toString(void) const
     return oss.str();
 }
 
+
+/*
+ * numInstr()
+ */
+unsigned int Program::numInstrs(void) const
+{
+    return this->instructions.size();
+}
+
+/*
+ * getInstr()
+ */
+Instr Program::getInstr(unsigned int idx) const
+{
+    if(idx < this->instructions.size())
+        return Instr(this->instructions[idx]);
+    return Instr();
+}
 
 /*
  * save()
@@ -247,6 +337,7 @@ int Program::save(const std::string& filename)
         return -1;
     }
 
+    // TODO : figure out what a proper header should look like
     // write instruction segment
     N = (uint32_t) this->instructions.size();
     outfile.write(reinterpret_cast<char*>(&N), sizeof(uint32_t));
@@ -257,6 +348,10 @@ int Program::save(const std::string& filename)
     );
     for(unsigned int idx = 0; idx < this->instructions.size(); ++idx)
     {
+        std::cout << "[" << __func__ << "] writing instr (" << std::dec
+            << idx + 1 << "/" << this->instructions.size() << ") 0x" 
+            << std::hex << std::setw(8) << std::setfill('0') 
+            << unsigned(this->instructions[idx].ins) << std::endl;
         outfile.write(
                 reinterpret_cast<char*>(&this->instructions[idx].ins),
                 sizeof(uint32_t)
@@ -304,7 +399,7 @@ int Program::load(const std::string& filename)
                 sizeof(uint32_t)
         );
         instr.adr = addr;
-        addr++;
+        addr += 4;          // TODO : maybe make this a global const?
         this->instructions.push_back(instr);
     }
     infile.close();

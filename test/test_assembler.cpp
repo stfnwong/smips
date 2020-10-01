@@ -1,4 +1,5 @@
-/* TEST_ASSEMBLER 
+/* 
+ * TEST_ASSEMBLER 
  * Unit tests for SMIPS Assembler object 
  *
  * Stefan Wong 2019
@@ -16,25 +17,21 @@
 #include "Lexer.hpp"
 #include "Assembler.hpp"
 #include "Program.hpp"
+#include "Register.hpp"
+#include "Address.hpp"
+// offsets, etc
+#include "Common.hpp"
 
 
-const int i_instr_op_offset = 26;
-const int i_instr_rt_offset = 16;
-const int i_instr_rs_offset = 21;
+//const bool show_all_output = false;
 
-const int r_instr_rs_offset = 21;
-const int r_instr_rt_offset = 16;
-const int r_instr_rd_offset = 11;
-
-const int j_instr_op_offset = 26;
-
-// TODO: when starting address is sorted, update this
 
 
 // Filenames for test 
 const std::string test_mult_add_file = "asm/mult_add.asm";
 const std::string test_for_loop_file = "asm/for_loop.asm";
 const std::string test_array_file    = "asm/array.asm";
+const std::string test_instr_file    = "asm/instr_test.asm";
 
 /*
  * Expected assembly output for mult_add.asm
@@ -45,203 +42,70 @@ Program get_mult_add_expected_program(void)
     Instr instr;
 
     // LW $t0, 4($gp)
-    instr.adr = 0x200;
-    instr.ins = 35 << i_instr_op_offset;  // I-format opcode
-    instr.ins = instr.ins | (8  << i_instr_rt_offset);
-    instr.ins = instr.ins | (28 << i_instr_rs_offset);
+    instr.adr = 0x00400000;
+    instr.ins = 35 << I_INSTR_OP_OFFSET;  // I-format opcode
+    instr.ins = instr.ins | (REG_TEMP_0  << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_GLOBAL << I_INSTR_RS_OFFSET);
     instr.ins = instr.ins | 4;
     prog.add(instr);
 
     instr.init();
     // MULT $t0, $t0, $t0
-    instr.adr = 0x201;
+    instr.adr = 0x00400004;
     instr.ins = 0x18;
-    instr.ins = instr.ins | (8 << r_instr_rs_offset);
-    instr.ins = instr.ins | (8 << r_instr_rt_offset);
-    instr.ins = instr.ins | (8 << r_instr_rd_offset);
+    instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RD_OFFSET);
     prog.add(instr);
 
     instr.init();
     // LW $t1, 4($gp)
-    instr.adr = 0x202;
-    instr.ins = 35 << i_instr_op_offset;
-    instr.ins = instr.ins | (9 << i_instr_rt_offset);
-    instr.ins = instr.ins | (28 << i_instr_rs_offset);
+    instr.adr = 0x00400008;
+    instr.ins = 35 << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_1 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_GLOBAL << I_INSTR_RS_OFFSET);
     instr.ins = instr.ins | 4;
     prog.add(instr);
 
     instr.init();
     // ORI $t2, $zero, 3
-    instr.adr = 0x203;
-    instr.ins = 0x0C << i_instr_op_offset;
-    instr.ins = instr.ins | (10 << i_instr_rt_offset);
-    instr.ins = instr.ins | (0  << i_instr_rs_offset);
+    instr.adr = 0x0040000C;
+    instr.ins = 0xD << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_2 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
     instr.ins = instr.ins | 3;
     prog.add(instr);
 
     instr.init();
     // MULT $t1, $t1, $t2
-    instr.adr = 0x204;
+    instr.adr = 0x00400010;
     instr.ins = 0x18;
-    instr.ins = instr.ins | (9  << r_instr_rd_offset);
-    instr.ins = instr.ins | (9  << r_instr_rs_offset);
-    instr.ins = instr.ins | (10 << r_instr_rt_offset);
+    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RD_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_2 << R_INSTR_RT_OFFSET);
     prog.add(instr);
 
     instr.init();
     // ADD $t2, $t0, $t1
-    instr.adr = 0x205;
+    instr.adr = 0x00400014;
     instr.ins = 0x20;
-    instr.ins = instr.ins | (10 << r_instr_rd_offset);
-    instr.ins = instr.ins | (8  << r_instr_rs_offset);
-    instr.ins = instr.ins | (9  << r_instr_rt_offset);
+    instr.ins = instr.ins | (REG_TEMP_2 << R_INSTR_RD_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_0  << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_1  << R_INSTR_RT_OFFSET);
     prog.add(instr);
 
     instr.init();
     // SW $t2, 0($gp) 
-    instr.adr = 0x206;
-    instr.ins = 0x2B << i_instr_op_offset;
-    instr.ins = instr.ins | (10 << i_instr_rt_offset);
-    instr.ins = instr.ins | (28 << i_instr_rs_offset);
+    instr.adr = 0x00400018;
+    instr.ins = 0x2B << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_2 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_GLOBAL << I_INSTR_RS_OFFSET);
     instr.ins = instr.ins | 0;  // has no effect, but mirrors the instruction
     prog.add(instr);
 
     return prog;
 }
 
-/*
- * Expected assembly output for for_loop.asm
- */
-Program get_for_loop_expected_program(void)
-{
-    Program prog;
-    Instr   instr;
-
-    // ADD $t0, $gp, $zero
-    instr.adr = 0x200;
-    instr.ins = 0x20;
-    instr.ins = instr.ins | (8 << r_instr_rd_offset);
-    instr.ins = instr.ins | (28 << r_instr_rs_offset);
-    instr.ins = instr.ins | (0 << r_instr_rt_offset);
-    prog.add(instr);
-
-    instr.init();
-    // LW $t1, 4($gp)
-    instr.adr = 0x201;
-    instr.ins = 35 << i_instr_op_offset;  // I-format opcode
-    instr.ins = instr.ins | (9  << i_instr_rt_offset);
-    instr.ins = instr.ins | (28 << i_instr_rs_offset);
-    instr.ins = instr.ins | 4;
-    prog.add(instr);
-
-    instr.init();
-    // SLL $t1, $t1, 2
-    instr.adr = 0x202;
-    instr.ins = 0x0;
-    instr.ins = instr.ins | (9 << r_instr_rd_offset);
-    instr.ins = instr.ins | (9 << r_instr_rs_offset);
-    instr.ins = instr.ins | (2 << r_instr_rt_offset);
-    prog.add(instr);
-
-    instr.init();
-    // ADD $t1, $t1, $gp
-    instr.adr = 0x203;
-    instr.ins = 0x20;
-    instr.ins = instr.ins | (9 << r_instr_rd_offset);
-    instr.ins = instr.ins | (9 << r_instr_rs_offset);
-    instr.ins = instr.ins | (28 << r_instr_rt_offset);
-    prog.add(instr);
-
-    instr.init();
-    // ORI $t2, $zero, 256
-    instr.adr = 0x204;
-    instr.ins = 0x0C << i_instr_op_offset;
-    instr.ins = instr.ins | (10 << i_instr_rt_offset);
-    instr.ins = instr.ins | (0 << i_instr_rs_offset);
-    instr.ins = instr.ins | (256);
-    prog.add(instr);
-
-    instr.init();
-    // TOP : SLTU $t3, $t0, $t1
-    instr.adr = 0x205;
-    instr.ins = 43;
-    instr.ins = instr.ins | (11 << r_instr_rd_offset);
-    instr.ins = instr.ins | (8 << r_instr_rs_offset);
-    instr.ins = instr.ins | (9 << r_instr_rt_offset);
-    prog.add(instr);
-
-    instr.init();
-    // BEQ $t3, $zero, DONE
-    instr.adr = 0x206;
-    instr.ins = 0x4 << i_instr_op_offset;
-    instr.ins = instr.ins | (11 << i_instr_rt_offset);
-    instr.ins = instr.ins | (0 << i_instr_rs_offset);
-    instr.ins = instr.ins | 0x20A;
-    prog.add(instr);
-
-    instr.init();
-    // SW $t2 28($t0)
-    instr.adr = 0x207;
-    instr.ins = 0x2B << i_instr_op_offset;
-    instr.ins = instr.ins | (10 << i_instr_rt_offset);
-    instr.ins = instr.ins | (8 << i_instr_rs_offset);
-    instr.ins = instr.ins | 28;
-    prog.add(instr);
-
-    instr.init();
-    // ADDI $t0, $t0, 4
-    instr.adr = 0x208;
-    instr.ins = 0x08 << i_instr_op_offset;
-    instr.ins = instr.ins | (8 << i_instr_rs_offset);
-    instr.ins = instr.ins | (8 << i_instr_rt_offset);
-    instr.ins = instr.ins | 4;
-    prog.add(instr);
-
-    instr.init();
-    // J TOP 
-    instr.adr = 0x209;
-    instr.ins = 0x02 << j_instr_op_offset;
-    instr.ins = instr.ins | 0x205;
-    prog.add(instr);
-    
-    instr.init();
-    // DONE (dummy instruction)
-    instr.adr = 0x20A;
-    prog.add(instr);
-
-    return prog;
-}
-
-
-/*
- * Expected assembly output for array.asm
- */
-Program get_array_expected_program(void)
-{
-    Program prog;
-    Instr   instr;
-    DataSeg data;
-
-
-    // ---- Data Section ---- //
-    
-    // ---- Text Section ---- //
-    
-    // la $s0, list
-    // NOTE: <la $s0, list> expands to
-    // lui $at, list
-    // ori $s0, $at, displ
-    instr.init();
-    instr.adr = 0x200;
-
-    // li $t0, 0
-    // NOTE; <li $t0, 0> translates to
-    // lui $at, 0
-    // ori $t0, $at, 0
-
-
-    return prog;
-}
 
 /*
  * Test mult_add example
@@ -276,10 +140,12 @@ TEST_CASE("test_asm_mult_add", "[classic]")
 
     Instr instr_exp;
     Instr instr_out;
+
+    std::cout << "\t           Address    Data   " << instr_exp.toString() << std::endl;
     for(unsigned int ins = 0; ins < prog_out.size(); ++ins)
     {
-        instr_exp = prog_exp.get(ins);
-        instr_out = prog_out.get(ins);
+        instr_exp = prog_exp.getInstr(ins);
+        instr_out = prog_out.getInstr(ins);
         std::cout << "Checking instruction [" << ins+1 << 
             "/" << prog_out.size() << "]" << std::endl; 
         
@@ -291,6 +157,108 @@ TEST_CASE("test_asm_mult_add", "[classic]")
     std::cout << prog_out.toString() << std::endl;
 }
 
+/*
+ * Expected assembly output for for_loop.asm
+ */
+Program get_for_loop_expected_program(void)
+{
+    Program prog;
+    Instr   instr;
+
+    // add $t0, $gp, $zero
+    instr.adr = 0x00400000;
+    instr.ins = 0x20;
+    instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RD_OFFSET);
+    instr.ins = instr.ins | (REG_GLOBAL << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_ZERO << R_INSTR_RT_OFFSET);
+    prog.add(instr);
+
+    instr.init();
+    // lw $t1, 4($gp)
+    instr.adr = 0x00400004;
+    instr.ins = 35 << I_INSTR_OP_OFFSET;  // I-format opcode
+    instr.ins = instr.ins | (REG_TEMP_1  << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_GLOBAL << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | 4;
+    prog.add(instr);
+
+    instr.init();
+    // sll $t1, $t1, 2
+    instr.adr = 0x00400008;
+    instr.ins = 0x0;
+    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RD_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (2 << R_INSTR_SHAMT_OFFSET);
+    prog.add(instr);
+
+    instr.init();
+    // add $t1, $t1, $gp
+    instr.adr = 0x0040000C;
+    instr.ins = 0x20;
+    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RD_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_GLOBAL << R_INSTR_RT_OFFSET);
+    prog.add(instr);
+
+    instr.init();
+    // ori $t2, $zero, 256
+    instr.adr = 0x00400010;
+    instr.ins = 0xD << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_2 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | 256;
+    prog.add(instr);
+
+    instr.init();
+    // top : sltu $t3, $t0, $t1
+    instr.adr = 0x00400014;
+    instr.ins = 43;
+    instr.ins = instr.ins | (REG_TEMP_3 << R_INSTR_RD_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RT_OFFSET);
+    prog.add(instr);
+
+    instr.init();
+    // beq $t3, $zero, done
+    instr.adr = 0x00400018;
+    instr.ins = 0x4 << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_3 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | ((0x0040028 - 0x00400018) & 0x0000FFFF); 
+    prog.add(instr);
+
+    instr.init();
+    // sw $t2 28($t0)
+    instr.adr = 0x0040001C;
+    instr.ins = 0x2B << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_2 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_0 << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | 28;
+    prog.add(instr);
+
+    instr.init();
+    // ADDI $t0, $t0, 4
+    instr.adr = 0x00400020;
+    instr.ins = 0x08 << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_0 << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_0 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | 4;
+    prog.add(instr);
+
+    instr.init();
+    // J TOP 
+    instr.adr = 0x00400024;
+    instr.ins = 0x02 << J_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | ((0x00400014 & 0x0FFFFFFC) >> 2);
+    prog.add(instr);
+    
+    instr.init();
+    // DONE (dummy instruction)
+    instr.adr = 0x00400028;
+    prog.add(instr);
+
+    return prog;
+}
 
 /*
  * Test for_loop example
@@ -305,7 +273,7 @@ TEST_CASE("test_for_loop", "[classic]")
 
     test_asm.setVerbose(true);
     // get some source info for this program
-    lexer.setVerbose(false);
+    lexer.setVerbose(true);
     lexer.loadFile(test_for_loop_file);
     lexer.lex();
 
@@ -325,13 +293,17 @@ TEST_CASE("test_for_loop", "[classic]")
 
     Instr instr_exp;
     Instr instr_out;
+
+    std::cout << "\t           Address    Data   " << instr_exp.toString() << std::endl;
     for(unsigned int ins = 0; ins < prog_out.size(); ++ins)
     {
-        instr_exp = prog_exp.get(ins);
-        instr_out = prog_out.get(ins);
+        instr_exp = prog_exp.getInstr(ins);
+        instr_out = prog_out.getInstr(ins);
         std::cout << "Checking instruction [" << ins+1 << 
             "/" << prog_out.size() << "]" << std::endl; 
         
+        std::cout << src_out.getText(ins).toString() << std::endl;
+
         std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
         std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
         
@@ -341,6 +313,155 @@ TEST_CASE("test_for_loop", "[classic]")
     std::cout << prog_out.toString() << std::endl;
 }
 
+/*
+ * Expected assembly output for array.asm
+ */
+Program get_array_expected_program(void)
+{
+    Program prog;
+    Instr   instr;
+    DataSeg data;
+
+    // ---- Data Section ---- //
+    // list: .word 3, 0, 1, 2, 6
+    data.init();
+    data.adr = 0x10000000;
+    data.data = {0x3, 0x0, 0x1, 0x2, 0x6};
+    prog.add(data);
+    // char_arr: .asciiz "hello"
+    data.init();
+    data.adr = 0x10000000 + 0x5;
+    data.data = {0x68, 0x65, 0x6C, 0x6C, 0x6F};
+    prog.add(data);
+    // buffer: .space 128
+    data.init();
+    data.adr = 0x10000000 + 0x5 + 0x5;
+    for(unsigned int d = 0; d < 128; ++d)
+        data.data.push_back(uint8_t(0));
+    prog.add(data);
+
+    // ---- Text Section ---- //
+    
+    // la $s0, list
+    // Exapnds to:
+    //     lui $s0, (list & 0xFFFF0000) >> 16
+    //     ori $s0, $s0, (list & 0x0000FFFF)
+    instr.init();
+    instr.adr = 0x00400000;
+    instr.ins = 0xF << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_SAVED_0 << I_INSTR_RT_OFFSET);        
+    instr.ins = instr.ins | ((DATA_START_ADDR & 0xFFFF0000) >> 16);
+    prog.add(instr);
+
+    instr.init();
+    instr.adr = 0x00400004;
+    instr.ins = 0xD << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_SAVED_0 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_SAVED_0 << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (DATA_START_ADDR & 0x0000FFFF);
+    prog.add(instr);
+
+    // li $t0, 0
+    // Expands to 
+    //     ori $t0, $zero, 0
+    instr.init();
+    instr.adr = 0x00400008;
+    instr.ins = 0xD << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_0 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (0x0);
+    prog.add(instr);
+
+    // li $t1, 5
+    // Expands to 
+    //     ori $t1, $zero, 5
+    instr.init();
+    instr.adr = 0x0040000C;
+    instr.ins = 0xD << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_1 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | 0x5;
+    prog.add(instr);
+
+    // loop: bgt $t0, $t1, end_loop
+    // Expands to
+    //      slt $at, $t1, $t0
+    //      bne $at, $zero, end_loop
+    instr.init();
+    instr.adr = 0x00400010;
+    instr.ins = 0x0 << R_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_AT << R_INSTR_RD_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | 42;
+    prog.add(instr);
+    instr.init();
+    instr.adr = 0x00400014;
+    instr.ins = 0x5 << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_AT << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | 0x1C;   // offset to end_loop label
+    prog.add(instr);
+
+    // lw $a0 ($s0)
+    instr.init();
+    instr.adr = 0x00400018;
+    instr.ins = 0x23 << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_SAVED_0 << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_ARG_0 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | 0x0;   // no offset in this case
+    prog.add(instr);
+
+    // li $v0 1
+    // Expands to
+    //      ori $v0 $zero 1
+    instr.init();
+    instr.adr = 0x0040001C;
+    instr.ins = 0xD << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_RETURN_0 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | 0x1;
+    prog.add(instr);
+
+    // syscall
+    // Note yet implemented at time of writing
+    instr.init();
+    instr.adr = 0x00400020;
+    prog.add(instr);
+
+    // addi $s0, $s0, 4
+    instr.init();
+    instr.adr = 0x00400024;
+    instr.ins = 0x8 << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_SAVED_0 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_SAVED_0 << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | 0x4;
+    prog.add(instr);
+
+    // addi $t0, $t0, 1
+    instr.init();
+    instr.adr = 0x00400028;
+    instr.ins = 0x8 << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_0 << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_0 << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | 0x1;
+    prog.add(instr);
+
+    // j loop
+    instr.init();
+    instr.adr = 0x0040002C;
+    instr.ins = 0x2 << J_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | ((0x00400010 & 0x0FFFFFFC) >> 2);
+    prog.add(instr);
+    
+    // end_loop
+    // No instructions here, just an address
+    instr.init();
+    instr.adr = 0x00400030;
+    prog.add(instr);
+
+    return prog;
+}
 
 /*
  * Array and data segment test
@@ -366,4 +487,159 @@ TEST_CASE("test_array", "[classic]")
 
     // expected program
     prog_exp =  get_array_expected_program();
+    // show the resulting program
+    prog_out = test_asm.getProgram();
+    std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
+    std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
+
+    std::cout << "Expected " << prog_exp.dataSize() << " bytes in data segment" << std::endl;
+    std::cout << "Output program has " << prog_out.dataSize() << " bytes in data segment" << std::endl;
+
+    // Print data segment
+    for(unsigned int d = 0; d < prog_out.numDataSeg(); ++d)
+    {
+        DataSeg seg = prog_out.getData(d);
+        std::cout << "Seg " << std::setw(3) << std::dec << d << " : ";
+        std::cout << seg.toString() << std::endl;
+    }
+
+    // Check data segment
+    for(unsigned int d = 0; d < prog_out.numDataSeg(); ++d)
+    {
+        DataSeg exp_seg = prog_exp.getData(d);
+        DataSeg out_seg = prog_out.getData(d);
+
+        // Show the diff 
+        std::cout << exp_seg.diff(out_seg) << std::endl;
+
+        std::cout << "Checking Seg " << std::setw(3) << std::dec << d << "/" 
+           << prog_out.numDataSeg() << " : " << std::endl;
+        std::cout << "[out]: " << out_seg.toString() << std::endl;
+        std::cout << "[exp]: " << exp_seg.toString() << std::endl;
+
+        REQUIRE(exp_seg == out_seg);        // TODO : data segment issue....
+    }
+
+    // Check text segment
+    Instr instr_exp;
+    Instr instr_out;
+
+    for(unsigned int ins = 0; ins < prog_out.size(); ++ins)
+    {
+        instr_exp = prog_exp.getInstr(ins);
+        instr_out = prog_out.getInstr(ins);
+        std::cout << "Checking instruction [" << ins+1 << 
+            "/" << prog_out.size() << "]" << std::endl; 
+        
+        std::cout << src_out.getText(ins).toString() << std::endl;
+
+        std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
+        std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        
+        REQUIRE(instr_exp == instr_out);
+    }
+    //REQUIRE(prog_exp.size() == prog_out.size());
+}
+
+
+/*
+ * Expected assembly output for instr_test.asm
+ */
+Program get_instr_test_expected_program(void)
+{
+    Program prog;
+    Instr   instr;
+    DataSeg data;
+
+    // ten: .word 10
+    data.init();
+    data.adr = 0x10000000;
+    data.data = {0xA};
+    prog.add(data);
+
+    // lui $t0 ten 
+    instr.init();
+    instr.adr = 0x00400000;
+    instr.ins = 0xF << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_TEMP_0 < I_INSTR_RT_OFFSET);        
+    instr.ins = instr.ins | (0x1000);
+    prog.add(instr);
+
+    // lui $at 4096
+    instr.init();
+    instr.adr = 0x00400004;
+    instr.ins = 0xF << I_INSTR_OP_OFFSET;
+    instr.ins = instr.ins | (REG_AT < I_INSTR_RT_OFFSET);       
+    instr.ins = instr.ins | (0x1000);
+    prog.add(instr);
+
+    return prog;
+}
+
+
+/*
+ * All instructions test
+ */
+TEST_CASE("test_instr", "[classic]")
+{
+    Lexer      lexer;
+    Assembler  test_asm;
+    SourceInfo src_out;
+    Program    prog_out;
+    Program    prog_exp;
+
+    test_asm.setVerbose(true);
+    // get some source info for this program
+    lexer.setVerbose(true);
+    lexer.loadFile(test_instr_file);
+    lexer.lex();
+
+    // add source info to assembler
+    src_out = lexer.getSourceInfo();
+    test_asm.loadSource(src_out);
+    test_asm.assemble();
+
+    // expected program
+    prog_exp =  get_array_expected_program();
+    prog_out = test_asm.getProgram();
+
+    std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
+    std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
+
+    std::cout << "Expected " << prog_exp.dataSize() << " bytes in data segment" << std::endl;
+    std::cout << "Output program has " << prog_out.dataSize() << " bytes in data segment" << std::endl;
+
+    std::cout << "Expected program data segment: " << std::endl;
+    for(unsigned int d = 0; d < prog_exp.numDataSeg(); ++d)
+    {
+        DataSeg seg = prog_exp.getData(d);
+        std::cout << "Seg " << std::setw(3) << std::dec << d << " : ";
+        std::cout << seg.toString() << std::endl;
+    }
+
+    std::cout << "Output program data segment: " << std::endl;
+    // Print data segment
+    for(unsigned int d = 0; d < prog_out.numDataSeg(); ++d)
+    {
+        DataSeg seg = prog_out.getData(d);
+        std::cout << "Seg " << std::setw(3) << std::dec << d << " : ";
+        std::cout << seg.toString() << std::endl;
+    }
+
+    // Check data segment
+    //for(unsigned int d = 0; d < prog_out.numDataSeg(); ++d)
+    //{
+    //    DataSeg exp_seg = prog_exp.getData(d);
+    //    DataSeg out_seg = prog_out.getData(d);
+
+    //    // Show the diff 
+    //    std::cout << exp_seg.diff(out_seg) << std::endl;
+
+    //    std::cout << "Checking Seg " << std::setw(3) << std::dec << d << "/" 
+    //       << prog_out.numDataSeg() << " : " << std::endl;
+    //    std::cout << "[out]: " << out_seg.toString() << std::endl;
+    //    std::cout << "[exp]: " << exp_seg.toString() << std::endl;
+
+    //    REQUIRE(exp_seg == out_seg);        
+    //}
 }

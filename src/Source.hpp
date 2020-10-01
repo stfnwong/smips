@@ -6,39 +6,11 @@
  * Stefan Wong 2019
  */
 
-#ifndef __SOURCE_HPP
-#define __SOURCE_HPP
+#ifndef __SMIPS_SOURCE_HPP
+#define __SMIPS_SOURCE_HPP
 
 #include <string>
 #include "Opcode.hpp"
-
-typedef enum TokenType
-{
-    // null token
-    SYM_NONE,
-    // end token
-    SYM_EOF,
-    SYM_LABEL,
-    SYM_INSTR,
-    SYM_LITERAL,
-    SYM_DIRECTIVE,
-    SYM_CHAR,
-    SYM_STRING,
-    SYM_SYSCALL,
-    // register types
-    SYM_REG_AT,     // assembler temporary
-    SYM_REG_STACK,
-    SYM_REG_FRAME,
-    SYM_REG_TEMP,
-    SYM_REG_SAVED,
-    SYM_REG_ARG,
-    SYM_REG_RET,
-    SYM_REG_RET_ADR,
-    SYM_REG_KERN,
-    SYM_REG_ZERO,
-    SYM_REG_NUM,        // register that has just a number
-    SYM_REG_GLOBAL,     // for the $GP register
-} TokenType;
 
 
 typedef enum DirectiveType
@@ -57,6 +29,56 @@ typedef enum DirectiveType
 } DirectiveType;
 
 
+// TODO : just have one type for registers, use map to get register number
+typedef enum TokenType
+{
+    // null token
+    SYM_NONE,
+    // end token
+    SYM_EOF,
+    SYM_LABEL,
+    SYM_INSTR,
+    SYM_LITERAL,
+    SYM_DIRECTIVE,
+    SYM_CHAR,
+    SYM_STRING,
+    SYM_SYSCALL,
+    SYM_REGISTER,
+} TokenType;
+
+
+static std::string TokenToString(const TokenType& type)
+{
+    switch(type)
+    {
+        case SYM_NONE:
+            return "NONE";
+        case SYM_EOF:
+            return "EOF";
+        case SYM_LABEL:
+            return "LABEL";
+        case SYM_INSTR:
+            return "INSTR";
+        case SYM_LITERAL:
+            return "LITERAL";
+        case SYM_DIRECTIVE:
+            return "DIRECTIVE";
+        case SYM_CHAR:
+            return "CHAR";
+        case SYM_STRING:
+            return "STRING";
+        case SYM_SYSCALL:
+            return "SYSCALL";
+        case SYM_REGISTER:
+            return "REGISTER";
+        default:
+            return "NULL";
+    }
+
+}
+
+
+
 /*
  * Token
  * Represents a single token from the source stream.
@@ -65,11 +87,12 @@ struct Token
 {
     TokenType   type;
     std::string val;
-    std::string offset;
+    std::string reg_offset;   // eg: the 4 in 4($t1), etc
 
     public:
         Token();
         Token(const TokenType& t, const std::string& v);
+        Token(const Token& that) = default;
         void init(void);
         bool isReg(void) const;
         bool isOffset(void) const;
@@ -80,7 +103,33 @@ struct Token
         bool operator!=(const Token& that) const;
 
         // assignment
-        Token& operator=(const Token& that);
+        Token& operator=(const Token& that) = default;
+};
+
+
+/*
+ * Argument
+ * Represents a single argument to an instruction 
+ */
+struct Argument
+{
+    TokenType type;
+    int       val;
+    int       offset;  
+
+    public:
+        Argument();
+        Argument(const TokenType& t, int v);
+        Argument(const Argument& that) = default;
+
+        void init(void);
+
+        bool operator==(const Argument& that) const;
+        bool operator!=(const Argument& that) const;
+        std::string toString(void) const;
+
+        // assignment
+        Argument& operator=(const Argument& that) = default;
 };
 
 
@@ -101,9 +150,11 @@ struct TextInfo
     bool         is_directive;
     bool         is_imm;
     bool         is_symbol;
+    // NOTE : upper and lower are only required for symbol expansion 
     bool         upper;
-    int          val[3];
-    TokenType    type[3];      // record of types for each register
+    bool         lower;
+    bool         psuedo;
+    Argument     args[3];
     Opcode       opcode;
 
     public:
@@ -116,9 +167,8 @@ struct TextInfo
 
         // string formatting
         std::string toString(void) const;
+        std::string toInstrString(void) const;
         std::string diff(const TextInfo& that) const;
-        // TODO: fomats the TextInfo like an instruction
-        //std::string toInstrString(void) const;
 };
 
 
@@ -155,6 +205,8 @@ struct DataInfo
         void addByte(const uint8_t byte);
         void addHalf(const uint16_t half);
         void addWord(const uint32_t word);
+
+        unsigned int size(void) const;
 };
 
 
@@ -165,11 +217,15 @@ struct Symbol
 {
     uint32_t    addr;
     std::string label;
+    int         section;    // For now just 0 for data, 1 for text (as in lexer)
 
     public:
         Symbol();
+        Symbol(const Symbol& that) = default;
         bool operator==(const Symbol& that) const;
         bool operator!=(const Symbol& that) const;
+        Symbol& operator=(const Symbol& that) = default;
+        void init(void);
         std::string toString(void) const;
 };
 
@@ -220,8 +276,11 @@ class SourceInfo
         unsigned int getTextInfoSize(void) const;
         unsigned int getDataInfoSize(void) const;
 
+        // TODO : search for data by address (dereference data section)
+        uint8_t      getDataByAddr(const uint32_t addr);        // TODO : better to do by copy or by ref?
+
         std::string  toString(void) const;
         std::string  errString(void) const;
 };
 
-#endif /*__SOURCE_HPP*/
+#endif /*__SMIPS_SOURCE_HPP*/

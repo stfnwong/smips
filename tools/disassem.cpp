@@ -77,16 +77,17 @@ int main(int argc, char *argv[])
         std::cerr << "Use -i <filename> to specify" << std::endl;
         exit(-1);
     }
-    if(dis_opts.outfile == "\0")
-    {
-        std::cerr << "Invalid output filename" << std::endl;
-        std::cerr << "Use -o <filename> to specify" << std::endl;
-        exit(-1);
-    }
+    //if(dis_opts.outfile == "\0")
+    //{
+    //    std::cerr << "Invalid output filename" << std::endl;
+    //    std::cerr << "Use -o <filename> to specify" << std::endl;
+    //    exit(-1);
+    //}
 
-    Disassembler disassem;
+    Program prog;
 
-    status = diassem.load(dis_opts.infile);
+    // TODO; this is broken
+    status = prog.load(dis_opts.infile);
     if(status < 0)
     {
         std::cerr << "Failed to load input file [" << 
@@ -94,7 +95,18 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    std::cout << "Here is where we would do the actual disassembly" << std::endl;
+    std::cout << "Found " << prog.numInstrs() << " instructions in program [" 
+        << dis_opts.infile << "]" << std::endl;
+
+    // Dump representation to console
+    // TODO: data segment
+    //for(unsigned int idx = 0; idx < prog.numInstrs(); ++idx)
+    //{
+    //    Instr cur_instr = prog.getInstr(idx);
+    //    TextInfo dis_out = dis_instr(cur_instr.ins, cur_instr.adr);
+
+    //    std::cout << dis_out.toInstrString() << std::endl;
+    //}
 
     return 0;
 }

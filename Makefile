@@ -13,10 +13,10 @@ TOOL_DIR=tools
 # Tool options
 CXX=g++
 OPT=-O0
-CXXFLAGS=-Wall -g2 -std=c++14 -D_REENTRANT $(OPT)
+CXXFLAGS=-Wall -g2 -std=c++17 -D_REENTRANT $(OPT)
 TESTFLAGS=
 LDFLAGS=-pthread
-LIBS = 
+LIBS =
 TEST_LIBS=
 
 # style for assembly output
@@ -51,7 +51,8 @@ $(TEST_OBJECTS): $(OBJ_DIR)/%.o : $(TEST_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@ 
 
 # ==== TEST TARGETS ==== #
-TESTS=test_elf test_assembler test_opcode test_lexer
+TESTS=test_elf test_assembler test_opcode test_lexer test_register \
+	  test_source test_disassembler test_program
 $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 	$(CXX) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o $(TEST_BIN_DIR)/$@ $(LIBS) $(TEST_LIBS)

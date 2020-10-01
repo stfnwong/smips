@@ -12,33 +12,15 @@
 
 #include "Program.hpp"
 #include "Source.hpp"
+#include "Register.hpp"
 
 
-class Disassembler
-{
-    private:
-        bool verbose;
+TextInfo dis_i_instr(uint32_t instr, uint32_t addr);
+TextInfo dis_r_instr(uint32_t instr, uint32_t addr);
+TextInfo dis_j_instr(uint32_t instr, uint32_t addr);
 
-    private:
-        Program    program;
-        SourceInfo source;
-        TextInfo   cur_line;
-        uint32_t   cur_instr;
+TextInfo dis_instr(uint32_t instr, uint32_t addr);
+SourceInfo dis_program(const Program& program);
 
-    // instruction disassembly
-    private:
-        void dis_add(void);
-
-
-    public:
-        Disassembler();
-
-
-        void disassemble(void);
-        int  load(const std::string& filename);
-
-        void setVerbose(const bool v);
-        bool getVerbose(void) const;
-};
 
 #endif /*__DISASSEMBLER_HPP*/

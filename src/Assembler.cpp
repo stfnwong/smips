@@ -18,82 +18,82 @@ Assembler::Assembler()
 {
     this->verbose = false;
     this->num_err = 0;
+    this->init_instr_to_code_map();
 }
 
-/*
- * val2Offset()
- * Convert register value to a memory offset
- */
-int Assembler::val2Offset(const TokenType& type, const int val) const
+void Assembler::init_instr_to_code_map(void)
 {
-    int offset;
+    // R-format instructions 
+    this->instr_to_code[LEX_ADD]  = 0x20;
+    this->instr_to_code[LEX_ADDU] = 0x21;
+    this->instr_to_code[LEX_AND]  = 0x24;
+    this->instr_to_code[LEX_JR]   = 0x08;
+    this->instr_to_code[LEX_MULT] = 0x18;
+    this->instr_to_code[LEX_OR]   = 0x25;
+    this->instr_to_code[LEX_SLL]  = 0x00;
+    this->instr_to_code[LEX_SLT]  = 0x2A;
+    this->instr_to_code[LEX_SLTU] = 0x2B;
+    this->instr_to_code[LEX_SUB]  = 0x22;
+    this->instr_to_code[LEX_SUBU] = 0x23;
+    
+    // I-format instructions
+    this->instr_to_code[LEX_ADDI]  = 0x08;
+    this->instr_to_code[LEX_ADDIU] = 0x09;
+    this->instr_to_code[LEX_BEQ]   = 0x04;
+    this->instr_to_code[LEX_BNE]   = 0x05;
+    this->instr_to_code[LEX_LW]    = 0x23;
+    this->instr_to_code[LEX_LUI]   = 0x0F;
+    this->instr_to_code[LEX_ORI]   = 0x0D;
+    this->instr_to_code[LEX_SW]    = 0x2B;
 
-    switch(type)
-    {
-        case SYM_REG_ZERO:
-            return 0;
-
-        case SYM_REG_AT:
-            return 1;
-
-        case SYM_REG_RET:
-            if((2 + val) > 3)
-                return this->ARG_INVALID_OFFSET;
-            return 2 + val;
-
-        case SYM_REG_ARG:
-            if(4 + val > 7)
-                return this->ARG_INVALID_OFFSET;
-            return 4 + val;
-
-        case SYM_REG_TEMP:
-            offset = 8 + val;
-            if(offset > 7 && offset < 16)
-                return offset;
-            if(offset > 23 && offset < 26)
-                return offset;
-            return this->ARG_INVALID_OFFSET;
-
-        case SYM_REG_SAVED:
-            if(16 + val > 23)
-                return this->ARG_INVALID_OFFSET;
-            return 16 + val;
-
-        case SYM_REG_GLOBAL:
-            return 28;
-
-        case SYM_REG_STACK:
-            return 29;
-
-        case SYM_REG_FRAME:
-            return 30;
-
-        case SYM_LITERAL:
-            return val;
-
-        default:
-            std::cout << "[" << __func__  << "] not a register type" << std::endl;
-            return this->ARG_INVALID_OFFSET;
-    }
-
-    // getting here is an error 
-    return this->ARG_INVALID_OFFSET;
+    // J-format instructions 
+    this->instr_to_code[LEX_J]    = 0x02;
+    this->instr_to_code[LEX_JAL]  = 0x03;
 }
 
 /*
  * asm_r_instr()
  * Assemble the arguments for an R-format instruction
  */
-uint32_t Assembler::asm_r_instr(const TextInfo& l, const int n) const
+Instr Assembler::asm_r_instr(const TextInfo& l, const int n) 
 {
-    uint32_t instr = 0;
-    int reg;
+    Instr instr;
 
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
     for(int i = 0; i < n; ++i)
     {
-        reg   = this->val2Offset(l.type[i], l.val[i]);
-        instr = instr | (reg << this->r_instr_offsets[i]);
+        std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
+            << " arg " << std::dec << i << " val : " << l.args[i].val 
+            << " (offsetting by " << std::dec << unsigned(this->r_instr_offsets[i]) << ")" << std::endl;
+        instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i]);
     }
+
+    return instr;
+}
+
+
+/*
+ * asm_r_instr_shamt()
+ * Assemble the arguments for an R-format instruction which accepts 
+ * a shift argument.
+ */
+Instr Assembler::asm_r_instr_shamt(const TextInfo& l, const int n)
+{
+    Instr instr;
+
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
+    for(int i = 0; i < n; ++i)
+    {
+        std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
+            << " arg " << std::dec << i << " val : " << l.args[i].val 
+            << " (offsetting by " << std::dec << unsigned(this->r_instr_offsets[i]) << ")" << std::endl;
+
+        if(i == 2)
+            instr.ins = instr.ins | (l.args[i].val & 0xFF) << 6;
+        else
+            instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i]);
+    }
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
 
     return instr;
 }
@@ -102,278 +102,39 @@ uint32_t Assembler::asm_r_instr(const TextInfo& l, const int n) const
  * asm_i_instr()
  * Assemble the arguments for an I-format instruction
  */
-uint32_t Assembler::asm_i_instr(const TextInfo& l, const int n) const
+Instr Assembler::asm_i_instr(const TextInfo& l, const int n) 
 {
-    uint32_t instr = 0;
-    int reg;
+    Instr instr;
 
+    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->i_instr_op_offset);
     for(int i = 0; i < n; ++i)
     {
-        reg = this->val2Offset(l.type[i], l.val[i]);
-        instr = instr | (reg << this->i_instr_offsets[i]);
+        std::cout << "[" << __func__ << "] instr : " << l.opcode.toString() 
+            << " arg " << std::dec << i << " val : " << l.args[i].val 
+            << " (offsetting by " << std::dec << unsigned(this->i_instr_offsets[i]) << ")" << std::endl;
+        instr.ins = instr.ins | ((l.args[i].val & 0xFFFF) << this->i_instr_offsets[i]);
     }
 
     return instr;
 }
 
-// TODO : put psuedo instructions here?
+
+/*
+ * asm_j_instr()
+ * Assemble the arguments for a J-format instruction
+ */
+Instr Assembler::asm_j_instr(const TextInfo& l) 
+{
+    Instr instr;
+
+    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->j_instr_op_offset);
+    instr.ins = instr.ins | ((l.args[2].val & 0x0FFFFFFC) >> 2);
+    std::cout << "[" << __func__ << "] set J instr val to " << instr.toString() << std::endl;
+
+    return instr;
+}
 
 // ==== Instruction Assembly ==== //
-
-/*
- * asm_add()
- * R-format
- * add $d, $s, $t
- */
-Instr Assembler::asm_add(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = instr.ins | this->asm_r_instr(l, 3);
-    instr.ins = instr.ins | 0x20;
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_addi()
- * I-format
- * addi $t, $s, imm
- */
-Instr Assembler::asm_addi(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = instr.ins | this->asm_i_instr(l, 3);
-    instr.ins = instr.ins | (0x08 << 26);
-    instr.ins = instr.ins | (l.val[2]);
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_addu()
- * R-format
- * addu $t, $s, imm
- */
-Instr Assembler::asm_addu(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = instr.ins | this->asm_r_instr(l, 3);
-    instr.ins = instr.ins | 0x21;
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_beq()
- * I-format
- * beq $s, $t, label
- */
-Instr Assembler::asm_beq(const TextInfo& l) const
-{
-    Instr instr;
-    
-    instr.ins = 0x04 << this->i_instr_op_offset;
-    instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[2]);
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_bne()
- * I-format
- * bne $s, $t, label
- */
-Instr Assembler::asm_bne(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = 0x05 << this->i_instr_op_offset;
-    instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[2]);
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_j()
- * J-format
- * j offset
- */
-Instr Assembler::asm_j(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = 0x02 << this->j_instr_op_offset;
-    instr.ins = instr.ins | l.val[2];
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_la()
- * TODO : this actually has to expand to 2 instructions...
- */
-Instr Assembler::asm_la(const TextInfo& l) const
-{
-    Instr instr;
-
-    return instr;
-}
-
-
-/*
- * asm_li()
- * TODO : this actually has to expand to 2 instructions...
- */
-Instr Assembler::asm_li(const TextInfo& l) const
-{
-    Instr instr;
-
-    return instr;
-}
-
-/*
- * asm_lw()
- * I-format
- * lw $t, OFFSET($s)
- */
-Instr Assembler::asm_lw(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = 0x23 << this->i_instr_op_offset;
-    instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[2]);        // insert immediate
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_mult()
- * R-format
- * mult $s, $t
- */
-Instr Assembler::asm_mult(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = instr.ins | this->asm_r_instr(l, 3);
-    instr.ins = instr.ins | 0x18;
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_or()
- * R-format
- * or $s, $s, $t
- */
-Instr Assembler::asm_or(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = instr.ins | this->asm_r_instr(l, 3);
-    instr.ins = instr.ins | 0x25;
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_ori()
- * I-format
- * ori $t, $s, imm
- */
-Instr Assembler::asm_ori(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | (l.val[2]);
-    instr.ins = instr.ins | (0x0C << this->i_instr_op_offset);
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_sll()
- * R-format
- * sll $d, $t, imm
- */
-Instr Assembler::asm_sll(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = 0x0;
-    instr.ins = instr.ins | this->asm_r_instr(l, 3);
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_sltu()
- * R-format
- * sltu $d, $s, $t
- */
-Instr Assembler::asm_sltu(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = 0x2B;
-    instr.ins = instr.ins | this->asm_r_instr(l, 3);
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_sub()
- * R-format
- * sub $d, $s, $t
- */
-Instr Assembler::asm_sub(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = instr.ins | this->asm_r_instr(l, 3);
-    instr.ins = instr.ins | 0x22;
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_subu()
- * R-format
- * subu $d, $s, $t
- */
-Instr Assembler::asm_subu(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = instr.ins | this->asm_r_instr(l, 3);
-    instr.ins = instr.ins | 0x23;
-    instr.adr = l.addr;
-    return instr;
-}
-
-/*
- * asm_sw()
- * I-format
- */
-Instr Assembler::asm_sw(const TextInfo& l) const
-{
-    Instr instr;
-
-    instr.ins = 0x2B << this->i_instr_op_offset;
-    instr.ins = instr.ins | this->asm_i_instr(l, 2);
-    instr.ins = instr.ins | l.val[2];       // was l.val[1]
-    instr.adr = l.addr;
-
-    return instr;
-}
-
 
 /*
  * AssembleLine()
@@ -381,87 +142,77 @@ Instr Assembler::asm_sw(const TextInfo& l) const
  */
 Instr Assembler::assembleText(const TextInfo& line)
 {
+    Instr instr;
+
+    std::cout << "[" << __func__ << "] assembling " << line.opcode.toString() 
+        << " which has code [" << std::hex << unsigned(this->instr_to_code[line.opcode.instr])
+        << "]" << std::endl;
+
+    std::cout << "[" << __func__ << "] " << line.toInstrString() << std::endl;
+
     switch(line.opcode.instr)
     {
+        // No-op
+        //case LEX_NULL:      
+        //    instr = Instr(line.addr, 0x00000000);
+        //    break;
+
+        // R-format instructions
         case LEX_ADD:
-            return this->asm_add(line);
-            break;
-
-        case LEX_ADDI:
-            return this->asm_addi(line);
-            break;
-
         case LEX_ADDU:
-            return this->asm_addu(line);
-            break;
-
-        case LEX_BEQ:
-            return this->asm_beq(line);
-            break;
-
-        case LEX_J:
-            return this->asm_j(line);
-            break;
-
-        // TODO : here we need to be able to insert two (or perhaps 3)
-        // instructions at a time.
-        case LEX_LA:
-            return this->asm_la(line);
-            break;
-
-        case LEX_LI:
-            return this->asm_li(line);
-            break;
-
-        case LEX_LW:
-            return this->asm_lw(line);
-            break;
-
+        case LEX_AND:
+        case LEX_JR:
         case LEX_MULT:
-            return this->asm_mult(line);
-            break;
-
         case LEX_OR:
-            return this->asm_or(line);
-            break;
-
-        case LEX_ORI:
-            return this->asm_ori(line);
+        case LEX_SLT:
+        case LEX_SLTU:
+        case LEX_SUB:
+        case LEX_SUBU:
+            instr = this->asm_r_instr(line, 3);
             break;
 
         case LEX_SLL:
-            return this->asm_sll(line);
+        case LEX_SRL:
+            instr = this->asm_r_instr_shamt(line, 3);
             break;
 
-        case LEX_SLTU:
-            return this->asm_sltu(line);
-            break;
-
-        case LEX_SUB:
-            return this->asm_sub(line);
-            break;
-
-        case LEX_SUBU:
-            return this->asm_subu(line);
-            break;
-
+        // I-format instructions 
+        case LEX_ADDI:
+        case LEX_ADDIU:
+        case LEX_BEQ:
+        case LEX_BNE:
+        case LEX_LW:
+        case LEX_LUI:
+        case LEX_ORI:
         case LEX_SW:
-            return this->asm_sw(line);
+            instr = this->asm_i_instr(line, 3);
+            break;
+
+        // J-format instructions 
+        case LEX_J:
+        case LEX_JAL:
+            instr = this->asm_j_instr(line);
             break;
 
         default:
+            // If we can't work out what to place here then emit a noop
             if(this->verbose)
             {
                 std::cout << "[" << __func__ << "] (line " << 
                     std::dec << line.line_num << 
-                    ") unknown opcode " << line.opcode.toString() << std::endl;
+                    ") unknown opcode " << line.opcode.toString() << 
+                    " inserting NOOP" << std::endl;
             }
-            // TODO : I will emit NO-OPS here, which may 
-            // prove later to be a bad idea
-            return Instr(line.addr, 0); // emit a null instruction
+            return Instr(line.addr, 0); 
     }
+    instr.adr = line.addr;
+
+    std::cout << "[" << __func__ << "] output instr: " << instr.toString() << std::endl;
+
+    return instr;
 }
 
+// ======== DATA SEGMENT ASSEMBLY ======== //
 
 /*
  * assembleData()
@@ -515,6 +266,7 @@ void Assembler::assemble(void)
         return;
     }
 
+    // assemble the data section
     this->program.init();
     for(unsigned int i = 0; i < this->source.getDataInfoSize(); ++i)
     {
@@ -523,7 +275,7 @@ void Assembler::assemble(void)
         this->program.add(cur_seg);
     }
 
-    // TODO : assemble the text sections
+    // assemble the text sections
     for(unsigned int i = 0; i < this->source.getTextInfoSize(); ++i)
     {
         cur_line = this->source.getText(i);

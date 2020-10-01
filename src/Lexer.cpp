@@ -7,31 +7,34 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <string>
 #include <stack>
 
+#include "Address.hpp"
 #include "Lexer.hpp"
 #include "Codes.hpp"
 #include "Data.hpp"     // MemLine is here at the moment...
 
 
+
 Lexer::Lexer()
 {
-    this->token_buf_size = 512;
-    this->line_buf_size  = 512;
+    this->token_buf_size  = 512;
+    this->line_buf_size   = 512;
     void nextLine(void);
-    this->verbose        = false;
-    this->expand_psuedo  = true;
-    this->cur_char       = '\0';
-    this->cur_line       = 0;
-    this->cur_pos        = 0;
-    this->text_addr      = 0;
-    this->data_addr      = 0;
-    this->start_addr     = 0x200;
-    this->cur_mode       = LEX_TEXT_SEG;
+    this->verbose         = false;
+    this->cur_char        = '\0';
+    this->cur_line        = 0;
+    this->cur_pos         = 0;
+    this->text_addr       = 0;
+    this->data_addr       = 0;
+    this->text_start_addr = TEXT_START_ADDR;
+    this->data_start_addr = DATA_START_ADDR;
+    this->cur_mode        = LEX_TEXT_SEG;
     // create token buffer
     this->alloc_mem();
     this->init_instr_table();
@@ -80,6 +83,17 @@ void Lexer::alloc_mem(void)
 {
     this->token_buf = new char[this->token_buf_size];
     this->line_buf = new char[this->line_buf_size];
+}
+
+// Memory position
+void Lexer::incrTextAddr(void)
+{
+    this->text_addr += 4;
+}
+
+void Lexer::incrDataAddr(void)
+{
+    this->data_addr += 1;
 }
 
 
@@ -170,48 +184,6 @@ bool Lexer::isComment(void) const
 }
 
 
-/*
- * getRegType()
- */
-// TODO : what to do about $ra, $sp, $at etc?
-TokenType Lexer::getRegType(const char& reg_char) const
-{
-    switch(reg_char)
-    {
-        case 'A':
-        case 'a':
-            return SYM_REG_ARG;
-        case 'F':
-        case 'f':
-            return SYM_REG_FRAME;
-        case 'R':
-        case 'r':
-            return SYM_REG_RET;
-        case 'S':
-        case 's':
-            return SYM_REG_SAVED;
-        case 'T':
-        case 't':
-            return SYM_REG_TEMP;
-        case 'Z':
-        case 'z':
-            return SYM_REG_ZERO;
-        case 'G':
-        case 'g':
-            return SYM_REG_GLOBAL;
-        case 'K':
-        case 'k':
-            return SYM_REG_KERN;
-        case 'V':
-        case 'v':
-            return SYM_REG_RET;
-        default:
-            return SYM_NONE;
-    }
-    // in case we somehow fall through
-    return SYM_NONE;
-}
-
 
 /*
  * scanToken()
@@ -251,6 +223,7 @@ void Lexer::scanToken(void)
         this->advance();
 }
 
+// TODO : re-write all the extraction methods, most of this shit is hot garbage
 
 /*
  * extractLiteral()
@@ -259,8 +232,9 @@ Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset,
 {
     Token out_token;
     unsigned int tok_ptr;
-    std::string offset;
+    std::string mem_offset;
 
+    // TODO : update to handle hex using c-style (0x) prefix
     tok_ptr = start_offset;
     while(std::isdigit(token[tok_ptr]))
         tok_ptr++;
@@ -272,18 +246,13 @@ Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset,
     }
 
     if(tok_ptr >= (token.size()))   // no more chars, this is just a literal
-    {
-        out_token.val = token.substr(start_offset, tok_ptr);
-        out_token.type = SYM_LITERAL;
-        goto LITERAL_REG_END;
-    }
-
-    offset = token.substr(start_offset, tok_ptr - start_offset);
-    out_token        = this->extractReg(token, tok_ptr, end_offset);
-    out_token.offset = offset;
+        out_token.val = token.substr(start_offset);     
+    else
+        out_token.val = token.substr(start_offset, tok_ptr - start_offset);
 
 LITERAL_REG_END:
     end_offset = tok_ptr;
+    out_token.type = SYM_LITERAL;
     return out_token;
 }
 
@@ -299,9 +268,11 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
     unsigned int paren_ptr = 0;
     std::stack<int> paren_stack;
     std::string offset;
+    int reg_idx;
 
     tok_ptr = start_offset;
     
+    out_token.reg_offset = "-1";
     while(tok_ptr < token.length())
     {
         if(token[tok_ptr] == '(')
@@ -310,55 +281,55 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
             paren_stack.pop();
         if(token[tok_ptr] == '$')
             break;
+
+        // We handle offsets here so that any number of parens 
+        // can appear before the register name. Offsets only occur
+        // before a '$' character
         if(std::isdigit(token[tok_ptr]))
         {
-            // this will be an offset
             out_token = this->extractLiteral(token, tok_ptr, end_offset);
-            offset = out_token.offset;
+            out_token.reg_offset = out_token.val;        // we will overwrite the other fields
+            tok_ptr = end_offset-1;      // we must have advaneced by this amount
         }
         tok_ptr++;
     }
 
     // we should now be right on the '$' character
+    start_offset = tok_ptr;
     if(paren_stack.empty())
     {
-        // there were no parenthesis, therefore we can 
-        // just directly extract the register value
-        tok_ptr += 1;
-        out_token.type = this->getRegType(token[tok_ptr]);
-        if(out_token.type == SYM_NONE)
-            out_token.val = "\0";           // ensure there is no string here
-        else if(out_token.type == SYM_REG_ZERO || out_token.type == SYM_REG_GLOBAL)
-            out_token.val = "0";
-        else
-            out_token.val  = token.substr(tok_ptr+1, token.length());
         end_offset = token.length();
     }
     else
     {
         // there is at least one parenthesis
-        tok_ptr += 1;
-        out_token.type = this->getRegType(token[tok_ptr]);
         paren_ptr = tok_ptr;
         while(paren_ptr < token.length())
         {
             if(token[paren_ptr] == ')')
             {
                 paren_stack.pop();
-                std::cout << "[" << __func__ << "] found paren_ptr at " << paren_ptr << std::endl;
                 break;
             }
             paren_ptr++;
         }
-        // The value now lies between tok_ptr and paren_ptr-1
-        // Ensure that we've checked all parenthesis
-        if(out_token.type == SYM_NONE)
-            out_token.val = "\0";           // ensure there is no string here
-        else if(out_token.type == SYM_REG_ZERO || out_token.type == SYM_REG_GLOBAL)
-            out_token.val = "0";
-        else
-            out_token.val  = token.substr(tok_ptr+1, (paren_ptr - tok_ptr-1));
-        end_offset = token.length();
+        end_offset = paren_ptr;
+    }
+
+    //  TODO: also check the paren stack can be cleared?
+    std::string token_substr = token.substr(start_offset, end_offset - start_offset);
+
+    // match the register string with a register
+    reg_idx = this->reg_map.getIdx(token_substr);
+    if(reg_idx >= 0)
+    {
+        out_token.type = SYM_REGISTER;
+        out_token.val = std::to_string(reg_idx);    // TODO : think about string conversions (ie: do we need to do it?)
+    }
+    else
+    {
+        out_token.type = SYM_NONE;
+        out_token.val = "\0";
     }
 
     return out_token;
@@ -433,7 +404,7 @@ void Lexer::nextToken(void)
     
     start_offset = 0;
     // Check digits, which may be either literals or register offsets 
-    if(std::isdigit(token_str[0]))
+    if(std::isdigit(token_str[0]) && token_str[1] != '(')
     {
         out_token = this->extractLiteral(token_str, start_offset, end_offset);
         if(out_token.type == SYM_NONE)
@@ -447,7 +418,9 @@ void Lexer::nextToken(void)
     }
 
     // Check registers or expand parenthesis
-    if((token_str[0] == '$') || (token_str[0] == '('))
+    if((token_str[0] == '$') || 
+       (token_str[0] == '(') || 
+       (std::isdigit(token_str[0]) && token_str[1] == '('))
     {
         out_token = this->extractReg(token_str, start_offset, end_offset);
         if(out_token.type == SYM_NONE)
@@ -461,6 +434,7 @@ void Lexer::nextToken(void)
         goto TOKEN_END;
     }
 
+    // TODO : we actually do this twice - why not set the instruction type here as well?
     // Check if this matches any instructions 
     op = this->instr_code_table.get(token_str);
           
@@ -483,7 +457,11 @@ TOKEN_END:
         std::cout << "[" << __func__ << "] (line " << std::dec << 
             this->cur_line << ") got " << this->cur_token.toString() << 
             " token <" << token_str << "> with value <" << 
-            this->cur_token.val << ">" << std::endl;
+            this->cur_token.val << ">";
+        if(cur_token.reg_offset != "\0")
+            std::cout << " and offset " << cur_token.reg_offset;
+       
+        std::cout << std::endl;
 
         if(this->text_info.error)
             std::cout << "[" << __func__ << "] " << this->text_info.errstr << std::endl;
@@ -504,16 +482,18 @@ void Lexer::parseAlign(void)
  */
 void Lexer::parseASCIIZ(void)
 {
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_ASCIIZ;
     this->data_info.line_num = this->cur_line;
+    this->data_info.addr = this->data_addr;
 
+    std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
     this->nextToken();
     if(this->cur_token.type == SYM_STRING)
     {
         for(unsigned int c = 1; c < this->cur_token.val.length()-1; ++c)
         {
             this->data_info.addByte(uint8_t(this->cur_token.val[c]));
+            this->incrDataAddr();
         }
     }
     else
@@ -524,6 +504,9 @@ void Lexer::parseASCIIZ(void)
         if(this->verbose)
             std::cout << "[" << __func__ << "] " << this->data_info.errstr << std::endl;
     }
+
+    std::cout << "[" << __func__ << "] this->data_info : " << std::endl;
+    std::cout << this->data_info.toString() << std::endl;
 }
 
 /*
@@ -531,7 +514,6 @@ void Lexer::parseASCIIZ(void)
  */
 void Lexer::parseByte(void)
 {
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_BYTE;
 
     // there should only be one token after the .byte directive which 
@@ -553,7 +535,7 @@ void Lexer::parseByte(void)
         if(byte > 255)
             byte = 255;
         this->data_info.addByte(uint8_t(byte));
-        this->data_addr++;
+        this->incrDataAddr();
     }
 }
 
@@ -564,7 +546,6 @@ void Lexer::parseHalf(void)
 {
     int word_idx = 0;
     uint32_t word;
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_HALF;
     this->data_info.line_num = this->cur_line;
 
@@ -599,8 +580,9 @@ void Lexer::parseHalf(void)
         }
 
         this->data_info.addByte(word);
-        word_idx++;
-        this->data_addr++;
+        word_idx++;         // NOTE: only using this value for debugging... remove in final version
+        this->incrDataAddr();
+        //this->data_addr++;
     }
 }
 
@@ -612,17 +594,14 @@ void Lexer::parseWord(void)
 {
     uint32_t word;
     int word_idx = 0;
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_WORD;
     this->data_info.line_num = this->cur_line;
+    this->data_info.addr     = this->data_addr;     // the address should be the start address at this time
 
+    std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
     while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
     {
         this->nextToken();
-        // awkward, but works.
-        if(this->cur_line > this->data_info.line_num)
-            break;
-
         if(this->cur_token.type != SYM_LITERAL)
         {
             this->data_info.error = true;
@@ -631,13 +610,20 @@ void Lexer::parseWord(void)
             if(this->verbose)
                 std::cout << "[" << __func__ << "] " << this->data_info.errstr << std::endl;
             break;
-
         }
 
         word = std::stoi(this->cur_token.val);
         this->data_info.addByte(word);
         word_idx++;
-        this->data_addr++;
+        std::cout << "[" << __func__ << "] wrote word " << std::hex << word <<
+            " which should be at oddress 0x" << std::hex << this->data_addr << std::endl;
+        this->incrDataAddr();
+    }
+
+    if(this->verbose)
+    {
+        std::cout << "[" << __func__ << "] this->data_info : " << std::endl;
+        std::cout << this->data_info.toString() << std::endl;
     }
 }
 
@@ -648,23 +634,28 @@ void Lexer::parseWord(void)
  */
 void Lexer::parseSpace(void)
 {
-    this->data_info.init();
     this->data_info.directive = SYM_DIR_SPACE;
     this->data_info.line_num = this->cur_line;
+    this->data_info.addr     = this->data_addr;
 
     // the next token should be a literal indicating how many bytes to reserve
     this->nextToken();
     if(this->cur_token.type != SYM_LITERAL)
     {
-
         this->data_info.error = true;
         this->data_info.errstr = "Expected literal after directive .space, got " + this->cur_token.toString();
+        return;
     }
-    else
+
+    this->data_info.space = std::stoi(this->cur_token.val);
+    
+    if(this->verbose)
     {
-        this->data_info.space = std::stoi(this->cur_token.val);
-        this->data_addr += this->data_info.space;
+        std::cout << "[" << __func__ << "] adding " << std::dec << 
+            this->data_info.space << " to this->data_addr (" << std::hex 
+            << this->data_addr << ")" << std::endl;
     }
+    this->data_addr += this->data_info.space;
 }
 
 
@@ -700,341 +691,407 @@ void Lexer::textSeg(void)
 
 
 
-// ======== INSTRUCTIONS ======== //
+// ======== PARSING ======== //
 
 /*
- * parseBranchZero()
- * Parse branch instructions where the comparison is done 
- * against zero.
+ * parseDirective()
+ * Parse an assembler directive.
  */
-void Lexer::parseBranchZero(void)
+void Lexer::parseDirective(int line_num)
 {
-    bool error = false;
+    Opcode directive;
 
-    this->nextToken();
-    if(!this->cur_token.isReg())
+    // Look up directive string in directive table
+    directive = this->directive_code_table.get(this->cur_token.val);
+    if(this->verbose)
     {
-        error = true;
-        goto BRANCH_ZERO_END;
+        std::cout << "[" << __func__ << "] (line " << 
+            std::dec << this->cur_line << ") got directive " <<
+            directive.toString() << std::endl;
     }
 
-    this->text_info.type[0]   = this->cur_token.type;
-    // if we have an offset, convert it here 
-    if(this->cur_token.offset != "\0")
+    // Check which directive this is
+    switch(directive.instr)
     {
-        this->text_info.val[1] = std::stoi(this->cur_token.offset, nullptr, 10);
-        this->text_info.type[1] = SYM_LITERAL;
-    }
-
-    switch(this->cur_token.type)
-    {
-        case SYM_REG_ZERO:
-        case SYM_REG_GLOBAL:
-        case SYM_REG_FRAME:
-            this->text_info.val[0] = 0;
+        case LEX_ALIGN:
+            this->dataSeg();
+            this->parseAlign();
             break;
+
+        case LEX_ASCIIZ:
+            this->dataSeg();
+            this->parseASCIIZ();
+            break;
+
+        case LEX_BYTE:
+            this->dataSeg();
+            this->parseByte();
+            break;
+
+        // Add a number of half-words to the data segment
+        case LEX_HALF:
+            this->dataSeg();
+            this->parseHalf();
+            break;
+
+        case LEX_SPACE:
+            this->dataSeg();
+            this->parseSpace();
+            break;
+
+        // data types 
+        case LEX_WORD:
+            this->dataSeg();
+            this->parseWord();
+            break;
+
+        // Change segment type
+        // Global variable segment 
+        case LEX_DATA:
+            this->dataSeg();
+            return;
+
+        // Text segment
+        case LEX_TEXT:
+            this->textSeg();
+            return;
 
         default:
-            this->text_info.val[0] = std::stoi(this->cur_token.val, nullptr, 10);
+            this->text_info.error = true;
+            this->text_info.errstr = "Unknown assembly directive " +
+                this->cur_token.val;
+
+            if(this->verbose)
+            {
+                std::cout << "[" << __func__ << "] (line " << 
+                    this->cur_line << ") " << 
+                    this->text_info.errstr << std::endl;
+            }
             break;
     }
 
-    // Next token must be a symbol
-    this->nextToken();
-    if(this->cur_token.type != SYM_LABEL)
-    {
-        error = true;
-        goto BRANCH_ZERO_END;
-    }
-    this->text_info.is_symbol = true;
-    this->text_info.symbol    = this->cur_token.val;
-
-BRANCH_ZERO_END:
-    if(error)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Invalid argument " + 
-            this->cur_token.toString() + " for instruction " + 
-            this->text_info.opcode.toString();
-
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] " << 
-                this->text_info.errstr << std::endl;
-        }
-    }
+    this->data_info.line_num = line_num;
+    if(this->data_info.addr == 0)
+        this->data_info.addr     = this->data_addr;
+    this->source_info.addData(this->data_info);
 }
 
 /*
- * parseBranch()
- * Parse a branch instruction
+ * parseInstruction()
+ * Parse an instruction
  */
-void Lexer::parseBranch(void)
+void Lexer::parseInstr(int line_num)
 {
-    int argn;
-    bool error = false;
+    Opcode op;
 
-    for(argn = 0; argn < 2; ++argn)
+    this->textSeg();
+    op = this->instr_code_table.get(this->cur_token.val);
+    if(this->verbose)
     {
-        this->nextToken();
-        if(!this->cur_token.isReg())
-        {
-            error = true;
-            goto BRANCH_END;
-        }
-        this->text_info.type[argn] = this->cur_token.type;
-
-        switch(this->cur_token.type)
-        {
-            case SYM_REG_ZERO:
-            case SYM_REG_GLOBAL:
-            case SYM_REG_FRAME:
-                this->text_info.val[argn] = 0;
-                break;
-
-            default:
-                this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-                break;
-        }
+        std::cout << "[" << __func__ << "] (line " << std::dec << 
+            this->cur_line << ") found instr token " << 
+            this->cur_token.val << " (opcode x" << std::hex << 
+            op.instr << ", mnemonic " << op.mnemonic << ")" << 
+            std::endl;
     }
 
-    // Finally, there should be one label or constant token at the end
-    this->nextToken();
-    if(this->cur_token.type == SYM_LABEL)
+    this->text_info.opcode = op;
+
+    switch(op.instr)
     {
-        this->text_info.is_symbol = true;
-        this->text_info.symbol    = this->cur_token.val;
-    }
-    else if(cur_token.type == SYM_LITERAL)
-    {
-        this->text_info.val[2] = std::stoi(this->cur_token.val, nullptr, 10);
-    }
-    else
-    {
-        error = true;
-        goto BRANCH_END;
-    }
-
-BRANCH_END:
-    if(error)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Invalid argument " + 
-            this->cur_token.toString() + " for instruction " + 
-            this->text_info.opcode.toString();
-
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] " << 
-                this->text_info.errstr << std::endl;
-        }
-    }
-}
-
-
-/*
- * parseMemArgs()
- */
-void Lexer::parseMemArgs(void)
-{
-    bool error = false;
-
-    this->nextToken();
-    if(!this->cur_token.isReg())
-    {
-        error = true;
-        goto ARG_END;
-    }
-    this->text_info.type[0] = this->cur_token.type;
-    this->text_info.val[0]  = std::stoi(this->cur_token.val, nullptr, 10);
-
-    // this should be a register that may or may not
-    // have an offset 
-    this->nextToken();
-    this->text_info.type[1] = this->cur_token.type;
-
-    switch(this->cur_token.type)
-    {
-        case SYM_REG_ZERO:
-        case SYM_REG_GLOBAL:
-        case SYM_REG_FRAME:
-            this->cur_token.val[1] = 0;
+        case LEX_JR:
+            this->parse_r();
             break;
 
-        default:
-            this->cur_token.val[1] = std::stoi(this->cur_token.val, nullptr, 10);
+        case LEX_J:
+        case LEX_JAL:
+        case LEX_JALR:
+            this->parse_i();
             break;
-    }
-
-    if(this->cur_token.offset != "\0")
-    {
-        this->text_info.val[2]  = std::stoi(this->cur_token.offset, nullptr, 10);
-        this->text_info.type[2] = SYM_LITERAL;
-    }
-
-
-ARG_END:
-    if(error)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Invalid argument " + 
-            this->cur_token.toString();
-
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] " << 
-                this->text_info.errstr << std::endl;
-        }
-    }
-}
-
-
-/*
- * parseRegArgs()
- * Parse some number of register arguments, eg for arithmetic
- * and logic instructions
- */
-void Lexer::parseRegArgs(const int num_args)
-{
-    int argn = 0;
-    bool error = false;
-
-    for(argn = 0; argn < num_args; ++argn)
-    {
-        this->nextToken();
-        // Offsets can only occur in certain instructions which have immediates.
-        // The rule needs to be that 
-        // 1) IF The instruction is an immediate instruction
-        // 2) AND there is an offset string in the current Token 
-        // 3) THEN we convert that offset string to an int and store it in 
-        // this->text_info.val[num_args-1] as a SYM_LITERAL
-        //
         
-        // NOTE: what if this is the ZERO register or the GLOBAL register?
-        // why are we relying on text_info.is_imm to check?
-        if(this->text_info.is_imm && (argn == num_args-1))
-        {
-            // Check if there is an offset 
-            if(this->cur_token.offset != "\0")
-                this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 11);
-            else
-                this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-            this->text_info.type[argn] = SYM_LITERAL;
+        // TODO : re-org by instruction format
+        case LEX_ADDI:
+        case LEX_ADDIU:
+        case LEX_ANDI:
+        case LEX_ORI:
+        case LEX_SLTI:
+        case LEX_SLTIU:
+        case LEX_SLL:
+            this->text_info.is_imm = true;
+            this->parse_rri();
+            break;
 
-            // adjust upper values 
-            if(this->text_info.upper)
+        // memory access with offsets
+        case LEX_LW:
+        case LEX_SW:
+            this->parse_rro();
+            break;
+        
+        case LEX_LUI:
+            this->text_info.is_imm = true;
+            this->text_info.upper = true;
+            this->parse_ri();
+            break;
+
+        case LEX_DIV:
+        case LEX_DIVU:
+        case LEX_MULT:
+        case LEX_MULTU:
+            this->parse_rrr();
+            break;
+
+        case LEX_ADD:
+        case LEX_AND:
+        case LEX_NOR:
+        case LEX_OR:
+        case LEX_SLT:
+        case LEX_SLTU:
+        case LEX_SUB:
+        case LEX_SUBU:
+        //case LEX_XOR:
+            this->parse_rrr();
+            break;
+
+        case LEX_BEQ:
+        case LEX_BNE:
+            this->text_info.is_imm = true;
+            this->parse_rri();
+            //this->branchInstructionArgSwap();
+            break;
+
+        // BGX instructions need to be able to handle symbols as immediate arg
+        // These are all psuedo-ops that get expanded to slt + bne, slt + beq, o
+        case LEX_BGT:
+        case LEX_BLT:
+        case LEX_BGE:
+        case LEX_BLE:
+        case LEX_BGTU:
+            this->text_info.is_imm = true;
+            this->text_info.psuedo = true;
+            this->parse_rri();
+            break;
+
+        case LEX_BEQZ:
+            this->text_info.psuedo = true;
+            this->parse_ri();
+            break;
+
+        case LEX_BGTZ:
+        case LEX_BLEZ:
+            this->parse_ri();
+            break;
+
+        case LEX_SYSCALL:
+            break;
+
+        // psudo-ops 
+        case LEX_LA:
+        case LEX_LI:
+            this->text_info.is_imm = true;
+            this->parse_ri();
+            this->text_info.psuedo = true;
+            break;
+
+            // no-op
+        case LEX_NULL:
+            this->add_noop();
+            break;
+
+        default:
+            this->text_info.error = true;
+            this->text_info.errstr = "Invalid instruction " + this->cur_token.val;
+            if(this->verbose)
             {
-                this->text_info.val[argn] = (this->text_info.val[argn] << 16);
+                std::cout << "[" << __func__ << "] (line " << 
+                    std::dec << this->cur_line << ") " << 
+                    this->text_info.errstr << std::endl;
             }
-        }
-        else
-        {
-            if(!this->cur_token.isReg())
-            {
-                error = true;
-                goto ARG_ERR;
-            }
-        }
-        this->text_info.type[argn] = this->cur_token.type;
-
-        switch(this->cur_token.type)
-        {
-            case SYM_REG_ZERO:
-            case SYM_REG_GLOBAL:
-            case SYM_REG_FRAME:
-                if(this->cur_token.offset != "\0")
-                    this->text_info.val[argn] = std::stoi(this->cur_token.offset, nullptr, 10);
-                else
-                    this->text_info.val[argn] = 0;
-                break;
-
-            default:
-                this->text_info.val[argn] = std::stoi(this->cur_token.val, nullptr, 10);
-                break;
-        }
     }
 
-ARG_ERR:
-    if(error)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Invalid argument " + std::to_string(argn+1) + 
-            " [" + this->cur_token.toString() + "] to instruction " + this->text_info.opcode.toString();
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] (line " << 
-                this->cur_line << ") " << this->text_info.errstr << std::endl;
-        }
-    }
-}
+    this->text_info.line_num = line_num;
+    this->text_info.addr     = this->text_addr;
 
-/*
- * parseJump()
- * Jump instructions only have labels
- * TODO: update to allow for an immediate to be used 
- * as well as a symbol?  This is presumably legal, but 
- * probably mostly useless except in very small programs
- */
-void Lexer::parseJump(void)
-{
-    bool error = false;
-
-    this->nextToken();
-    if(this->cur_token.type != SYM_LABEL)
+    // NOTE: this is annoying and it makes reasoning about the operation a pain. The 
+    // reason that this is here is because in expandPsuedo() when expanding an operation
+    // we add the expanded instructions directly into this->text_info. The expansion looks
+    // at the last instruction in this->text_info, and if its one of the psuedo ops then
+    // it replaces it with the 'real' ops (ie: it mutates this->text_info behind the scenes).
+    if(this->text_info.psuedo)
     {
-        error = true;
+        std::cout << "[" << __func__ << "] expanding psuedo opcode " << this->text_info.opcode.toString() << std::endl;
+        this->expandPsuedo();
     }
     else
     {
-        this->text_info.is_symbol = true;
-        this->text_info.symbol    = this->cur_token.val;
-    }
-
-    if(error)
-    {
-        this->text_info.error = true;
-        this->text_info.errstr = "Invalid argument " + 
-            this->cur_token.toString();
-
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] " << 
-                this->text_info.errstr << std::endl;
-        }
+        std::cout << "[" << __func__ << "] adding opcode " << this->text_info.opcode.toString() << std::endl;
+        this->source_info.addText(this->text_info);
+        this->incrTextAddr();
     }
 }
 
-/*
- * parseLabel()
- */
-void Lexer::parseLabel(void)
+// parse a single register
+void Lexer::parse_r(void)
 {
-    // We are expecting there to be a label here...
-    this->nextToken();
-    if(this->cur_token.type != SYM_LABEL)
+    this->text_info.args[0] = this->parseRegister();
+}
+
+// parse a single immediate
+void Lexer::parse_i(void)
+{
+    this->text_info.args[0] = this->parseImmediate();
+    if(this->text_info.args[0].type == SYM_LABEL)
     {
-        this->text_info.error = true;
-        this->text_info.errstr = "Expected LABEL";
-        if(this->verbose)
-            std::cout << "[" << __func__ << "] " << this->text_info.errstr << std::endl;
+        this->text_info.is_symbol = true;
+        this->text_info.symbol = this->cur_token.val;
     }
-    this->text_info.is_symbol = true;
-    this->text_info.symbol = this->cur_token.val;
+    else
+        this->text_info.is_symbol = false;
+}
+
+// parse register, register
+void Lexer::parse_rr(void)
+{
+    this->text_info.args[0] = this->parseRegister();
+    this->text_info.args[1] = this->parseRegister();
+    // if the second register has an offset then add 
+    // an immediate in index 2 to reflect that
+    if(this->text_info.args[1].offset > 0)
+        this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+}
+
+void Lexer::parse_ri(void)
+{
+    this->text_info.args[0] = this->parseRegister();
+    this->text_info.args[1] = Argument(SYM_NONE, 0);
+    this->text_info.args[2] = this->parseImmediate();
+
+    // immediate must be either a symbol (label) or literal
+    if(this->text_info.args[2].type == SYM_LABEL)
+    {
+        this->text_info.is_symbol = true;
+        this->text_info.symbol = this->cur_token.val;
+    }
+    else if(this->text_info.args[2].type != SYM_LITERAL)
+    {
+        this->text_info.errstr = "Argument (1) expected literal or symbol, got [" + 
+            TokenToString(this->text_info.args[2].type) + 
+            "]";
+        this->text_info.error = true;
+    }
+}
+
+void Lexer::parse_rro(void)
+{
+    this->text_info.args[0] = this->parseRegister();
+    this->text_info.args[1] = this->parseRegister();
+    if(this->text_info.args[1].offset > -1)
+    {
+        std::cout << "[" << __func__ << "] got offset in args[1] " << std::dec 
+            << this->text_info.args[1].offset << std::endl;
+        this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+    }
+    else
+        this->text_info.args[2] = Argument(SYM_LITERAL, 0);
+
+}
+
+// parse register, register, immediate
+void Lexer::parse_rri(void)
+{
+    this->text_info.args[0] = this->parseRegister();
+    this->text_info.args[1] = this->parseRegister();
+    if(this->text_info.args[1].offset > -1)
+    {
+        std::cout << "[" << __func__ << "] got offset in args[1] " << std::dec 
+            << this->text_info.args[1].offset << std::endl;
+        this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+    }
+    else
+        this->text_info.args[2] = this->parseImmediate();
+
+    // immediate must be either a symbol (label) or literal
+    if(this->text_info.args[2].type == SYM_LABEL)
+    {
+        this->text_info.is_symbol = true;
+        this->text_info.symbol = this->cur_token.val;
+    }
+    else if(this->text_info.args[2].type != SYM_LITERAL)
+    {
+        this->text_info.errstr = "Argument (2) expected literal or symbol, got [" + 
+            TokenToString(this->text_info.args[2].type) + 
+            "]";
+        this->text_info.error = true;
+    }
+}
+
+// parse register, register, register
+void Lexer::parse_rrr(void)
+{
+    this->text_info.args[0] = this->parseRegister();
+    this->text_info.args[1] = this->parseRegister();
+    this->text_info.args[2] = this->parseRegister();
+}
+
+void Lexer::add_noop(void)
+{
+    this->text_info.opcode = Opcode(LEX_NULL, 0x0);
+}
+
+/*
+ * parseRegister()
+ * Extract a single register argument from the input
+ */
+Argument Lexer::parseRegister(void)
+{
+    Argument arg;
+
+    this->nextToken();
+    if(!this->cur_token.isReg())
+        return arg;     
+
+    arg.type = this->cur_token.type;
+    arg.val  = std::stoi(this->cur_token.val);
+    if(this->cur_token.isOffset())
+        arg.offset = std::stoi(this->cur_token.reg_offset, nullptr, 10);
+
+    return arg; 
+}
+
+/*
+ * parseImmediate()
+ * Extract an immediate or label from the input
+ */
+Argument Lexer::parseImmediate(void)
+{
+    this->nextToken();
+    if(this->cur_token.type == SYM_LITERAL)
+    {
+        std::cout << "[" << __func__ << "] val = " 
+            << std::stoi(this->cur_token.val, nullptr, 10) 
+            << std::endl;
+
+        return Argument(SYM_LITERAL, std::stoi(this->cur_token.val, nullptr, 10));
+    }
+    if(this->cur_token.type == SYM_LABEL)
+        return Argument(SYM_LABEL, 0);
+
+    return Argument();
 }
 
 
 /*
  * parseLine()
+ * TODO : consider a more functional design where we return a TextInfo .
+ * The problem with that is that we would need to call it twice to expand psuedo-ops...
  */
 void Lexer::parseLine(void)
 {
-    Opcode op;
-    Opcode directive;
     Symbol sym;
     unsigned int line_num = 0;
 
-    this->text_info.init();
     line_num = this->cur_line;
+    this->text_info.init();
+    this->data_info.init();
     this->nextToken();          
 
     // if there is a label at the start of this line, add it to the symbol table
@@ -1057,18 +1114,17 @@ void Lexer::parseLine(void)
             sym.label = this->cur_token.val;
 
         sym.addr = (this->cur_mode == LEX_TEXT_SEG) ? this->text_addr : this->data_addr;
+        sym.section = int(this->cur_mode);
         // add to symbol table 
         this->sym_table.add(sym);
 
         if(this->cur_mode == LEX_TEXT_SEG)
         {
-            std::cout << "[" << __func__ << "] adding symbol [" << sym.label << "] to TEXT segment" << std::endl;
             this->text_info.is_label = true;
             this->text_info.label = sym.label;
         }
         else
         {
-            std::cout << "[" << __func__ << "] adding symbol [" << sym.label << "] to DATA segment" << std::endl;
             this->data_info.is_label = true;
             this->data_info.label = sym.label;
         }
@@ -1079,230 +1135,22 @@ void Lexer::parseLine(void)
         line_num = this->cur_line;
     }
 
+    // check for directives
     if(this->cur_token.type == SYM_DIRECTIVE)
-    {
-        // Look up directive string in directive table
-        directive = this->directive_code_table.get(this->cur_token.val);
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] (line " << 
-                std::dec << this->cur_line << ") got directive " <<
-                directive.toString() << std::endl;
-        }
-
-        // Check which directive this is
-        switch(directive.instr)
-        {
-            case LEX_ALIGN:
-                this->dataSeg();
-                this->parseAlign();
-                break;
-
-            case LEX_ASCIIZ:
-                this->dataSeg();
-                this->parseASCIIZ();
-                break;
-
-            case LEX_BYTE:
-                this->dataSeg();
-                this->parseByte();
-                break;
-
-            // Add a number of half-words to the data segment
-            case LEX_HALF:
-                this->dataSeg();
-                this->parseHalf();
-                break;
-
-            case LEX_SPACE:
-                this->dataSeg();
-                this->parseSpace();
-                break;
-
-            // data types 
-            case LEX_WORD:
-                this->dataSeg();
-                this->parseWord();
-                break;
-
-            // Change segment type
-            // Global variable segment 
-            case LEX_DATA:
-                this->dataSeg();
-                return;
-
-            // Text segment
-            case LEX_TEXT:
-                this->textSeg();
-                return;
-
-            default:
-                this->text_info.error = true;
-                this->text_info.errstr = "Unknown assembly directive " +
-                    this->cur_token.val;
-
-                if(this->verbose)
-                {
-                    std::cout << "[" << __func__ << "] (line " << 
-                        this->cur_line << ") " << 
-                        this->text_info.errstr << std::endl;
-                }
-                break;
-        }
-    }
-
-    // parse instructions 
-    if(this->cur_token.type == SYM_INSTR)
-    {
-        this->textSeg();
-        op = this->instr_code_table.get(this->cur_token.val);
-        if(this->verbose)
-        {
-            std::cout << "[" << __func__ << "] (line " << std::dec << 
-                this->cur_line << ") found instr token " << 
-                this->cur_token.val << " (opcode x" << std::hex << 
-                op.instr << ", mnemonic " << op.mnemonic << ")" << 
-                std::endl;
-        }
-
-        this->text_info.opcode = op;
-
-        switch(op.instr)
-        {
-            case LEX_ADD:
-            case LEX_ADDU:
-            case LEX_AND:
-                this->parseRegArgs(3);
-                break;
-
-            case LEX_ADDI:
-            case LEX_ADDIU:
-            case LEX_ANDI:
-                this->text_info.is_imm = true;
-                this->parseRegArgs(3);
-                break;
-
-            case LEX_BEQ:
-            case LEX_BNE:
-                this->parseBranch();
-                break;
-
-            case LEX_BGT:
-                this->parseBranch();
-                break;
-
-            case LEX_BGTZ:
-            case LEX_BLEZ:
-                this->parseBranchZero();
-                break;
-
-            case LEX_J:
-            case LEX_JAL:
-            case LEX_JALR:
-                this->parseJump();
-                break;
-
-            case LEX_JR:
-                this->parseRegArgs(1);
-                break;
-
-            case LEX_LW:
-                this->parseMemArgs();
-                break;
-
-            case LEX_LA:
-                this->parseRegArgs(1);
-                this->parseLabel();
-                break;
-
-            case LEX_LI:
-                this->text_info.is_imm = true;
-                this->parseRegArgs(2);
-                break;
-
-            case LEX_LUI:
-                this->text_info.is_imm = true;
-                this->text_info.upper = true;
-                this->parseRegArgs(2);
-                break;
-
-            case LEX_MULT:
-                this->parseRegArgs(3);
-                break;
-
-            case LEX_OR:
-                this->parseRegArgs(2);
-                break;
-
-            case LEX_ORI:
-                this->text_info.is_imm = true;
-                this->parseRegArgs(3);
-                break;
-
-            case LEX_SLL:
-            case LEX_SRL:
-                this->text_info.is_imm = true;
-                this->parseRegArgs(3);
-                break;
-
-            case LEX_SLTU:
-                this->parseRegArgs(3);
-                break;
-
-            case LEX_SUB:
-            case LEX_SUBU:
-                this->parseRegArgs(3);
-                break;
-
-            case LEX_SW:
-                this->parseMemArgs();
-                break;
-
-            case LEX_SYSCALL:
-                break;
-
-            default:
-                this->text_info.error = true;
-                this->text_info.errstr = "Invalid instruction " + this->cur_token.val;
-                if(this->verbose)
-                {
-                    std::cout << "[" << __func__ << "] (line " << 
-                        std::dec << this->cur_line << ") " << 
-                        this->text_info.errstr << std::endl;
-                }
-                goto LINE_END;
-        }
-    }
-
-LINE_END:
-    if(this->cur_mode == LEX_TEXT_SEG)
-    {
-        this->text_info.line_num = line_num;
-        this->text_info.addr     = this->text_addr;
-
-        if(this->expand_psuedo)
-        {
-            this->expandPsuedo();
-        }
-        else
-        {
-            this->source_info.addText(this->text_info);
-            this->text_addr++;
-        }
-    }
-    else if(this->cur_mode == LEX_DATA_SEG)
-    {
-        this->data_addr++;
-        this->data_info.line_num = line_num;
-        this->data_info.addr     = this->data_addr;
-        this->source_info.addData(this->data_info);
-    }
+        this->parseDirective(line_num);
+    // check for instructions instructions 
+    else if(this->cur_token.type == SYM_INSTR)
+        this->parseInstr(line_num);
     else
     {
-        std::cout << "[" << __func__ << "] invalid segment mode " <<
-            std::hex << this->cur_mode << std::endl;
+        // add a standalone label (which is a valid construction)
+        this->text_info.line_num = line_num;
+        this->text_info.addr     = this->text_addr;
+        this->source_info.addText(this->text_info);
     }
 
+    std::cout << "[" << __func__ << "] there are " << std::dec << 
+        this->source_info.getTextInfoSize() << " entries in text section" << std::endl;
 }
 
 /*
@@ -1310,7 +1158,6 @@ LINE_END:
  */
 void Lexer::resolveLabels(void)
 {
-    unsigned int idx;
     uint32_t label_addr;
     TextInfo line;
 
@@ -1327,43 +1174,78 @@ void Lexer::resolveLabels(void)
         }
     }
 
-    for(idx = 0; idx < this->source_info.getTextInfoSize(); ++idx)
+    for(unsigned int idx = 0; idx < this->source_info.getTextInfoSize(); ++idx)
     {
         line = this->source_info.getText(idx);
         if(line.is_symbol)
         {
-            if(this->verbose)
-            {
-                std::cout << "[" << __func__ << "] checking address for symbol <" <<
-                    line.symbol << ">" << std::endl;
-            }
-
             label_addr = this->sym_table.getAddr(line.symbol);
 
             if(label_addr > 0)
             {
-                // TODO  : looks like all the exceptions go here
-                if(line.opcode.instr == LEX_LUI)
+                uint32_t offset;
+                switch(line.opcode.instr)
                 {
-                    line.type[1] = SYM_LITERAL;
-                    if(line.upper)
-                        line.val[1] = (label_addr & 0xFFFF0000);
-                    else
-                        line.val[1] = label_addr;
+                    case LEX_LUI:
+                    {
+                        line.args[1] = Argument();  
+                        if(line.upper)
+                            line.args[2] = Argument(SYM_LITERAL, (label_addr & 0xFFFF0000) >> 16);
+                        else
+                            line.args[2] = Argument(SYM_LITERAL, label_addr & 0x0000FFFF);
+                    }
+                    break;
+
+                    case LEX_ORI:
+                    {
+                        line.args[2].type = SYM_LITERAL;
+                        if(line.lower)
+                            line.args[2].val = (label_addr & 0x0000FFFF);
+                        else
+                            line.args[2].val = (label_addr & 0xFFFF0000) >> 16;
+                    }
+                    break;
+
+                    case LEX_BNE:
+                    case LEX_BEQ:
+                    {
+                        // convert to offset
+                        offset = label_addr - line.addr;
+                        line.args[2].type = SYM_LITERAL;
+                        line.args[2].val  = (offset & 0x0000FFFF);
+                    }
+                    break;
+
+                    case LEX_J:
+                    {
+                        // same as default, except we also reset arg[0]
+                        line.args[2].type = SYM_LITERAL;
+                        line.args[2].val = label_addr;
+                        line.args[0] = Argument();
+                    }
+                    break;
+
+                    default:
+                        line.args[2].type = SYM_LITERAL;
+                        line.args[2].val = label_addr;
+                        break;
                 }
-                else
+
+                if(this->verbose)
                 {
-                    line.type[2] = SYM_LITERAL;
-                    line.val[2] = label_addr;
+                    std::cout << "[" << __func__ << "] updating line " << line.line_num 
+                        << " to be " << std::endl << line.toString() << std::endl;
                 }
                 this->source_info.update(idx, line);
 
                 if(this->verbose)
                 {
-                    std::cout << "[" << __func__ << "] updated symbol " <<
-                        line.symbol << " on line " << line.line_num << 
-                        " with address 0x" << std::hex << std::setw(8) << 
-                        line.addr << std::endl;
+                    std::cout << "[" << __func__ << "] updated symbol <" <<
+                        line.symbol << "> on line " << std::dec << 
+                        line.line_num << " [0x" << std::hex << 
+                        std::setfill('0') << std::setw(8) << 
+                        line.addr << "] to value [0x" << 
+                        ")" << std::endl;
                 }
             }
         }
@@ -1395,79 +1277,84 @@ void Lexer::expandPsuedo(void)
 {
     Opcode cur_opcode;
     TextInfo ti;
+    uint32_t instr = this->text_info.opcode.instr;
 
-    switch(this->text_info.opcode.instr)
+    // TODO : debug, show the psuedo op before expansion 
+    std::cout << "[" << __func__ << "] expanding psuedo op : " << std::endl;
+    std::cout << this->text_info.toString() << std::endl;
+    switch(instr)
     {
         case LEX_BGT:
-            {
-                // Input is [bgt $s, $t, C]
-                // slt $at, $t, $s
-                ti.init();
-                ti = this->text_info;
-                ti.opcode.instr = LEX_SLT;
-                ti.opcode.mnemonic = "slt";
-                ti.addr     = this->text_info.addr;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_TEMP;
-                ti.type[2]  = SYM_REG_SAVED;
-                ti.val[0]   = 0;            // TODO : where should AT be?
-                ti.val[1]   = this->text_info.val[1];
-                ti.val[2]   = this->text_info.val[0];
-
-                this->source_info.addText(ti);
-                
-                // bne $at, $zero, C
-                ti.init();
-                ti.opcode.instr = LEX_BNE;
-                ti.opcode.mnemonic = "bne";
-                ti.addr     = this->text_info.addr + 1;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_ZERO;
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[2]  = this->text_info.val[2];
-                
-                this->source_info.addText(ti);
-            }
-            this->text_addr += 2;
-            
-            break;
-
         case LEX_BLT:
+        case LEX_BGE:
+        case LEX_BLE:
+        case LEX_BGTU:
             {
-                // Input is [bgt $s, $t, C]
-                // slt $at, $t, $s
+                std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
+                // slt/sltu $at, $t, $s
                 ti.init();
-                //ti = this->text_info;
-                ti.opcode.instr = LEX_SLT;
-                ti.opcode.mnemonic = "slt";
-                ti.addr     = this->text_info.addr;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_SAVED;
-                ti.type[2]  = SYM_REG_TEMP;
-                ti.val[0]   = 0;            // TODO : where should AT be?
-                ti.val[1]   = this->text_info.val[1];
-                ti.val[2]   = this->text_info.val[2];
+                ti.opcode    = (instr == LEX_BGTU) ? Opcode(LEX_SLTU, "sltu") : Opcode(LEX_SLT, "slt");
+                ti.addr      = this->text_info.addr;
+                ti.line_num  = this->text_info.line_num;
+
+                ti.args[0] = Argument(SYM_REGISTER, REG_AT);
+                if(instr == LEX_BLT || instr == LEX_BGE)
+                {
+                    ti.args[1] = this->text_info.args[0];
+                    ti.args[2] = this->text_info.args[1];
+                }
+                else
+                {
+                    ti.args[1] = this->text_info.args[1];
+                    ti.args[2] = this->text_info.args[0];
+                }
+                ti.label     = this->text_info.label;
+                ti.is_label  = this->text_info.is_label;
 
                 this->source_info.addText(ti);
+                this->incrTextAddr();
                 
-                // bne $at, $zero, C
+                // bne/beq $at, $zero, C
                 ti.init();
-                ti.opcode.instr = LEX_BNE;
-                ti.opcode.mnemonic = "bne";
-                ti.addr     = this->text_info.addr + 1;
-                ti.line_num = this->text_info.line_num;
-                ti.type[0]  = SYM_REG_AT;
-                ti.type[1]  = SYM_REG_ZERO;
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[2]  = this->text_info.val[2];
+                if(instr == LEX_BGE || instr == LEX_BLE)
+                    ti.opcode = Opcode(LEX_BEQ, "beq");
+                else
+                    ti.opcode = Opcode(LEX_BNE, "bne");
+                ti.addr      = this->text_info.addr + 4;
+                ti.line_num  = this->text_info.line_num;
+                ti.args[0]   = Argument(SYM_REGISTER, REG_AT);
+                ti.args[1]   = Argument(SYM_REGISTER, REG_ZERO);
+                ti.args[2]   = this->text_info.args[2];
+                ti.is_imm    = true;
+                ti.symbol    = this->text_info.symbol;
+                ti.is_symbol = this->text_info.is_symbol;
                 
                 this->source_info.addText(ti);
+                this->incrTextAddr();
+                break;
             }
-            this->text_addr += 2;
-            break;
+
+        case LEX_BEQZ:
+            {
+                // Input is [beqz $s C]
+                // beq $s $zero C
+                ti.init();
+                ti.opcode = Opcode(LEX_BEQ, "beq");
+                ti.addr      = this->text_info.addr;
+                ti.line_num  = this->text_info.line_num;
+                ti.args[0]   = this->text_info.args[0];
+                ti.args[1]   = Argument(SYM_REGISTER, REG_ZERO);
+                ti.args[2]   = this->text_info.args[2];
+                ti.label     = this->text_info.label;
+                ti.is_label  = this->text_info.is_label;
+                ti.symbol    = this->text_info.symbol;
+                ti.is_symbol = this->text_info.is_symbol;
+                ti.is_imm    = true;
+
+                this->source_info.addText(ti);
+                this->incrTextAddr();
+                break;
+            }
 
         case LEX_LA:
             {
@@ -1475,98 +1362,114 @@ void Lexer::expandPsuedo(void)
                 //
                 // lui $t, A_hi
                 // ori $t, $t, A_lo
+
+                // Note that literals get resolved from symbols later
+                // This means that we actually need to set upper or lower to tell the resolve step 
+                // how to shift the value correctly for the assembler stage. That means that here we
+                // just place the entire value in both instructions and let resolveLabels() handle
+                // the details.
                 ti.init();
-                ti.opcode.instr    = LEX_LUI;
-                ti.opcode.mnemonic = "lui";
+                ti.opcode = Opcode(LEX_LUI, "lui");
                 ti.addr      = this->text_info.addr;
                 ti.line_num  = this->text_info.line_num;
-                ti.type[0]   = this->text_info.type[0];
-                ti.val[0]    = this->text_info.val[0];
-                ti.type[1]   = SYM_LITERAL;
-                ti.val[1]    = this->text_info.val[1] & 0xFFFF0000;
+                ti.args[0]   = this->text_info.args[0];
+                ti.args[1]   = Argument(SYM_NONE, 0);
+                ti.args[2]   = Argument(
+                        this->text_info.args[2].type,
+                        (this->text_info.args[2].val & 0xFFFF0000) >> 16
+                        );
                 ti.is_imm    = true;
-                ti.upper     = true;
-                ti.is_symbol = true;
+                ti.upper     = true;   
+                ti.is_symbol = this->text_info.is_symbol;
                 ti.symbol    = this->text_info.symbol;
 
                 this->source_info.addText(ti);
+                this->incrTextAddr();
 
                 ti.init();
-                ti.opcode.instr    = LEX_ORI;
-                ti.opcode.mnemonic = "ori";
-                ti.addr      = this->text_info.addr + 1;
+                ti.opcode = Opcode(LEX_ORI, "ori");
+                ti.addr      = this->text_info.addr + 4;
                 ti.line_num  = this->text_info.line_num;
-                ti.type[0]   = this->text_info.type[0];
-                ti.val[0]    = this->text_info.val[0];
-                ti.type[1]   = this->text_info.type[0];
-                ti.val[1]    = this->text_info.val[0];
-                ti.type[2]   = SYM_LITERAL;
-                ti.val[2]    = this->text_info.val[1] & 0x0000FFFF;
+                ti.args[0]   = this->text_info.args[0];
+                ti.args[1]   = this->text_info.args[0];
+                ti.args[2]   = Argument(
+                        this->text_info.args[2].type,
+                        this->text_info.args[2].val & 0x0000FFFF
+                        );
                 ti.is_imm    = true;
                 ti.is_symbol = true;
+                ti.lower     = true;
+                ti.is_symbol = this->text_info.is_symbol;
                 ti.symbol    = this->text_info.symbol;
 
                 this->source_info.addText(ti);
+                this->incrTextAddr();
             }
-            this->text_addr += 2;
             break;
 
         case LEX_LI:
             ti.init();
             // 32-bit immediate (2 instrs)
-            if(this->text_info.val[1] > ((1 << 16)-1))
+            if(this->text_info.args[2].val > ((1 << 16)-1))
             {
-                ti.opcode.instr    = LEX_LUI;
-                ti.opcode.mnemonic = "lui";
+                ti.opcode   = Opcode(LEX_LUI, "lui");
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
-                ti.type[0]  = this->text_info.type[0];
-                ti.val[0]   = this->text_info.val[0];
-                ti.type[1]  = SYM_LITERAL;
-                ti.val[1]   = this->text_info.val[1] & 0xFFFF0000;
+                ti.args[0]  = this->text_info.args[0];
+                ti.args[1]  = Argument(SYM_NONE, 0);
+                ti.args[2]  = Argument(
+                        this->text_info.args[2].type, 
+                        (this->text_info.args[2].val & 0xFFFF0000) >> 16
+                        );
+                //ti.args[2]  = this->text_info.args[1];  // val & 0xFFFF0000  TODO: come back and implement bitwise ops?
                 ti.is_imm   = true;
                 ti.upper    = true;
 
                 this->source_info.addText(ti);
+                this->incrTextAddr();
 
                 ti.init();
-                ti.opcode.instr    = LEX_ORI;
-                ti.opcode.mnemonic = "ori";
-                ti.addr     = this->text_info.addr + 1;
+                ti.opcode   = Opcode(LEX_ORI, "ori");
+                ti.addr     = this->text_info.addr + 4;
                 ti.line_num = this->text_info.line_num;
-                ti.type[0]  = this->text_info.type[0];
-                ti.val[0]   = this->text_info.val[0];
-                ti.type[1]  = this->text_info.type[0];
-                ti.val[1]   = this->text_info.val[0];
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[2]   = this->text_info.val[1] & 0x0000FFFF;
+                ti.args[0]  = this->text_info.args[0];
+                ti.args[1]  = this->text_info.args[0];
+                ti.args[2]  = Argument(
+                        this->text_info.args[2].type,
+                        this->text_info.args[2].val & 0x0000FFFF
+                        );
+                //ti.args[2]  = this->text_info.args[1];  // val & 0x0000FFFF
                 ti.is_imm   = true;
+                ti.lower    = true;
 
                 this->source_info.addText(ti);
-                this->text_addr += 2;
+                this->incrTextAddr();
             }
             // 16-bit immediate (1 instr)
             else
             {
-                ti.opcode.instr = LEX_ORI;
-                ti.opcode.mnemonic = "ori";
+                ti.opcode   = Opcode(LEX_ORI, "ori");
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
-                ti.type[0]  = this->text_info.type[0];
-                ti.val[0]   = this->text_info.val[0];
-                ti.type[1]  = SYM_REG_ZERO;
-                ti.type[2]  = SYM_LITERAL;
-                ti.val[2]   = this->text_info.val[1];
+                ti.args[0]  = this->text_info.args[0];
+                ti.args[1]  = Argument(SYM_REGISTER, REG_ZERO);
+                ti.args[2]  = Argument(SYM_LITERAL, (this->text_info.args[2].val & 0x0000FFFF));
                 ti.is_imm   = true;
 
                 this->source_info.addText(ti);
-                this->text_addr += 1;
+                this->incrTextAddr();
             }
             break;
 
         default:
-            this->source_info.addText(this->text_info);
-            this->text_addr += 1;
+            if(this->verbose)
+            {
+                std::cout << "[" << __func__ << "] got something else..." << std::endl;
+                std::cout << "[" << __func__ << "] this->text_info :..." 
+                    << std::endl << this->text_info.toString() << std::endl;
+            }
+            this->text_info.error = true;
+            this->text_info.errstr = "Unknown psuedo op " + this->text_info.opcode.toString();
             break;
     }
 }
@@ -1579,7 +1482,8 @@ void Lexer::lex(void)
 {
     this->cur_line = 1;
     this->cur_pos = 0;
-    this->text_addr = this->start_addr;     // TODO : proper address init..
+    this->text_addr = this->text_start_addr;     
+    this->data_addr = this->data_start_addr;
 
     while(!this->exhausted())
     {
@@ -1589,7 +1493,6 @@ void Lexer::lex(void)
             this->advance();
             continue;
         }
-
         // eat comments 
         if(this->isComment())
         {
@@ -1598,7 +1501,6 @@ void Lexer::lex(void)
         }
         this->parseLine();
     }
-
     // Resolve symbols
     this->resolveLabels();
 }
@@ -1642,11 +1544,6 @@ bool Lexer::getVerbose(void) const
     return this->verbose;
 }
 
-bool Lexer::getExpandPsuedo(void) const
-{
-    return this->expand_psuedo;
-}
-
 const SourceInfo& Lexer::getSourceInfo(void) const
 {
     return this->source_info;
@@ -1657,23 +1554,18 @@ const SymbolTable& Lexer::getSymTable(void) const
     return this->sym_table;
 }
 
-int Lexer::getStartAddr(void) const
+int Lexer::getTextStartAddr(void) const
 {
-    return this->start_addr;
+    return this->text_start_addr;
+}
+
+int Lexer::getDataStartAddr(void) const
+{
+    return this->data_start_addr;
 }
 
 // ==== SETTERS ===== //
 void Lexer::setVerbose(const bool v)
 {
     this->verbose = v;
-}
-
-void Lexer::setExpandPsuedo(const bool v)
-{
-    this->expand_psuedo = v;
-}
-
-void Lexer::setStartAddr(int a)
-{
-    this->start_addr = a;
 }

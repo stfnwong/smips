@@ -9,6 +9,7 @@
 #define __ASSEMBLER_HPP
 
 #include <string>
+#include <unordered_map>
 #include "Program.hpp"
 #include "Source.hpp"
 #include "Object.hpp"
@@ -20,17 +21,33 @@
  */
 class Assembler
 {
+    // TODO ; move to global space in header?
     private:
         bool verbose;
         int  num_err;
-        // instruction arg offsets
+        // instruction arg offsets      (TODO : move these to a new common location?)
         const uint8_t j_instr_op_offset = 26;
         const uint8_t i_instr_op_offset = 26;
+        const uint8_t r_instr_op_offset = 26;
+
+        // R-format is 
+        // OP rd, rs, rt
         const uint8_t r_instr_offsets[3] = {
             11,     // rd offset
             21,     // rs offset 
             16      // rt offset
         };
+        // I-format is 
+        // OP rt, IMM(rs)
+        // except for BEQ and BNE, which are 
+        // OP rs, rt ,IMM
+        // 
+        // Note that for an instruction with OP rs, IMM(rs) format, the lexer 
+        // LineInfo order will be 
+        // 0 -> rs 
+        // 1 -> rt
+        // 2 -> imm
+        // hence the below ordering
         const uint8_t i_instr_offsets[3] = {
             16,     // rt   (dest))
             21,     // rs   (base)
@@ -47,45 +64,21 @@ class Assembler
         Program program;
         Object  object;
 
+    private:
+        std::unordered_map<int, uint8_t> instr_to_code;
+        void init_instr_to_code_map(void);
+
     // assemble by instruction type
     private:
-        int      val2Offset(const TokenType& type, const int val) const;
-        uint32_t asm_r_instr(const TextInfo& l, const int n) const;
-        uint32_t asm_i_instr(const TextInfo& l, const int n) const;
-        uint32_t asm_j_instr(const TextInfo& l) const;
-
-    // data region assembly
-    private:
-        //DataSeg asm_asciiz(const DataInfo& d);
-        //DataSeg asm_byte(const DataInfo& d);
-        //DataSeg asm_char(const DataInfo& d);
-        //DataSeg asm_half(const DataInfo& d);
-        //DataSeg asm_space(const DataInfo& d);
-        //DataSeg asm_word(const DataInfo& d);
-
-    // text region/instruction assembly
-    private:
-        Instr asm_add(const TextInfo& l) const;
-        Instr asm_addi(const TextInfo& l) const;
-        Instr asm_addu(const TextInfo& l) const;
-        Instr asm_beq(const TextInfo& l) const;
-        Instr asm_bne(const TextInfo& l) const;
-        Instr asm_j(const TextInfo& l) const;
-        Instr asm_la(const  TextInfo& l) const;
-        Instr asm_li(const TextInfo& l) const;
-        Instr asm_lw(const TextInfo& l) const;
-        Instr asm_mult(const TextInfo& l) const;
-        Instr asm_or(const TextInfo& l) const;
-        Instr asm_ori(const TextInfo& l) const;
-        Instr asm_sll(const TextInfo& l) const;
-        Instr asm_sltu(const TextInfo& l) const;
-        Instr asm_sub(const TextInfo& l) const;
-        Instr asm_subu(const TextInfo& l) const;
-        Instr asm_sw(const TextInfo& l) const;
+        Instr asm_r_instr(const TextInfo& l, const int n);
+        Instr asm_r_instr_shamt(const TextInfo& l, const int n);
+        Instr asm_i_instr(const TextInfo& l, const int n);
+        Instr asm_j_instr(const TextInfo& l) ;
 
     // disable copy and move construction, 
     private:
         Assembler(const Assembler& that) = delete;
+        Assembler& operator=(const Assembler& assem) = delete;
 
     public:
         Assembler();

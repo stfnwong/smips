@@ -26,7 +26,8 @@ struct Instr
     public:
         Instr();
         Instr(const uint32_t adr, const uint32_t ins);
-        Instr(const Instr& that);
+        Instr(const Instr& that);       // TODO : what is the issue with the default copy ctor?
+        //Instr(const Instr&& that) noexcept : adr(std::move(that.adr), ins(std::move(that.ins) {} 
 
         // TODO: will the default move constructor be sufficient here?
         bool operator==(const Instr& that) const;
@@ -58,6 +59,7 @@ struct DataSeg
         bool operator!=(const DataSeg& that) const;
 
         std::string toString(void) const;
+        std::string diff(const DataSeg& that) const;
 };
 
 
@@ -71,8 +73,12 @@ class Program
         std::vector <DataSeg> data_segments;
         std::vector <Instr> instructions;
         Instr null_instr;
+        DataSeg null_data;
+
     // TODO : does it make sense to have a copy constructor for Program objects?
     private:
+        //Program(const Program& that) = delete;
+        Program operator==(const Program& that) = delete;
 
     public:
         Program();
@@ -93,17 +99,29 @@ class Program
          */
         void add(const DataSeg& d);
         /*
-         * get()
+         * getInstr()
          * Returns the Nth instruction object from the instruction list
          */
-        Instr& get(const unsigned int idx);
+        Instr& getInstr(const unsigned int idx);
+        /*
+         * getData()
+         * Returns the Nth DataSeg object from the instruction list
+         */
+        DataSeg& getData(const unsigned int idx);
         /*
          * writeMem()
          * Write a word directly to a specific memory location
          */
         void writeMem(const uint32_t addr, const uint32_t val);
         unsigned int size(void) const;
+        unsigned int numDataSeg(void) const;
+        unsigned int dataSize(void) const;
         std::string toString(void) const;
+        
+        // get a specific instr 
+        unsigned int numInstrs(void) const;
+        Instr getInstr(unsigned int idx) const;
+        // TODO: some iterator over instrs
 
         // disk operations
         int save(const std::string& filename);
