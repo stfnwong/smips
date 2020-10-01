@@ -58,7 +58,7 @@ $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 		-o $(TEST_BIN_DIR)/$@ $(LIBS) $(TEST_LIBS)
 
 ## ===== TOOL TARGETS ===== # 
-TOOLS=assem 
+TOOLS=assem disassem
 TOOL_OBJECTS  := $(TOOL_SOURCES:$(TOOL_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 $(TOOL_OBJECTS) : $(OBJ_DIR)/%.o : $(TOOL_DIR)/%.cpp

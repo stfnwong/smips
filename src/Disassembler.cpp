@@ -148,15 +148,12 @@ TextInfo dis_j_instr(uint32_t instr, uint32_t addr)
     ti.addr = addr;
     op_bits = (instr & 0xFC000000) >> 26;
 
-    std::cout << "[" << __func__ << "] instr :" << std::hex 
-        << instr << std::endl;
-    std::cout << "[" << __func__ << "] j op bits 0x" << std::hex 
-        << unsigned(op_bits) << std::endl;
-
     if(op_bits == 0x2)
         ti.opcode = Opcode(LEX_J, "j");
-    else
+    else if(op_bits == 0x3)
         ti.opcode = Opcode(LEX_JAL, "jal");
+    else 
+        return ti;      // Invalid/unsupported J instruction
 
     // this ensures the output is such that if we put it back in
     // the lexer we'd be able to assemble the same program again

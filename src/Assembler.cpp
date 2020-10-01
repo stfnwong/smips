@@ -138,10 +138,8 @@ Instr Assembler::assembleText(const TextInfo& line)
         std::cout << "[" << __func__ << "] assembling " << line.opcode.toString() 
             << " which has code [" << std::hex << unsigned(this->instr_to_code[line.opcode.instr])
             << "]" << std::endl;
-        // Show equivalent instruction
         std::cout << "[" << __func__ << "] " << line.toInstrString() << std::endl;
     }
-
 
     switch(line.opcode.instr)
     {
@@ -194,6 +192,9 @@ Instr Assembler::assembleText(const TextInfo& line)
             return Instr(line.addr, 0); 
     }
     instr.adr = line.addr;
+
+    if(this->verbose)
+        std::cout << "[" << __func__ << "] output instr: " << instr.toString() << std::endl;
 
     return instr;
 }

@@ -1,3 +1,6 @@
 # Ignore some things
 *.swp
 *.o
+# Ignore binaries 
+assem
+disassem
