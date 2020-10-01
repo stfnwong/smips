@@ -195,6 +195,7 @@ Instr Assembler::assembleText(const TextInfo& line)
             break;
 
         default:
+            // If we can't work out what to place here then emit a noop
             if(this->verbose)
             {
                 std::cout << "[" << __func__ << "] (line " << 
@@ -202,9 +203,7 @@ Instr Assembler::assembleText(const TextInfo& line)
                     ") unknown opcode " << line.opcode.toString() << 
                     " inserting NOOP" << std::endl;
             }
-            // TODO : I will emit NO-OPS here, which may 
-            // prove later to be a bad idea
-            return Instr(line.addr, 0); // emit a null instruction
+            return Instr(line.addr, 0); 
     }
     instr.adr = line.addr;
 

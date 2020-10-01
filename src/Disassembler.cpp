@@ -176,7 +176,6 @@ TextInfo dis_instr(uint32_t instr, uint32_t addr)
 {
     uint8_t op_bits;
 
-    // TODO : add disassembly for no-op
     if(instr == 0x00000000)
     {
         TextInfo noop;
@@ -199,7 +198,7 @@ TextInfo dis_instr(uint32_t instr, uint32_t addr)
             return dis_i_instr(instr, addr);
     }
 
-    // if we somehow get here then just return a black TextInfo
+    // if we somehow get here then just return a blank TextInfo
     return TextInfo();
 }
 

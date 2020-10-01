@@ -23,19 +23,8 @@
 #include "Common.hpp"
 
 
-
 //const bool show_all_output = false;
 
-//const int I_INSTR_OP_OFFSET = 26;
-//const int I_INSTR_RT_OFFSET = 16;
-//const int I_INSTR_RS_OFFSET = 21;
-//
-//const int R_INSTR_OP_OFFSET = 26;
-//const int R_INSTR_RS_OFFSET = 21;
-//const int R_INSTR_RT_OFFSET = 16;
-//const int R_INSTR_RD_OFFSET = 11;
-//
-//const int J_INSTR_OP_OFFSET = 26;
 
 
 // Filenames for test 
@@ -199,7 +188,7 @@ Program get_for_loop_expected_program(void)
     instr.ins = 0x0;
     instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RD_OFFSET);
     instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RS_OFFSET);
-    instr.ins = instr.ins | (2 << R_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (2 << R_INSTR_SHAMT_OFFSET);
     prog.add(instr);
 
     instr.init();
