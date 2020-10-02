@@ -74,6 +74,7 @@ class Program
         std::vector <Instr> instructions;
         Instr null_instr;
         DataSeg null_data;
+        bool verbose;
 
     private:
         Program operator==(const Program& that) = delete;
@@ -125,6 +126,10 @@ class Program
         // disk operations
         int save(const std::string& filename);
         int load(const std::string& filename);
+
+        // verbose 
+        void setVerbose(bool v);
+        bool getVerbose(void) const;
 };
 
 

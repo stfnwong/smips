@@ -20,6 +20,7 @@ struct DisOpts
     std::string infile;
     std::string outfile;
     bool verbose;
+    bool print_adr;
 
     public:
         DisOpts()
@@ -27,6 +28,7 @@ struct DisOpts
             infile = "\0";
             outfile = "\0";
             verbose = false;
+            print_adr = false;
         }
 };
 
@@ -35,7 +37,7 @@ struct DisOpts
 int main(int argc, char *argv[])
 {
     DisOpts dis_opts;
-    const char* const short_opts = "vhi:o:";
+    const char* const short_opts = "avhi:o:";
     const option long_opts[] = {};
     int argn = 0;
     int status;
@@ -51,6 +53,10 @@ int main(int argc, char *argv[])
         {
             case 'v':
                 dis_opts.verbose = true;
+                break;
+
+            case 'a':
+                dis_opts.print_adr = true;
                 break;
                 
             case 'i':
@@ -95,10 +101,14 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    std::cout << "Found " << prog.numDataSeg() << " data segments in program [" 
-        << dis_opts.infile << "]" << std::endl;
-    std::cout << "Found " << prog.numInstrs() << " instructions in program [" 
-        << dis_opts.infile << "]" << std::endl;
+    if(dis_opts.verbose)
+    {
+        std::cout << "Found " << prog.numDataSeg() << " data segments in program [" 
+            << dis_opts.infile << "]" << std::endl;
+        std::cout << "Found " << prog.numInstrs() << " instructions in program [" 
+            << dis_opts.infile << "]" << std::endl;
+        std::cout << std::endl;
+    }
 
     // Dump representation to console
     // TODO: data segment
@@ -107,8 +117,11 @@ int main(int argc, char *argv[])
         Instr cur_instr = prog.getInstr(idx);
         TextInfo dis_out = dis_instr(cur_instr.ins, cur_instr.adr);
 
-        std::cout << "[0x" << std::hex << std::setw(8) << std::setfill('0')
-            << dis_out.addr << "] ";
+        if(dis_opts.print_adr)
+        {
+            std::cout << "[0x" << std::hex << std::setw(8) << std::setfill('0')
+                << dis_out.addr << "] ";
+        }
         std::cout << dis_out.toInstrString() << std::endl;
     }
 

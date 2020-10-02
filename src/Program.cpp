@@ -209,6 +209,7 @@ std::string DataSeg::toString(void) const
 // ======== PROGRAM ======== //
 Program::Program()
 {
+    this->verbose = false;
     this->init();
 }
 
@@ -348,10 +349,13 @@ int Program::save(const std::string& filename)
     );
     for(unsigned int idx = 0; idx < this->instructions.size(); ++idx)
     {
-        std::cout << "[" << __func__ << "] writing instr (" << std::dec
-            << idx + 1 << "/" << this->instructions.size() << ") 0x" 
-            << std::hex << std::setw(8) << std::setfill('0') 
-            << unsigned(this->instructions[idx].ins) << std::endl;
+        if(this->verbose)
+        {
+            std::cout << "[" << __func__ << "] writing instr (" << std::dec
+                << idx + 1 << "/" << this->instructions.size() << ") 0x" 
+                << std::hex << std::setw(8) << std::setfill('0') 
+                << unsigned(this->instructions[idx].ins) << std::endl;
+        }
         outfile.write(
                 reinterpret_cast<char*>(&this->instructions[idx].ins),
                 sizeof(uint32_t)
@@ -405,4 +409,14 @@ int Program::load(const std::string& filename)
     infile.close();
 
     return 0;
+}
+
+
+void Program::setVerbose(bool v) 
+{
+    this->verbose = v;
+}
+bool Program::getVerbose(void) const
+{
+    return this->verbose;
 }

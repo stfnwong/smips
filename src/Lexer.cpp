@@ -486,7 +486,9 @@ void Lexer::parseASCIIZ(void)
     this->data_info.line_num = this->cur_line;
     this->data_info.addr = this->data_addr;
 
-    std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
+    if(this->verbose)
+        std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
+
     this->nextToken();
     if(this->cur_token.type == SYM_STRING)
     {
@@ -505,8 +507,11 @@ void Lexer::parseASCIIZ(void)
             std::cout << "[" << __func__ << "] " << this->data_info.errstr << std::endl;
     }
 
-    std::cout << "[" << __func__ << "] this->data_info : " << std::endl;
-    std::cout << this->data_info.toString() << std::endl;
+    if(this->verbose)
+    {
+        std::cout << "[" << __func__ << "] this->data_info : " << std::endl;
+        std::cout << this->data_info.toString() << std::endl;
+    }
 }
 
 /*
@@ -917,12 +922,10 @@ void Lexer::parseInstr(int line_num)
     // it replaces it with the 'real' ops (ie: it mutates this->text_info behind the scenes).
     if(this->text_info.psuedo)
     {
-        std::cout << "[" << __func__ << "] expanding psuedo opcode " << this->text_info.opcode.toString() << std::endl;
         this->expandPsuedo();
     }
     else
     {
-        std::cout << "[" << __func__ << "] adding opcode " << this->text_info.opcode.toString() << std::endl;
         this->source_info.addText(this->text_info);
         this->incrTextAddr();
     }
@@ -984,11 +987,7 @@ void Lexer::parse_rro(void)
     this->text_info.args[0] = this->parseRegister();
     this->text_info.args[1] = this->parseRegister();
     if(this->text_info.args[1].offset > -1)
-    {
-        std::cout << "[" << __func__ << "] got offset in args[1] " << std::dec 
-            << this->text_info.args[1].offset << std::endl;
         this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
-    }
     else
         this->text_info.args[2] = Argument(SYM_LITERAL, 0);
 
@@ -1065,10 +1064,6 @@ Argument Lexer::parseImmediate(void)
     this->nextToken();
     if(this->cur_token.type == SYM_LITERAL)
     {
-        std::cout << "[" << __func__ << "] val = " 
-            << std::stoi(this->cur_token.val, nullptr, 10) 
-            << std::endl;
-
         return Argument(SYM_LITERAL, std::stoi(this->cur_token.val, nullptr, 10));
     }
     if(this->cur_token.type == SYM_LABEL)
@@ -1147,9 +1142,6 @@ void Lexer::parseLine(void)
         this->text_info.addr     = this->text_addr;
         this->source_info.addText(this->text_info);
     }
-
-    std::cout << "[" << __func__ << "] there are " << std::dec << 
-        this->source_info.getTextInfoSize() << " entries in text section" << std::endl;
 }
 
 /*

@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
     assembler.assemble();
     
     // Save the program to disk
+    program.setVerbose(asm_opts.verbose);
     program = assembler.getProgram();
     status = program.save(asm_opts.outfile);
     if(status < 0)
