@@ -12,6 +12,12 @@
 #include <string>
 #include <vector>
 
+#define FUNC_ADD 32
+#define FUNC_ADDU 33
+#define FUNC_SUB 34
+#define FUNC_SUBU 35
+#define FUNC_AND 36
+#define FUNC_OR 37
 
 #define SMIPS_MEM_SIZE 0x1000       // TODO: boost this up later
 
@@ -23,10 +29,16 @@ struct State
     uint8_t mem[SMIPS_MEM_SIZE];    // TODO: this would be cache in a modern processor...
 
     // reg for 4 stage pipeline
-    uint32_t instr;
-    uint32_t id_ex;
-    uint32_t ex_mem;
-    uint32_t mem_wb;
+    uint32_t instr;     // fetch stage register
+    uint8_t op_bits;
+    uint8_t func;
+    // register file outputs
+    uint8_t rs;
+    uint8_t rt;
+    uint8_t rd;
+    uint8_t shamt;
+    uint32_t imm;
+
     // register file 
     uint32_t reg[32];
 
@@ -38,6 +50,7 @@ struct State
     public:
         void fetch(void);
         void decode(void);
+        void execute(void);
 
     public:
         State();
