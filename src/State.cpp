@@ -58,6 +58,9 @@ State::State()
     this->init_reg();
 }
 
+/*
+ * copy ctor
+ */
 State::State(const State& that)
 {
     this->pc      = that.pc;
@@ -75,6 +78,9 @@ State::State(const State& that)
         this->reg[i] = that.reg[i];
 }
 
+/*
+ * init_reg()
+ */
 void State::init_reg(void)
 {
     this->pc      = 0;       // TODO : should actually be START_ADDR
@@ -93,6 +99,9 @@ void State::init_reg(void)
         this->reg[i] = 0;
 }
 
+/*
+ * zero_mem()
+ */
 void State::zero_mem(void)
 {
     for(int i = 0; i < SMIPS_MEM_SIZE; ++i)
@@ -100,6 +109,9 @@ void State::zero_mem(void)
 }
 
 // ================ PIPELINE ================ //
+/*
+ * fetch()
+ */
 void State::fetch(void)
 {
     this->instr = 0x0;
@@ -110,6 +122,9 @@ void State::fetch(void)
     this->pc += 4;
 }
 
+/*
+ * decode()
+ */
 void State::decode(void)
 {
     this->op_bits = (this->instr & 0xFC000000) >> 26;
@@ -124,8 +139,6 @@ void State::decode(void)
                 this->rd    = (this->instr & 0x0000F700) >> R_INSTR_RD_OFFSET;
                 this->shamt = (this->instr & 0x000003E0) >> R_INSTR_SHAMT_OFFSET;
                 this->func  = (this->instr & 0x0000003F);
-
-                std::cout << "[" << __func__ << "] func: " << unsigned(this->func) << std::endl;
             }
             break;
 
@@ -148,8 +161,12 @@ void State::decode(void)
     }
 }
 
+/*
+ * execute()
+ */
 void State::execute(void)
 {
+    int64_t t;
     // R-instructions
     if(this->op_bits == 0x0)
     {
@@ -166,12 +183,109 @@ void State::execute(void)
             case R_SRA:     // R[$rd] <- R[$st] >> shamt (signed)
                 this->reg[this->rd] = unsigned(this->reg[this->rt] >> this->shamt);
 
+
+            case R_SLLV:    // R[$rd] <- R[$rt] << R[$rs]
+                this->reg[this->rd] = (this->reg[this->rt] << this->reg[this->rs]);
+                break;
+
+            case R_SRLV:    // R[$rd] <- R[$rt] >> R[$rs]
+                this->reg[this->rd] = unsigned(this->reg[this->rt] >> this->reg[this->rs]);
+                break;
+
+            case R_SRAV:    // R[$rd] <- R[$rt] >> R[$rs]   (signed)
+                this->reg[this->rd] = (this->reg[this->rt] >> this->reg[this->rs]);
+                break;
+
+            case R_JR:      // PC <- R[$rs]
+                this->pc = this->reg[this->rs];
+                break;
+
+            case R_JALR:    // 
+                this->tmp = this->reg[this->rs];
+                this->reg[this->rd] = this->pc + 8;
+                this->pc = this->tmp;
+                break;
+
+            case R_SYSCALL:
+                std::cout << "[" << __func__ << "] SYSCALL not yet implemented" << std::endl;
+                break;
+
+            case R_MFHI:    // R[$rd] <- HI
+                this->reg[this->rd] = this->hi;
+                break;
+
+            case R_MTHI:    // HI <- R[$rs]
+                this->hi = this->reg[this->rs];
+                break;
+
+            case R_MFLO:    // R[$rd] <- LO
+                this->reg[this->rd] = this->lo;
+                break;
+
+            case R_MTLO:    // LO <- R[$rs]
+                this->lo = this->reg[this->rs];
+                break;
+
+            case R_MULT:    // {HI, LO} <- R[$rs] * R[$rt]
+                t = this->reg[this->rs] * this->reg[this->rt];
+                this->hi = (t & 0xFFFFFFFF00000000) >> 32;
+                this->lo = (t & 0x00000000FFFFFFFF);
+                break;
+
+            case R_MULTU:   // {HI, LO} <- R[$rs] * R[$rt]
+                t = unsigned(this->reg[this->rs]) * unsigned(this->reg[this->rt]);
+                this->hi = (t & 0xFFFFFFFF00000000) >> 32;
+                this->lo = (t & 0x00000000FFFFFFFF);
+                break;
+
+            case R_DIV:     // LO <- R[$rs] / R[$rt], HI <- R[$rs] % R[$rt] (signed)
+                this->lo = this->reg[this->rs] / this->reg[this->rt];
+                this->hi = this->reg[this->rs] % this->reg[this->rt];
+                break;
+
+            case R_DIVU:    // LO <- R[$rs] / R[$rt], HI <- R[$rs] % R[$rt] (unsigned)
+                this->lo = unsigned(this->reg[this->rs]) / unsigned(this->reg[this->rt]);
+                this->hi = unsigned(this->reg[this->rs]) % unsigned(this->reg[this->rt]);
+                break;
+
             case R_ADD:     // R[$rd] <- R[$rs] + R[$rt]
                 this->reg[this->rd] = this->reg[this->rs] + this->reg[this->rt];
                 break;
 
-            case R_ADDU: // R[$rd] <- R[$rs] + R[$rt] (unsigned)
+            case R_ADDU:    // R[$rd] <- R[$rs] + R[$rt] (unsigned)
                 this->reg[this->rd] = unsigned(this->reg[this->rs]) + unsigned(this->reg[this->rt]);
+                break;
+
+            case R_SUB:
+                this->reg[this->rd] = this->reg[this->rs] - this->reg[this->rt];
+                break;
+
+            case R_SUBU:
+                this->reg[this->rd] = unsigned(this->reg[this->rs]) - unsigned(this->reg[this->rt]);
+                break;
+
+            case R_AND:
+                this->reg[this->rd] = this->reg[this->rs] & this->reg[this->rt];
+                break;
+
+            case R_OR:
+                this->reg[this->rd] = this->reg[this->rs] | this->reg[this->rt];
+                break;
+
+            case R_XOR:
+                this->reg[this->rd] = this->reg[this->rs] ^ this->reg[this->rt];
+                break;
+
+            case R_NOR:
+                this->reg[this->rd] = !(this->reg[this->rs] | this->reg[this->rt]);
+                break;
+
+            case R_SLT:
+                this->reg[this->rd] = (this->reg[this->rs] < this->reg[this->rt]) ? 1 : 0;
+                break;
+
+            case R_SLTU:
+                this->reg[this->rd] = (unsigned(this->reg[this->rs]) < unsigned(this->reg[this->rt])) ? 1 : 0;
                 break;
 
             default:
@@ -263,9 +377,10 @@ void State::execute(void)
                 this->reg[this->rt] = (this->mem[this->reg[this->rs] + (this->imm & 0x0000FFFF)]) & 0xFFFF;
                 break;
 
-            case I_LW:  // get 4 bytes starting at $s + i
+            case I_LW:  // TODO : get 4 bytes starting at $s + i
                 this->reg[this->rt] = this->mem[this->reg[this->rs]] + (this->imm & 0xFFFF);
                 break;
+
 
             default:        // Noop
                 break;
@@ -284,11 +399,15 @@ void State::loadMem(const std::vector<uint8_t>& data, unsigned int offset)
         this->mem[offset + i] = data[i];
 }
 
+/*
+ * tick()
+ */
 void State::tick(void)
 {
     // run the pipeline for one cycle
     this->fetch();
     this->decode();
+    this->execute();
 }
 
 

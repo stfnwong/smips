@@ -37,6 +37,7 @@
 #define R_AND     36
 #define R_OR      37
 #define R_XOR     38
+#define R_NOR     39
 #define R_SLT     42
 #define R_SLTU    43
 
@@ -98,6 +99,9 @@ struct State
     uint8_t rd;
     uint8_t shamt;
     int32_t imm;
+    int32_t tmp;
+    int32_t hi;
+    int32_t lo;
 
     // register file 
     int32_t reg[32];      

@@ -95,13 +95,9 @@ TEST_CASE("test_execute", "[classic]")
     // lets set the values of those registers to be
     // R[rs] = 1
     // R[rt] = 2
-    //
     // so that R[rd] will be 3
     test_state.reg[test_state.rs] = 1;
     test_state.reg[test_state.rt] = 2;
-
-    //for(int i = 0; i < 32; ++i)
-    //    std::cout << "reg " << std::dec << i << ": " << std::hex << test_state.reg[i] << std::endl;
 
     // now execute this add
     test_state.execute();

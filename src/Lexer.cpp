@@ -852,7 +852,7 @@ void Lexer::parseInstr(int line_num)
         case LEX_SLTU:
         case LEX_SUB:
         case LEX_SUBU:
-        //case LEX_XOR:
+        case LEX_XOR:
             this->parse_rrr();
             break;
 
@@ -861,6 +861,14 @@ void Lexer::parseInstr(int line_num)
             this->text_info.is_imm = true;
             this->parse_rri();
             //this->branchInstructionArgSwap();
+            break;
+
+        // Move to hi/lo registers 
+        case LEX_MFHI:
+        case LEX_MTHI:
+        case LEX_MFLO:
+        case LEX_MTLO:
+            this->parse_r();
             break;
 
         // BGX instructions need to be able to handle symbols as immediate arg
