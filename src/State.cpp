@@ -8,12 +8,53 @@
 #include <iomanip>
 #include <sstream>
 
-#include "State.hpp"
 #include "Common.hpp"
+#include "Register.hpp"
+#include "State.hpp"
 
 
+DataCache::DataCache(unsigned int size)
+{
+    this->mem = new uint8_t[size];
+    this->mem_size = size;
+}
+
+DataCache::~DataCache()
+{
+    delete[] this->mem;
+}
+
+/*
+ * size()
+ */
+unsigned int DataCache::size(void) const
+{
+    return this->mem_size;
+}
+
+/*
+ * clear()
+ */
+void DataCache::clear(void)
+{
+    for(unsigned int i = 0; i < this->mem_size; ++i)
+        this->mem[i] = 0;
+}
+
+/*
+ * []
+ */
+uint8_t& DataCache::operator[](const int i)
+{
+    return this->mem[i];
+}
+
+
+
+// ======== STATE ======== //
 State::State()
 {
+    this->verbose = false;
     this->init_reg();
 }
 
@@ -67,10 +108,6 @@ void State::fetch(void)
     this->instr = this->instr | (this->mem[this->pc+2] << 8);
     this->instr = this->instr | (this->mem[this->pc+3] << 0);
     this->pc += 4;
-
-    // TODO : debug, remove 
-    //std::cout << "[" << __func__ << "] instr: 0x" << std::hex 
-    //    << std::setw(8) << std::setfill('0') << this->instr << std::endl;
 }
 
 void State::decode(void)
@@ -82,16 +119,13 @@ void State::decode(void)
         // R-instruction
         case 0x0:
             {
-                this->rs = (this->instr & 0x03E00000) >> R_INSTR_RS_OFFSET;
-                this->rt = (this->instr & 0x001F0000) >> R_INSTR_RT_OFFSET;
-                this->rd = (this->instr & 0x0000F700) >> R_INSTR_RD_OFFSET;
+                this->rs    = (this->instr & 0x03E00000) >> R_INSTR_RS_OFFSET;
+                this->rt    = (this->instr & 0x001F0000) >> R_INSTR_RT_OFFSET;
+                this->rd    = (this->instr & 0x0000F700) >> R_INSTR_RD_OFFSET;
                 this->shamt = (this->instr & 0x000003E0) >> R_INSTR_SHAMT_OFFSET;
-                this->func = (this->instr & 0x0000001F);
+                this->func  = (this->instr & 0x0000003F);
 
-                std::cout << "[" << __func__ << "] rs    : " << std::dec << unsigned(this->rs) << std::endl;
-                std::cout << "[" << __func__ << "] rt    : " << std::dec << unsigned(this->rt) << std::endl;
-                std::cout << "[" << __func__ << "] rd    : " << std::dec << unsigned(this->rd) << std::endl;
-                std::cout << "[" << __func__ << "] shamt : " << std::dec << unsigned(this->shamt) << std::endl;
+                std::cout << "[" << __func__ << "] func: " << unsigned(this->func) << std::endl;
             }
             break;
 
@@ -99,15 +133,15 @@ void State::decode(void)
         case 0x2:
         case 0x3:
             {
-                this->imm = (this->instr & 0x3FFFFFFF) << 2;    
+                this->imm = (this->instr & 0x3FFFFFFF);
             }
             break;
 
         // I-instructions
         default:
             {
-                this->rs = (this->instr & 0x03E00000) >> I_INSTR_RS_OFFSET;
-                this->rt = (this->instr & 0x001F0000) >> I_INSTR_RT_OFFSET;
+                this->rs  = (this->instr & 0x03E00000) >> I_INSTR_RS_OFFSET;
+                this->rt  = (this->instr & 0x001F0000) >> I_INSTR_RT_OFFSET;
                 this->imm = (this->instr & 0x0000FFFF);
             }
             break;
@@ -121,11 +155,22 @@ void State::execute(void)
     {
         switch(this->func)
         {
-            case FUNC_ADD:
+            case R_SLL:     // R[$rd] <- R[$rt] << shamt
+                this->reg[this->rd] = this->reg[this->rt] << this->shamt;
+                break;
+
+            case R_SRL:     // R[$rd] <- R[$rt] >> shamt
+                this->reg[this->rd] = this->reg[this->rt] >> this->shamt;
+                break;
+
+            case R_SRA:     // R[$rd] <- R[$st] >> shamt (signed)
+                this->reg[this->rd] = unsigned(this->reg[this->rt] >> this->shamt);
+
+            case R_ADD:     // R[$rd] <- R[$rs] + R[$rt]
                 this->reg[this->rd] = this->reg[this->rs] + this->reg[this->rt];
                 break;
 
-            case FUNC_ADDU:
+            case R_ADDU: // R[$rd] <- R[$rs] + R[$rt] (unsigned)
                 this->reg[this->rd] = unsigned(this->reg[this->rs]) + unsigned(this->reg[this->rt]);
                 break;
 
@@ -139,8 +184,11 @@ void State::execute(void)
         switch(this->op_bits)
         {
             case 0x2:   // j
+                this->pc += (this->imm << 2);
                 break;
             case 0x3:   // jal
+                this->reg[REG_RETURN] = this->pc;
+                this->pc += (this->imm << 2);
                 break;
         }
     }
@@ -149,7 +197,77 @@ void State::execute(void)
     {
         switch(this->func)
         {
-            case 4:     // beq
+            case I_BEQ:     
+                if(this->reg[this->rs] == this->reg[this->rt])
+                    this->pc += (this->imm << 2) + 4;
+                break;
+
+            case I_BNE:
+                if(this->reg[this->rs] != this->reg[this->rt])
+                    this->pc += (this->imm << 2) + 4;
+                break;
+
+            case I_BLEZ:
+                if(this->reg[this->rs] <= 0)
+                    this->pc += (this->imm << 2) + 4;
+                break;
+
+            case I_BGTZ:
+                if(this->reg[this->rs] > 0)
+                    this->pc += (this->imm << 2) + 4;
+                break;
+
+            case I_ADDI:    // R[$rt] <- R[$rs] + imm16s
+                this->reg[this->rt] = this->reg[this->rs] + this->imm;
+                break;
+
+            case I_ADDIU:   /// R[$rt] <- R[$rs] + imm16u
+                this->reg[this->rt] = unsigned(this->reg[this->rs] + this->imm);
+                break;
+
+            case I_SLTI:
+                if(this->reg[this->rs] < this->imm)
+                    this->reg[this->rt] = 1;
+                else 
+                    this->reg[this->rt] = 0;
+                break;
+
+            case I_SLTIU:
+                if(unsigned(this->reg[this->rs]) < unsigned(this->imm))
+                    this->reg[this->rt] = 1;
+                else 
+                    this->reg[this->rt] = 0;
+                break;
+
+            case I_ANDI:
+                this->reg[this->rt] = this->reg[this->rs] & this->imm;
+                break;
+                
+            case I_ORI:
+                this->reg[this->rt] = this->reg[this->rs] | this->imm;
+                break;
+
+            case I_XORI:
+                this->reg[this->rt] = this->reg[this->rs] ^ this->imm;
+                break;
+
+            case I_LUI:
+                this->reg[this->rt] = (this->imm << 16);
+                break;
+
+            case I_LB:  // sign extend to 8 bits
+                this->reg[this->rt] = (this->mem[this->reg[this->rs] + (this->imm & 0x0000FFFF)]) & 0xFF;
+                break;
+
+            case I_LH:  // sign extend to 16 bits
+                this->reg[this->rt] = (this->mem[this->reg[this->rs] + (this->imm & 0x0000FFFF)]) & 0xFFFF;
+                break;
+
+            case I_LW:  // get 4 bytes starting at $s + i
+                this->reg[this->rt] = this->mem[this->reg[this->rs]] + (this->imm & 0xFFFF);
+                break;
+
+            default:        // Noop
                 break;
         }
     }
