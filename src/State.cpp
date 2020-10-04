@@ -292,8 +292,10 @@ void State::execute(void)
                 break;      // No-op
         }
     }
+
     // J-instructions 
-    else if(this->op_bits > 0)
+    // TODO: have a decode table or something rather than testing here...
+    else if(this->op_bits == 0x2 || this->op_bits == 0x3)
     {
         switch(this->op_bits)
         {
@@ -309,7 +311,7 @@ void State::execute(void)
     // I-instructions
     else
     {
-        switch(this->func)
+        switch(this->op_bits)
         {
             case I_BEQ:     
                 if(this->reg[this->rs] == this->reg[this->rt])
@@ -378,9 +380,18 @@ void State::execute(void)
                 break;
 
             case I_LW:  // TODO : get 4 bytes starting at $s + i
-                this->reg[this->rt] = this->mem[this->reg[this->rs]] + (this->imm & 0xFFFF);
+                //this->reg[this->rt] = this->mem[this->reg[this->rs]] + (this->imm & 0xFFFF);
+                this->reg[this->rt] = 0;
+                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
+                this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 0] << 24);
+                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
+                this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 1] << 16);
+                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
+                this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 2] << 8);
+                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
+                this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 3] << 0);
+                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
                 break;
-
 
             default:        // Noop
                 break;

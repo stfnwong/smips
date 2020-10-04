@@ -323,6 +323,25 @@ Instr Program::getInstr(unsigned int idx) const
 }
 
 /*
+ * toVec()
+ */
+std::vector<uint8_t> Program::toVec(void)
+{
+    std::vector<uint8_t> prog;
+
+    for(unsigned int i = 0; i < this->instructions.size(); ++i)
+    {
+        Instr cur_instr = this->instructions[i];
+        prog.push_back((cur_instr.ins & 0xFF000000) >> 24);
+        prog.push_back((cur_instr.ins & 0x00FF0000) >> 16);
+        prog.push_back((cur_instr.ins & 0x0000FF00) >> 8);
+        prog.push_back((cur_instr.ins & 0x000000FF) >> 0);
+    }
+
+    return prog;
+}
+
+/*
  * save()
  */
 int Program::save(const std::string& filename) 

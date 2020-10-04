@@ -15,6 +15,7 @@
 
 // unit(s) under test 
 #include "State.hpp"
+#include "Program.hpp"
 
 
 // add $s0, $s1. $s2
@@ -52,17 +53,13 @@ TEST_CASE("test_fetch", "[classic]")
     // load some data into memory 
     test_state.loadMem(add_example, 0);
     test_state.loadMem(lw_example, 4);
-    
-    std::cout << test_state.toString() << std::endl;
     // fetch the two instructions
     test_state.fetch();
     REQUIRE(test_state.instr == 0x02328020);
     REQUIRE(test_state.pc == 4);
-    std::cout << test_state.toString() << std::endl;
     test_state.fetch();
     REQUIRE(test_state.instr == 0x8E680020);
     REQUIRE(test_state.pc == 8);
-    std::cout << test_state.toString() << std::endl;
 }
 
 TEST_CASE("test_decode", "[classic]")
@@ -78,7 +75,7 @@ TEST_CASE("test_decode", "[classic]")
 }
 
 
-TEST_CASE("test_execute", "[classic]")
+TEST_CASE("test_execute_add", "[classic]")
 {
     State test_state;
 
@@ -102,4 +99,30 @@ TEST_CASE("test_execute", "[classic]")
     // now execute this add
     test_state.execute();
     REQUIRE(test_state.reg[test_state.rd] == 3);
+}
+
+TEST_CASE("test_execute_lw", "[classic]")
+{
+    State test_state;
+
+    test_state.loadMem(lw_example, 0);
+    // ensure all registers are zero'd at start up time 
+    for(int i = 0; i < 32; ++i)
+        REQUIRE(test_state.reg[i] == 0);
+
+    test_state.fetch();
+    test_state.decode();
+    REQUIRE(test_state.rs == 19);
+    REQUIRE(test_state.rt == 8);
+    REQUIRE(test_state.imm == 32);
+    // Set the test up so that the word we want to load is at offset 64
+    // Since the offset in the example instruction is 32, we place 32
+    // in $rs and pre-load the memory. 
+    test_state.reg[test_state.rs] = 32;
+    const std::vector<uint8_t> dummy_data = {0xDE, 0xAD, 0xBE, 0xEF};
+    test_state.loadMem(dummy_data, 64);
+
+    // now execute this lw
+    test_state.execute();
+    REQUIRE(test_state.reg[8] == 0xDEADBEEF);
 }

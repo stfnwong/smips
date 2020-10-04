@@ -123,6 +123,8 @@ class Program
         Instr getInstr(unsigned int idx) const;
         // TODO: some iterator over instrs
 
+        std::vector<uint8_t> toVec(void);
+
         // disk operations
         int save(const std::string& filename);
         int load(const std::string& filename);

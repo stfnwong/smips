@@ -56,7 +56,7 @@
 #define I_LUI     15
 #define I_LB      32
 #define I_LH      33
-#define I_LW      34
+#define I_LW      35
 #define I_LBU     36
 #define I_LHU     37
 #define I_SB      40
