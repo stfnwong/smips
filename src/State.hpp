@@ -122,7 +122,7 @@ struct State
         State();
         State(const State& that);
 
-        void loadMem(const std::vector<uint8_t>& data, unsigned int offset);
+        void writeMem(const std::vector<uint8_t>& data, unsigned int offset);
         void tick(void);
 
         std::string toString(void) const;

@@ -146,7 +146,7 @@ void State::decode(void)
         case 0x2:
         case 0x3:
             {
-                this->imm = (this->instr & 0x3FFFFFFF);
+                this->imm = (this->instr & 0x03FFFFFF);
             }
             break;
 
@@ -367,7 +367,7 @@ void State::execute(void)
                 this->reg[this->rt] = this->reg[this->rs] ^ this->imm;
                 break;
 
-            case I_LUI:
+            case I_LUI: // R[$rt] <- {imm, 0x0000}
                 this->reg[this->rt] = (this->imm << 16);
                 break;
 
@@ -379,18 +379,13 @@ void State::execute(void)
                 this->reg[this->rt] = (this->mem[this->reg[this->rs] + (this->imm & 0x0000FFFF)]) & 0xFFFF;
                 break;
 
-            case I_LW:  // TODO : get 4 bytes starting at $s + i
-                //this->reg[this->rt] = this->mem[this->reg[this->rs]] + (this->imm & 0xFFFF);
+            case I_LW:  // R[$rt] <- Mem4b(R[$rs] + imm16)
+                // TODO: we can almost certainly implement a faster version of this instruction
                 this->reg[this->rt] = 0;
-                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
                 this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 0] << 24);
-                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
                 this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 1] << 16);
-                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
                 this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 2] << 8);
-                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
                 this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 3] << 0);
-                std::cout << "[" << __func__ << "] this->reg[" << std::dec << unsigned(this->rt) << "] : " << std::hex << this->reg[this->rt] << std::endl;
                 break;
 
             default:        // Noop
@@ -401,7 +396,7 @@ void State::execute(void)
 }
 
 // ================ MEMORY ================ //
-void State::loadMem(const std::vector<uint8_t>& data, unsigned int offset)
+void State::writeMem(const std::vector<uint8_t>& data, unsigned int offset)
 {
     if(offset + data.size() > SMIPS_MEM_SIZE)
         return;
@@ -419,6 +414,7 @@ void State::tick(void)
     this->fetch();
     this->decode();
     this->execute();
+    // TODO: write back?
 }
 
 
