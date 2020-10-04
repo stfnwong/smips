@@ -87,9 +87,8 @@ class DataCache
 
 struct State
 {
-    //uint8_t mem[SMIPS_MEM_SIZE];    // TODO: replace with DataCache object
-    DataCache mem;
-    bool verbose;       // print messages to console
+    DataCache mem;      // represents memory or L1 instruction/data cache
+    bool verbose;       // print info to console during execution
     
     uint32_t pc;
     uint32_t addr;
@@ -110,7 +109,6 @@ struct State
     // register file 
     int32_t reg[32];      
 
-
     private:
         void init_reg(void);
         void zero_mem(void);
@@ -128,7 +126,9 @@ struct State
 
         void writeMem(const std::vector<uint8_t>& data, unsigned int offset);
         uint8_t& readMem(unsigned int idx);
+        void clearMem(void);
         void tick(void);
+        void reset(void);
 
         std::string toString(void) const;
 };

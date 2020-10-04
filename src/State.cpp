@@ -93,6 +93,9 @@ State::State(const State& that)
     this->rd      = that.rd;
     this->shamt   = that.shamt;
     this->imm     = that.imm;
+    this->tmp     = that.tmp;
+    this->hi      = that.hi;
+    this->lo      = that.lo;
 
     for(int i = 0; i < 32; ++i)
         this->reg[i] = that.reg[i];
@@ -116,6 +119,9 @@ void State::init_reg(void)
     this->rd      = 0;
     this->shamt   = 0;
     this->imm     = 0;
+    this->tmp     = 0;
+    this->hi      = 0;
+    this->lo      = 0;
     // register file reg
     for(int i = 0; i < 32; ++i)
         this->reg[i] = 0;
@@ -433,6 +439,14 @@ uint8_t& State::readMem(unsigned int idx)
 }
 
 /*
+ * clearMem()
+ */
+void State::clearMem(void)
+{
+    this->zero_mem();
+}
+
+/*
  * tick()
  */
 void State::tick(void)
@@ -443,6 +457,15 @@ void State::tick(void)
     this->execute();
     // TODO: write back?
 }
+
+/*
+ * reset()
+ */
+void State::reset(void)
+{
+    this->init_reg();
+}
+
 
 
 std::string State::toString(void) const

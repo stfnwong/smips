@@ -65,10 +65,42 @@ TEST_CASE("test_state_init", "[classic]")
     REQUIRE(test_state.pc == 0);
     REQUIRE(test_state.addr == 0);
     REQUIRE(test_state.instr == 0);
+    REQUIRE(test_state.op_bits == 0);
+    REQUIRE(test_state.func == 0);
+    REQUIRE(test_state.rs == 0);
+    REQUIRE(test_state.rt == 0);
+    REQUIRE(test_state.rd == 0);
+    REQUIRE(test_state.shamt == 0);
+    REQUIRE(test_state.imm == 0);
+    REQUIRE(test_state.tmp == 0);
+    REQUIRE(test_state.hi == 0);
+    REQUIRE(test_state.lo == 0);
 
     // check registers
     for(int i = 0; i < 32; ++i)
        REQUIRE(test_state.reg[i] == 0); 
+}
+
+TEST_CASE("test_state_zero_mem", "[classic]")
+{
+    State test_state;
+    
+    // put some junk in the memory 
+    std::vector<uint8_t> dummy_data = {0xDE, 0xAD, 0xBE, 0xEF};
+    test_state.writeMem(dummy_data, 0);
+    test_state.writeMem(dummy_data, 32);
+    test_state.writeMem(dummy_data, 64);
+
+    for(unsigned int i = 0; i < dummy_data.size(); ++i)
+    {
+        REQUIRE(test_state.mem[i]    == dummy_data[i]);
+        REQUIRE(test_state.mem[i+32] == dummy_data[i]);
+        REQUIRE(test_state.mem[i+64] == dummy_data[i]);
+    }
+
+    test_state.clearMem();
+    for(unsigned int i = 0; i < test_state.mem.size(); ++i)
+        REQUIRE(test_state.mem[i] == 0);
 }
 
 TEST_CASE("test_fetch", "[classic]")
@@ -112,6 +144,15 @@ TEST_CASE("test_decode_lw", "[classic]")
     REQUIRE(test_state.imm == 32);
 }
 
+TEST_CASE("test_decode_j", "[classic]")
+{
+    State test_state;
+
+    test_state.writeMem(j_example, 0);
+    test_state.fetch();
+    test_state.decode();
+    REQUIRE(test_state.imm == 257);
+}
 
 TEST_CASE("test_execute_add", "[classic]")
 {
