@@ -133,17 +133,6 @@ TEST_CASE("test_decode_add", "[classic]")
     REQUIRE(test_state.rd == 16);
 }
 
-TEST_CASE("test_decode_lw", "[classic]")
-{
-    State test_state;
-
-    test_state.writeMem(lw_example, 0);
-    test_state.fetch();
-    test_state.decode();
-    REQUIRE(test_state.rs == 19);
-    REQUIRE(test_state.rt == 8);
-    REQUIRE(test_state.imm == 32);
-}
 
 TEST_CASE("test_decode_j", "[classic]")
 {
@@ -180,7 +169,7 @@ TEST_CASE("test_execute_add", "[classic]")
     REQUIRE(test_state.alu == 3);
 }
 
-TEST_CASE("test_execute_lw", "[classic]")
+TEST_CASE("test_lw_pipeline", "[classic]")
 {
     State test_state;
 
@@ -191,6 +180,9 @@ TEST_CASE("test_execute_lw", "[classic]")
 
     test_state.fetch();
     test_state.decode();
+    REQUIRE(test_state.rs == 19);
+    REQUIRE(test_state.rt == 8);
+    REQUIRE(test_state.imm == 32);
     // Set the test up so that the word we want to load is at offset 64
     // Since the offset in the example instruction is 32, we place 32
     // in $rs and pre-load the memory. 
@@ -200,9 +192,14 @@ TEST_CASE("test_execute_lw", "[classic]")
 
     // now execute this lw
     test_state.execute();
+    REQUIRE(test_state.mem_addr == 64);
     test_state.memory();
-    //REQUIRE(test_state.alu == 0xDEADBEEF);
-    REQUIRE(test_state.reg[8] == 0xDEADBEEF);
+    //// TODO: in the next refactor have a seperate data register
+    //REQUIRE(test_state.mem_data == 0xDEADBEEF);       
+    test_state.write_back();
+    
+    for(unsigned int i = 0; i < dummy_data.size(); ++i)
+        REQUIRE(test_state.mem[test_state.mem_addr+i] == dummy_data[i]);
 }
 
 TEST_CASE("test_execute_j", "[classic]")

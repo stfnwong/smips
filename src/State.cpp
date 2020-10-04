@@ -65,6 +65,21 @@ uint8_t& DataCache::operator[](const int i)
     return this->mem[i];
 }
 
+/*
+ * readWord()
+ */
+int32_t DataCache::readWord(const int i) const
+{
+    int32_t d = 0;
+
+    d = d | (this->mem[i] << 24);
+    d = d | (this->mem[i] << 16);
+    d = d | (this->mem[i] << 8);
+    d = d | (this->mem[i] << 0);
+
+    return d;
+}
+
 
 
 // ======== STATE ======== //
@@ -369,11 +384,11 @@ void State::execute(void)
                 break;
 
             case I_ADDI:    // R[$rt] <- R[$rs] + imm16s
-                this->reg[this->rt] = this->reg[this->rs] + this->imm;
+                this->alu = this->reg[this->rs] + this->imm;
                 break;
 
             case I_ADDIU:   /// R[$rt] <- R[$rs] + imm16u
-                this->reg[this->rt] = unsigned(this->reg[this->rs] + this->imm);
+                this->alu = unsigned(this->reg[this->rs] + this->imm);
                 break;
 
             case I_SLTI:
@@ -390,20 +405,29 @@ void State::execute(void)
                     this->reg[this->rt] = 0;
                 break;
 
-            case I_ANDI:
-                this->reg[this->rt] = this->reg[this->rs] & this->imm;
+            case I_ANDI:    // R[$rt] <- R[$rs] & imm16        
+                this->alu = this->reg[this->rs] & this->imm;
                 break;
                 
-            case I_ORI:
-                this->reg[this->rt] = this->reg[this->rs] | this->imm;
+            case I_ORI:     // R[$rt] <- R[$rs] | imm16
+                this->alu = this->reg[this->rs] | this->imm;
                 break;
 
-            case I_XORI:
-                this->reg[this->rt] = this->reg[this->rs] ^ this->imm;
+            case I_XORI:    // R[$rt] <- R[$rs] ^ imm16
+                this->alu = this->reg[this->rs] ^ (this->imm & 0xFFFF);
                 break;
 
             case I_LUI: // R[$rt] <- {imm, 0x0000}
-                this->reg[this->rt] = (this->imm << 16);
+                this->alu = (this->imm << 16);
+                break;
+
+            case I_SB:
+            case I_SH:
+            case I_SW:
+            case I_LB:
+            case I_LH:
+            case I_LW:
+                this->mem_addr = this->reg[this->rs] + (this->imm & 0xFFFF);
                 break;
 
             default:        // Noop
@@ -418,41 +442,45 @@ void State::execute(void)
  */
 void State::memory(void)
 {
+    // TODO : could split this again so that this->mem_data contains the the values we
+    // want, and then the guts of this method reduces to this->mem[this->mem_addr] = this->mem_data
     // R-type instructions do nothing during this cycle
     switch(this->op_bits)
     {
         case I_SB:
-            this->mem[this->reg[this->rs + (this->imm & 0xFFFF)]] = this->reg[this->rt] & 0xFF; 
+            this->mem[this->mem_addr] = this->reg[this->rt] & 0xFF;
             break;
 
         case I_SH:
-            this->mem[this->reg[this->rs + (this->imm & 0xFFFF)]] = this->reg[this->rt] & 0xFF;
-            this->mem[this->reg[this->rs + (this->imm & 0xFFFF)+1]] = ((this->reg[this->rt] & 0xFF00) >> 8);
+            this->mem[this->mem_addr]   = this->reg[this->rt] & 0xFF;
+            this->mem[this->mem_addr+1] = this->reg[this->rt] & 0xFFFF;
             break;
 
         case I_SW:
             // TODO : check endianness here...
-            this->mem[this->reg[this->rs + (this->imm & 0xFFFF)]] = this->reg[this->rt] & 0xFF;
-            this->mem[this->reg[this->rs + (this->imm & 0xFFFF)+1]] = ((this->reg[this->rt] & 0xFF00) >> 8);
-            this->mem[this->reg[this->rs + (this->imm & 0xFFFF)+2]] = ((this->reg[this->rt] & 0xFF0000) >> 16);
-            this->mem[this->reg[this->rs + (this->imm & 0xFFFF)+3]] = ((this->reg[this->rt] & 0xFF000000) >> 24);
+            this->mem[this->mem_addr+0] = (this->reg[this->rt] & 0x000000FF) >> 0;
+            this->mem[this->mem_addr+1] = (this->reg[this->rt] & 0x0000FF00) >> 8;
+            this->mem[this->mem_addr+2] = (this->reg[this->rt] & 0x00FF0000) >> 16;
+            this->mem[this->mem_addr+3] = (this->reg[this->rt] & 0xFF000000) >> 24;
             break;
 
         case I_LB:  // sign extend to 8 bits
-            this->reg[this->rt] = (this->mem[this->reg[this->rs] + (this->imm & 0x0000FFFF)]) & 0xFF;
+            this->reg[this->rt] = (this->mem[this->mem_addr]) & 0xFF;
             break;
 
         case I_LH:  // sign extend to 16 bits
-            this->reg[this->rt] = (this->mem[this->reg[this->rs] + (this->imm & 0x0000FFFF)]) & 0xFFFF;
+            this->reg[this->rt] = (this->mem[this->mem_addr]) & 0xFFFF;
             break;
 
         case I_LW:  // R[$rt] <- Mem4b(R[$rs] + imm16)
             // TODO: we can almost certainly implement a faster version of this instruction
+            // NOTE: I understand that we can read 4-bytes from memory in one cycle here, so this implementation
+            // is basically legit timing wise. 
             this->reg[this->rt] = 0;
-            this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 0] << 24);
-            this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 1] << 16);
-            this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 2] << 8);
-            this->reg[this->rt] |= (this->mem[this->reg[this->rs] + (this->imm & 0xFFF) + 3] << 0);
+            this->reg[this->rt] |= (this->mem[this->mem_addr] << 24);
+            this->reg[this->rt] |= (this->mem[this->mem_addr] << 16);
+            this->reg[this->rt] |= (this->mem[this->mem_addr] << 8);
+            this->reg[this->rt] |= (this->mem[this->mem_addr] << 0);
             break;
 
         default:
@@ -491,13 +519,14 @@ void State::write_back(void)
     {
         switch(this->func)
         {
+            // these write to memory, so nothing to do in this stage
             case I_SB:
             case I_SH:
             case I_SW:
                 break;
 
             default:
-                this->reg[this->rt] = alu;
+                this->reg[this->rt] = this->alu;
                 break;
         }
     }

@@ -82,6 +82,7 @@ class DataCache
         void clear(void);       // write all zeros (slow!)
 
         uint8_t &operator[](const int i);  
+        int32_t readWord(const int i) const;     // read 4-bytes starting from i;;
 };
 
 
