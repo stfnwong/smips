@@ -18,6 +18,32 @@
 #include "Program.hpp"
 
 
+TEST_CASE("test_datacache_init", "[classic]")
+{
+    DataCache test_cache;
+    REQUIRE(test_cache.size() == SMIPS_MEM_SIZE);
+}
+
+TEST_CASE("test_datacache_init_custom", "[classic]")
+{
+    DataCache test_cache(1);
+    REQUIRE(test_cache.size() == 1);
+}
+
+TEST_CASE("test_datacache_read_write", "[classic]")
+{
+    DataCache test_cache;
+
+    std::vector<uint8_t> dummy_data = {0xDE, 0xAD, 0xBE, 0xEF};
+
+    for(unsigned int i = 0; i < dummy_data.size(); ++i)
+        test_cache[i] = dummy_data[i];
+
+    for(unsigned int i = 0; i < dummy_data.size(); ++i)
+        REQUIRE(test_cache[i] == dummy_data[i]);
+}
+
+
 // add $s0, $s1. $s2
 const std::vector<uint8_t> add_example = {
     0x02, 0x32, 0x80, 0x20
@@ -62,7 +88,7 @@ TEST_CASE("test_fetch", "[classic]")
     REQUIRE(test_state.pc == 8);
 }
 
-TEST_CASE("test_decode", "[classic]")
+TEST_CASE("test_decode_add", "[classic]")
 {
     State test_state;
 
@@ -72,6 +98,18 @@ TEST_CASE("test_decode", "[classic]")
     REQUIRE(test_state.rs == 17);
     REQUIRE(test_state.rt == 18);
     REQUIRE(test_state.rd == 16);
+}
+
+TEST_CASE("test_decode_lw", "[classic]")
+{
+    State test_state;
+
+    test_state.writeMem(lw_example, 0);
+    test_state.fetch();
+    test_state.decode();
+    REQUIRE(test_state.rs == 19);
+    REQUIRE(test_state.rt == 8);
+    REQUIRE(test_state.imm == 32);
 }
 
 
@@ -86,9 +124,6 @@ TEST_CASE("test_execute_add", "[classic]")
 
     test_state.fetch();
     test_state.decode();
-    REQUIRE(test_state.rs == 17);
-    REQUIRE(test_state.rt == 18);
-    REQUIRE(test_state.rd == 16);
     // lets set the values of those registers to be
     // R[rs] = 1
     // R[rt] = 2
@@ -112,9 +147,6 @@ TEST_CASE("test_execute_lw", "[classic]")
 
     test_state.fetch();
     test_state.decode();
-    REQUIRE(test_state.rs == 19);
-    REQUIRE(test_state.rt == 8);
-    REQUIRE(test_state.imm == 32);
     // Set the test up so that the word we want to load is at offset 64
     // Since the offset in the example instruction is 32, we place 32
     // in $rs and pre-load the memory. 

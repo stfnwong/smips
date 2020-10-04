@@ -4,6 +4,7 @@
  *
  */
 
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -12,11 +13,26 @@
 #include "Register.hpp"
 #include "State.hpp"
 
+// ======== DATA CACHE ======== //
+
+DataCache::DataCache()
+{
+    this->mem = new uint8_t[SMIPS_MEM_SIZE];
+    this->mem_size = SMIPS_MEM_SIZE;
+}
 
 DataCache::DataCache(unsigned int size)
 {
     this->mem = new uint8_t[size];
     this->mem_size = size;
+}
+
+DataCache::DataCache(const DataCache& that)
+{
+    this->mem_size = that.mem_size;
+    this->mem = new uint8_t[this->mem_size];
+    
+    std::memcpy(this->mem, that.mem, sizeof(uint8_t) * this->mem_size);
 }
 
 DataCache::~DataCache()
@@ -52,9 +68,13 @@ uint8_t& DataCache::operator[](const int i)
 
 
 // ======== STATE ======== //
-State::State()
+State::State() : mem(SMIPS_MEM_SIZE), verbose(false)
 {
-    this->verbose = false;
+    this->init_reg();
+}
+
+State::State(unsigned int mem_size) : mem(mem_size), verbose(false)
+{
     this->init_reg();
 }
 
@@ -76,6 +96,8 @@ State::State(const State& that)
 
     for(int i = 0; i < 32; ++i)
         this->reg[i] = that.reg[i];
+
+    this->mem = that.mem;
 }
 
 /*
@@ -248,7 +270,7 @@ void State::execute(void)
                 this->hi = unsigned(this->reg[this->rs]) % unsigned(this->reg[this->rt]);
                 break;
 
-            case R_ADD:     // R[$rd] <- R[$rs] + R[$rt]
+            case R_ADD:     // R[$rd] <- R[$rs] + R[$rt]    (signed)
                 this->reg[this->rd] = this->reg[this->rs] + this->reg[this->rt];
                 break;
 
@@ -256,27 +278,27 @@ void State::execute(void)
                 this->reg[this->rd] = unsigned(this->reg[this->rs]) + unsigned(this->reg[this->rt]);
                 break;
 
-            case R_SUB:
+            case R_SUB:     // R[$rd] <- R[$rs] - R[$rt]    (signed)
                 this->reg[this->rd] = this->reg[this->rs] - this->reg[this->rt];
                 break;
 
-            case R_SUBU:
+            case R_SUBU:    // R[$rd] <- R[$rs] - R[$rt]    (unsigned)
                 this->reg[this->rd] = unsigned(this->reg[this->rs]) - unsigned(this->reg[this->rt]);
                 break;
 
-            case R_AND:
+            case R_AND:     // R[$rd] <- R[$rs] & R[$rt]
                 this->reg[this->rd] = this->reg[this->rs] & this->reg[this->rt];
                 break;
 
-            case R_OR:
+            case R_OR:      // R[$rd] <- R[$rs] | R[$rt]
                 this->reg[this->rd] = this->reg[this->rs] | this->reg[this->rt];
                 break;
 
-            case R_XOR:
+            case R_XOR:     // R[$rd] <- R[$rs] ^ R[$rt]
                 this->reg[this->rd] = this->reg[this->rs] ^ this->reg[this->rt];
                 break;
 
-            case R_NOR:
+            case R_NOR:     // R[$rd] <- !(R[$rs] | R[$rt])
                 this->reg[this->rd] = !(this->reg[this->rs] | this->reg[this->rt]);
                 break;
 
@@ -403,6 +425,11 @@ void State::writeMem(const std::vector<uint8_t>& data, unsigned int offset)
 
     for(unsigned int i = 0; i < data.size(); ++i)
         this->mem[offset + i] = data[i];
+}
+
+uint8_t& State::readMem(unsigned int idx) 
+{
+    return this->mem[idx];
 }
 
 /*

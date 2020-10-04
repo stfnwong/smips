@@ -74,7 +74,9 @@ class DataCache
         unsigned int mem_size;
 
     public:
+        DataCache();
         DataCache(unsigned int size);
+        DataCache(const DataCache& that);
         ~DataCache();
         unsigned int size(void) const;
         void clear(void);       // write all zeros (slow!)
@@ -85,11 +87,13 @@ class DataCache
 
 struct State
 {
-    uint8_t mem[SMIPS_MEM_SIZE];    // TODO: replace with DataCache object
+    //uint8_t mem[SMIPS_MEM_SIZE];    // TODO: replace with DataCache object
+    DataCache mem;
+    bool verbose;       // print messages to console
+    
     uint32_t pc;
     uint32_t addr;
 
-    // reg for 4 stage pipeline
     uint32_t instr;     // fetch stage register
     uint8_t op_bits;
     uint8_t func;
@@ -106,7 +110,6 @@ struct State
     // register file 
     int32_t reg[32];      
 
-    bool verbose;       // print messages to console
 
     private:
         void init_reg(void);
@@ -120,9 +123,11 @@ struct State
 
     public:
         State();
+        State(unsigned int mem_size);
         State(const State& that);
 
         void writeMem(const std::vector<uint8_t>& data, unsigned int offset);
+        uint8_t& readMem(unsigned int idx);
         void tick(void);
 
         std::string toString(void) const;
