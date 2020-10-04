@@ -63,7 +63,6 @@ TEST_CASE("test_state_init", "[classic]")
     State test_state;
 
     REQUIRE(test_state.pc == 0);
-    REQUIRE(test_state.addr == 0);
     REQUIRE(test_state.instr == 0);
     REQUIRE(test_state.op_bits == 0);
     REQUIRE(test_state.func == 0);
@@ -75,6 +74,8 @@ TEST_CASE("test_state_init", "[classic]")
     REQUIRE(test_state.tmp == 0);
     REQUIRE(test_state.hi == 0);
     REQUIRE(test_state.lo == 0);
+    REQUIRE(test_state.mem_addr == 0);
+    REQUIRE(test_state.mem_data == 0);
 
     // check registers
     for(int i = 0; i < 32; ++i)
@@ -154,6 +155,8 @@ TEST_CASE("test_decode_j", "[classic]")
     REQUIRE(test_state.imm == 257);
 }
 
+// TODO : rather than make each stage a different test case, make
+// each instruction a test case and push through the complete pipeline
 TEST_CASE("test_execute_add", "[classic]")
 {
     State test_state;
@@ -174,7 +177,7 @@ TEST_CASE("test_execute_add", "[classic]")
 
     // now execute this add
     test_state.execute();
-    REQUIRE(test_state.reg[test_state.rd] == 3);
+    REQUIRE(test_state.alu == 3);
 }
 
 TEST_CASE("test_execute_lw", "[classic]")
@@ -197,6 +200,8 @@ TEST_CASE("test_execute_lw", "[classic]")
 
     // now execute this lw
     test_state.execute();
+    test_state.memory();
+    //REQUIRE(test_state.alu == 0xDEADBEEF);
     REQUIRE(test_state.reg[8] == 0xDEADBEEF);
 }
 
@@ -217,3 +222,4 @@ TEST_CASE("test_execute_j", "[classic]")
     test_state.execute();
     REQUIRE(test_state.pc == 1028+4);
 }
+
