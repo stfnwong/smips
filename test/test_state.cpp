@@ -104,35 +104,6 @@ TEST_CASE("test_state_zero_mem", "[classic]")
         REQUIRE(test_state.mem[i] == 0);
 }
 
-TEST_CASE("test_fetch", "[classic]")
-{
-    State test_state;
-
-    REQUIRE(test_state.pc == 0);
-    // load some data into memory 
-    test_state.writeMem(add_example, 0);
-    test_state.writeMem(lw_example, 4);
-    // fetch the two instructions
-    test_state.fetch();
-    REQUIRE(test_state.instr == 0x02328020);
-    REQUIRE(test_state.pc == 4);
-    test_state.fetch();
-    REQUIRE(test_state.instr == 0x8E680020);
-    REQUIRE(test_state.pc == 8);
-}
-
-TEST_CASE("test_decode_add", "[classic]")
-{
-    State test_state;
-
-    test_state.writeMem(add_example, 0);
-    test_state.fetch();
-    test_state.decode();
-    REQUIRE(test_state.rs == 17);
-    REQUIRE(test_state.rt == 18);
-    REQUIRE(test_state.rd == 16);
-}
-
 
 TEST_CASE("test_decode_j", "[classic]")
 {
@@ -144,9 +115,7 @@ TEST_CASE("test_decode_j", "[classic]")
     REQUIRE(test_state.imm == 257);
 }
 
-// TODO : rather than make each stage a different test case, make
-// each instruction a test case and push through the complete pipeline
-TEST_CASE("test_execute_add", "[classic]")
+TEST_CASE("test_add_pipeline", "[classic]")
 {
     State test_state;
 
@@ -156,6 +125,8 @@ TEST_CASE("test_execute_add", "[classic]")
         REQUIRE(test_state.reg[i] == 0);
 
     test_state.fetch();
+    REQUIRE(test_state.instr == 0x02328020);
+    REQUIRE(test_state.pc == 4);
     test_state.decode();
     // lets set the values of those registers to be
     // R[rs] = 1
@@ -179,6 +150,8 @@ TEST_CASE("test_lw_pipeline", "[classic]")
         REQUIRE(test_state.reg[i] == 0);
 
     test_state.fetch();
+    REQUIRE(test_state.instr == 0x8E680020);
+    REQUIRE(test_state.pc == 4);
     test_state.decode();
     REQUIRE(test_state.rs == 19);
     REQUIRE(test_state.rt == 8);
@@ -194,15 +167,16 @@ TEST_CASE("test_lw_pipeline", "[classic]")
     test_state.execute();
     REQUIRE(test_state.mem_addr == 64);
     test_state.memory();
-    //// TODO: in the next refactor have a seperate data register
-    //REQUIRE(test_state.mem_data == 0xDEADBEEF);       
+    REQUIRE(test_state.mem_data == 0xDEADBEEF);       
     test_state.write_back();
+    REQUIRE(test_state.reg[test_state.rt] == 0xDEADBEEF);       
     
     for(unsigned int i = 0; i < dummy_data.size(); ++i)
         REQUIRE(test_state.mem[test_state.mem_addr+i] == dummy_data[i]);
 }
 
-TEST_CASE("test_execute_j", "[classic]")
+
+TEST_CASE("test_j_pipeline", "[classic]")
 {
     State test_state;
 
@@ -212,11 +186,14 @@ TEST_CASE("test_execute_j", "[classic]")
         REQUIRE(test_state.reg[i] == 0);
 
     test_state.fetch();
+    REQUIRE(test_state.instr == 0x08000101);
+    REQUIRE(test_state.pc == 4);
     test_state.decode();
     REQUIRE(test_state.imm == 257);
     REQUIRE(test_state.pc == 4);
 
     test_state.execute();
     REQUIRE(test_state.pc == 1028+4);
+    // nothing actually happens in memory or write-back phase for jumps
 }
 

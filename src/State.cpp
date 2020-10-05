@@ -361,6 +361,7 @@ void State::execute(void)
     // I-instructions
     else
     {
+        // TODO : do we set this->pc in write_back phase?
         switch(this->op_bits)
         {
             case I_BEQ:     
@@ -391,18 +392,12 @@ void State::execute(void)
                 this->alu = unsigned(this->reg[this->rs] + this->imm);
                 break;
 
-            case I_SLTI:
-                if(this->reg[this->rs] < this->imm)
-                    this->reg[this->rt] = 1;
-                else 
-                    this->reg[this->rt] = 0;
+            case I_SLTI:    // R[$rt] <- (R[$rs] < imm16)
+                this->alu = this->reg[this->rs] < (this->imm & 0xFFFF);
                 break;
 
-            case I_SLTIU:
-                if(unsigned(this->reg[this->rs]) < unsigned(this->imm))
-                    this->reg[this->rt] = 1;
-                else 
-                    this->reg[this->rt] = 0;
+            case I_SLTIU:   // R[$rt] <- (R[$rs] < imm16)
+                this->alu = unsigned(this->reg[this->rs]) < unsigned(this->imm & 0xFFFF);
                 break;
 
             case I_ANDI:    // R[$rt] <- R[$rs] & imm16        
@@ -465,22 +460,22 @@ void State::memory(void)
             break;
 
         case I_LB:  // sign extend to 8 bits
-            this->reg[this->rt] = (this->mem[this->mem_addr]) & 0xFF;
+            this->mem_data= (this->mem[this->mem_addr]) & 0xFF;
             break;
 
         case I_LH:  // sign extend to 16 bits
-            this->reg[this->rt] = (this->mem[this->mem_addr]) & 0xFFFF;
+            this->mem_data = (this->mem[this->mem_addr]) & 0xFFFF;
             break;
 
         case I_LW:  // R[$rt] <- Mem4b(R[$rs] + imm16)
             // TODO: we can almost certainly implement a faster version of this instruction
             // NOTE: I understand that we can read 4-bytes from memory in one cycle here, so this implementation
             // is basically legit timing wise. 
-            this->reg[this->rt] = 0;
-            this->reg[this->rt] |= (this->mem[this->mem_addr] << 24);
-            this->reg[this->rt] |= (this->mem[this->mem_addr] << 16);
-            this->reg[this->rt] |= (this->mem[this->mem_addr] << 8);
-            this->reg[this->rt] |= (this->mem[this->mem_addr] << 0);
+            this->mem_data  = 0;
+            this->mem_data |= (this->mem[this->mem_addr+0] << 24);
+            this->mem_data |= (this->mem[this->mem_addr+1] << 16);
+            this->mem_data |= (this->mem[this->mem_addr+2] << 8);
+            this->mem_data |= (this->mem[this->mem_addr+3] << 0);
             break;
 
         default:
@@ -508,7 +503,6 @@ void State::write_back(void)
                 this->reg[this->rd] = this->alu;    
                 break;
         }
-
     }
     else if(this->op_bits == 0x2 || this->op_bits == 0x3)
     {
@@ -517,12 +511,18 @@ void State::write_back(void)
     // I-instructions
     else
     {
-        switch(this->func)
+        switch(this->op_bits)
         {
             // these write to memory, so nothing to do in this stage
             case I_SB:
             case I_SH:
             case I_SW:
+                break;
+
+            case I_LB:
+            case I_LH:
+            case I_LW:
+                this->reg[this->rt] = this->mem_data;
                 break;
 
             default:
@@ -565,7 +565,8 @@ void State::tick(void)
     this->fetch();
     this->decode();
     this->execute();
-    // TODO: write back?
+    this->memory();
+    this->write_back();
 }
 
 /*
