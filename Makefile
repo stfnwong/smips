@@ -51,7 +51,7 @@ $(TEST_OBJECTS): $(OBJ_DIR)/%.o : $(TEST_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@ 
 
 # ==== TEST TARGETS ==== #
-TESTS=test_elf test_assembler test_opcode test_lexer test_register \
+TESTS=test_assembler test_opcode test_lexer test_register \
 	  test_source test_disassembler test_program
 $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 	$(CXX) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
@@ -79,6 +79,7 @@ assem : $(ASSEM_OBJECTS)
 
 clean:
 	rm -rfv *.o $(OBJ_DIR)/*.o 
+	rm -rfv $(TEST_BIN_DIR)/test_*
 
 print-%:
 	@echo $* = $($*)

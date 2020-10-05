@@ -162,6 +162,13 @@ Instr Assembler::assembleText(const TextInfo& line)
             instr = this->asm_r_instr_shamt(line, 3);
             break;
 
+        case LEX_MFHI:
+        case LEX_MTHI:
+        case LEX_MFLO:
+        case LEX_MTLO:
+            instr = this->asm_r_instr(line, 1);
+            break;
+
         // I-format instructions 
         case LEX_ADDI:
         case LEX_ADDIU:

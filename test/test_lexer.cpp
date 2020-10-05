@@ -26,6 +26,7 @@ const std::string test_psuedo_file   = "asm/psuedo.asm";
 const std::string test_instr_file    = "asm/instr_test.asm";
 
 const bool show_all_output = false;
+const bool GLOBAL_VERBOSE = false;
 
 
 /*
@@ -342,7 +343,7 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_mult_add_file);
     test_lexer.lex();
 
@@ -533,7 +534,7 @@ TEST_CASE("test_for_loop", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_for_loop_file);
     test_lexer.lex();
 
@@ -598,7 +599,7 @@ TEST_CASE("test_array", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_array_file);
     test_lexer.lex();
 
@@ -710,7 +711,7 @@ TEST_CASE("test_paren_parse", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_paren_file);
     test_lexer.lex();
 
@@ -1022,7 +1023,7 @@ TEST_CASE("test_psuedo_instr", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_psuedo_file);
     test_lexer.lex();
 
@@ -1135,7 +1136,7 @@ TEST_CASE("test_instr", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_instr_file);
     test_lexer.lex();
 

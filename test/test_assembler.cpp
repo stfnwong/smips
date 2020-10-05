@@ -24,8 +24,7 @@
 
 
 //const bool show_all_output = false;
-
-
+const bool GLOBAL_VERBOSE = false;
 
 // Filenames for test 
 const std::string test_mult_add_file = "asm/mult_add.asm";
@@ -118,7 +117,7 @@ TEST_CASE("test_asm_mult_add", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    test_asm.setVerbose(true);
+    test_asm.setVerbose(GLOBAL_VERBOSE);
     // get some source info for this program
     lexer.setVerbose(false);
     lexer.loadFile(test_mult_add_file);
@@ -271,9 +270,9 @@ TEST_CASE("test_for_loop", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    test_asm.setVerbose(true);
+    test_asm.setVerbose(GLOBAL_VERBOSE);
     // get some source info for this program
-    lexer.setVerbose(true);
+    lexer.setVerbose(GLOBAL_VERBOSE);
     lexer.loadFile(test_for_loop_file);
     lexer.lex();
 
@@ -474,7 +473,7 @@ TEST_CASE("test_array", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    test_asm.setVerbose(true);
+    test_asm.setVerbose(GLOBAL_VERBOSE);
     // get some source info for this program
     lexer.setVerbose(false);
     lexer.loadFile(test_array_file);
@@ -588,9 +587,9 @@ TEST_CASE("test_instr", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    test_asm.setVerbose(true);
+    test_asm.setVerbose(GLOBAL_VERBOSE);
     // get some source info for this program
-    lexer.setVerbose(true);
+    lexer.setVerbose(GLOBAL_VERBOSE);
     lexer.loadFile(test_instr_file);
     lexer.lex();
 

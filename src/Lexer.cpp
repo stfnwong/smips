@@ -888,6 +888,13 @@ void Lexer::parseInstr(int line_num)
         case LEX_SYSCALL:
             break;
 
+        case LEX_MFHI:
+        case LEX_MTHI:
+        case LEX_MFLO:
+        case LEX_MTLO:
+            this->parse_r();
+            break;
+
         // psudo-ops 
         case LEX_LA:
         case LEX_LI:
