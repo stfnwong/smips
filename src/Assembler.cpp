@@ -24,17 +24,24 @@ Assembler::Assembler()
 void Assembler::init_instr_to_code_map(void)
 {
     // R-format instructions 
-    this->instr_to_code[LEX_ADD]  = 0x20;
-    this->instr_to_code[LEX_ADDU] = 0x21;
-    this->instr_to_code[LEX_AND]  = 0x24;
-    this->instr_to_code[LEX_JR]   = 0x08;
-    this->instr_to_code[LEX_MULT] = 0x18;
-    this->instr_to_code[LEX_OR]   = 0x25;
-    this->instr_to_code[LEX_SLL]  = 0x00;
-    this->instr_to_code[LEX_SLT]  = 0x2A;
-    this->instr_to_code[LEX_SLTU] = 0x2B;
-    this->instr_to_code[LEX_SUB]  = 0x22;
-    this->instr_to_code[LEX_SUBU] = 0x23;
+    this->instr_to_code[LEX_ADD]   = 0x20;
+    this->instr_to_code[LEX_ADDU]  = 0x21;
+    this->instr_to_code[LEX_AND]   = 0x24;
+    this->instr_to_code[LEX_JR]    = 0x08;
+    this->instr_to_code[LEX_MULT]  = 0x18;
+    this->instr_to_code[LEX_MULTU] = 0x19;
+    this->instr_to_code[LEX_DIV]   = 26;
+    this->instr_to_code[LEX_DIVU]  = 27;
+    this->instr_to_code[LEX_OR]    = 0x25;
+    this->instr_to_code[LEX_SLL]   = 0x00;
+    this->instr_to_code[LEX_SLT]   = 0x2A;
+    this->instr_to_code[LEX_SLTU]  = 0x2B;
+    this->instr_to_code[LEX_SUB]   = 0x22;
+    this->instr_to_code[LEX_SUBU]  = 0x23;
+    this->instr_to_code[LEX_MFHI]  = 0x10;
+    this->instr_to_code[LEX_MTHI]  = 0x11;
+    this->instr_to_code[LEX_MFLO]  = 0x12;
+    this->instr_to_code[LEX_MTLO]  = 0x13;
     
     // I-format instructions
     this->instr_to_code[LEX_ADDI]  = 0x08;
