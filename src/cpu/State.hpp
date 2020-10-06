@@ -64,7 +64,7 @@
 #define I_SW      43
 
 
-#define SMIPS_MEM_SIZE 0x1000       // TODO: boost this up later
+#define SMIPS_MEM_SIZE 0x100000       // TODO: boost this up later
 
 
 class DataCache
