@@ -29,4 +29,4 @@ script:
     - ./bin/test/test_disassembler
     - ./bin/test/test_register
     - ./bin/test/test_source
-    - ./bin/test/test_state
+      #- ./bin/test/test_state
