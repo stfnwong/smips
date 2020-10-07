@@ -4,8 +4,6 @@
 
 # OUTPUT DIRS
 BIN_DIR=bin
-#OBJ_DIR=obj
-#SRC_DIR=src
 TEST_DIR=test
 TEST_BIN_DIR=$(BIN_DIR)/test
 TOOL_DIR=tools
@@ -19,9 +17,7 @@ LDFLAGS=-pthread
 LIBS =
 TEST_LIBS=
 
-# style for assembly output
-ASM_STYLE=intel
-
+# Sources, etc
 MODULES  := cpu tools
 SRC_DIR  := $(addprefix src/,$(MODULES))
 OBJ_DIR  := $(addprefix obj/,$(MODULES))
@@ -69,15 +65,6 @@ $(TOOLS): $(OBJECTS) $(TOOL_OBJECTS)
 	$(CXX) $(LDFLAGS) $(INCS) $(OBJECTS)  obj/$@.o\
 		-o $(BIN_DIR)/$@ $(LIBS) 
 
-#TOOL_SOURCES = $(wildcard $(TOOL_DIR)/*.cpp)
-#TOOL_OBJECTS  := $(TOOL_SOURCES:$(TOOL_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-#
-#$(TOOL_OBJECTS) : $(OBJ_DIR)/%.o : $(TOOL_DIR)/%.cpp
-#	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-#
-#$(TOOLS): $(OBJECTS) $(TOOL_OBJECTS) 
-#	$(CXX) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
-#		-o $(BIN_DIR)/$@ $(LIBS) $(TEST_LIBS)
 
 # Main targets 
 all : test tools
