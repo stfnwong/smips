@@ -41,27 +41,34 @@ $1/%.o: %.cpp
 endef
 
 # Unit tests 
-TEST_SOURCES  = $(wildcard $(TEST_DIR)/*.cpp)
+TEST_SOURCES := $(wildcard $(TEST_DIR)/*.cpp)
 TEST_OBJECTS := $(patsubst $(TEST_DIR)/%.cpp,obj/%.o,$(TEST_SOURCES))
 
 $(TEST_OBJECTS): obj/%.o: test/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ 
 
-#TEST_OBJECTS  := $(TEST_SOURCES:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-#$(TEST_OBJECTS): %.o : $(TEST_DIR)/%.cpp
-#	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@ 
-
-##
 ### ==== TEST TARGETS ==== #
 TESTS=test_elf test_assembler test_opcode test_lexer test_register \
 	  test_source test_disassembler test_program 
 $(TESTS): $(OBJECTS) $(TEST_OBJECTS) 
 	$(CXX) $(LDFLAGS) $(INCS) $(OBJECTS)  obj/$@.o\
 		-o $(TEST_BIN_DIR)/$@ $(LIBS) $(TEST_LIBS)
-#
+
+
 ### ===== TOOL TARGETS ===== # 
 ## Tools (program entry points)
-#TOOLS=assem disassem
+TOOL_SOURCES := $(wildcard $(TOOL_DIR)/*.cpp)
+TOOL_OBJECTS := $(patsubst $(TOOL_DIR)/%.cpp,obj/%.o,$(TOOL_SOURCES))
+
+$(TOOL_OBJECTS): obj/%.o : tools/%.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+TOOLS=assem disassem
+
+$(TOOLS): $(OBJECTS) $(TOOL_OBJECTS)
+	$(CXX) $(LDFLAGS) $(INCS) $(OBJECTS)  obj/$@.o\
+		-o $(BIN_DIR)/$@ $(LIBS) 
+
 #TOOL_SOURCES = $(wildcard $(TOOL_DIR)/*.cpp)
 #TOOL_OBJECTS  := $(TOOL_SOURCES:$(TOOL_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 #
@@ -77,7 +84,7 @@ all : test tools
 
 test : $(OBJECTS) $(TESTS)
 
-tools : $(TOOLS)
+tools : $(OBJECTS) $(TOOLS)
 
 assem : $(ASSEM_OBJECTS)
 
