@@ -18,32 +18,6 @@
 #include "Program.hpp"
 
 
-TEST_CASE("test_datacache_init", "[classic]")
-{
-    DataCache test_cache;
-    REQUIRE(test_cache.size() == SMIPS_MEM_SIZE);
-}
-
-TEST_CASE("test_datacache_init_custom", "[classic]")
-{
-    DataCache test_cache(1);
-    REQUIRE(test_cache.size() == 1);
-}
-
-TEST_CASE("test_datacache_read_write", "[classic]")
-{
-    DataCache test_cache;
-
-    std::vector<uint8_t> dummy_data = {0xDE, 0xAD, 0xBE, 0xEF};
-
-    for(unsigned int i = 0; i < dummy_data.size(); ++i)
-        test_cache[i] = dummy_data[i];
-
-    for(unsigned int i = 0; i < dummy_data.size(); ++i)
-        REQUIRE(test_cache[i] == dummy_data[i]);
-}
-
-
 // add $s0, $s1. $s2
 const std::vector<uint8_t> add_example = {
     0x02, 0x32, 0x80, 0x20
