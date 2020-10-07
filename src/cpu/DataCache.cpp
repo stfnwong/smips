@@ -6,6 +6,7 @@
 #include <cstring>
 #include "DataCache.hpp"
 
+
 // ======== DATA CACHE ======== //
 
 DataCache::DataCache()
@@ -59,16 +60,29 @@ uint8_t& DataCache::operator[](const int i)
 }
 
 /*
+ * readHalf()
+ */
+int16_t DataCache::readHalf(const int i) const
+{
+    int16_t h = 0;
+
+    h = h | (this->mem[i+0] << 8);
+    h = h | (this->mem[i+1] << 0);
+
+    return h;
+}
+
+/*
  * readWord()
  */
 int32_t DataCache::readWord(const int i) const
 {
     int32_t d = 0;
 
-    d = d | (this->mem[i] << 24);
-    d = d | (this->mem[i] << 16);
-    d = d | (this->mem[i] << 8);
-    d = d | (this->mem[i] << 0);
+    d = d | (this->mem[i+0] << 24);
+    d = d | (this->mem[i+1] << 16);
+    d = d | (this->mem[i+2] << 8);
+    d = d | (this->mem[i+3] << 0);
 
     return d;
 }
