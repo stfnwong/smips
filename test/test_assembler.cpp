@@ -23,8 +23,8 @@
 #include "Common.hpp"
 
 
-//const bool show_all_output = false;
-
+const bool SHOW_ALL_OUTPUT = false;
+const bool GLOBAL_VERBOSE = false;
 
 
 // Filenames for test 
@@ -118,7 +118,7 @@ TEST_CASE("test_asm_mult_add", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    test_asm.setVerbose(true);
+    test_asm.setVerbose(GLOBAL_VERBOSE);
     // get some source info for this program
     lexer.setVerbose(false);
     lexer.loadFile(test_mult_add_file);
@@ -271,9 +271,9 @@ TEST_CASE("test_for_loop", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    test_asm.setVerbose(true);
+    test_asm.setVerbose(GLOBAL_VERBOSE);
     // get some source info for this program
-    lexer.setVerbose(true);
+    lexer.setVerbose(GLOBAL_VERBOSE);
     lexer.loadFile(test_for_loop_file);
     lexer.lex();
 
@@ -302,7 +302,8 @@ TEST_CASE("test_for_loop", "[classic]")
         std::cout << "Checking instruction [" << ins+1 << 
             "/" << prog_out.size() << "]" << std::endl; 
         
-        std::cout << src_out.getText(ins).toString() << std::endl;
+        if(SHOW_ALL_OUTPUT)
+            std::cout << src_out.getText(ins).toString() << std::endl;
 
         std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
         std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
@@ -474,7 +475,7 @@ TEST_CASE("test_array", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    test_asm.setVerbose(true);
+    test_asm.setVerbose(GLOBAL_VERBOSE);
     // get some source info for this program
     lexer.setVerbose(false);
     lexer.loadFile(test_array_file);
@@ -531,7 +532,8 @@ TEST_CASE("test_array", "[classic]")
         std::cout << "Checking instruction [" << ins+1 << 
             "/" << prog_out.size() << "]" << std::endl; 
         
-        std::cout << src_out.getText(ins).toString() << std::endl;
+        if(SHOW_ALL_OUTPUT)
+            std::cout << src_out.getText(ins).toString() << std::endl;
 
         std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
         std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
@@ -588,9 +590,9 @@ TEST_CASE("test_instr", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    test_asm.setVerbose(true);
+    test_asm.setVerbose(GLOBAL_VERBOSE);
     // get some source info for this program
-    lexer.setVerbose(true);
+    lexer.setVerbose(GLOBAL_VERBOSE);
     lexer.loadFile(test_instr_file);
     lexer.lex();
 

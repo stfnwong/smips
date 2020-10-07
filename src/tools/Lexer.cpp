@@ -602,7 +602,8 @@ void Lexer::parseWord(void)
     this->data_info.line_num = this->cur_line;
     this->data_info.addr     = this->data_addr;     // the address should be the start address at this time
 
-    std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
+    if(this->verbose)
+        std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
     while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
     {
         this->nextToken();
@@ -619,8 +620,6 @@ void Lexer::parseWord(void)
         word = std::stoi(this->cur_token.val);
         this->data_info.addByte(word);
         word_idx++;
-        std::cout << "[" << __func__ << "] wrote word " << std::hex << word <<
-            " which should be at oddress 0x" << std::hex << this->data_addr << std::endl;
         this->incrDataAddr();
     }
 
@@ -1279,8 +1278,11 @@ void Lexer::expandPsuedo(void)
     uint32_t instr = this->text_info.opcode.instr;
 
     // TODO : debug, show the psuedo op before expansion 
-    std::cout << "[" << __func__ << "] expanding psuedo op : " << std::endl;
-    std::cout << this->text_info.toString() << std::endl;
+    if(this->verbose)
+    {
+        std::cout << "[" << __func__ << "] expanding psuedo op : " << std::endl;
+        std::cout << this->text_info.toString() << std::endl;
+    }
     switch(instr)
     {
         case LEX_BGT:
@@ -1289,7 +1291,8 @@ void Lexer::expandPsuedo(void)
         case LEX_BLE:
         case LEX_BGTU:
             {
-                std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
+                if(this->verbose)
+                    std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
                 // slt/sltu $at, $t, $s
                 ti.init();
                 ti.opcode    = (instr == LEX_BGTU) ? Opcode(LEX_SLTU, "sltu") : Opcode(LEX_SLT, "slt");

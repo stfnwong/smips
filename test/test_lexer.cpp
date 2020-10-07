@@ -25,7 +25,8 @@ const std::string test_paren_file    = "asm/paren.asm";
 const std::string test_psuedo_file   = "asm/psuedo.asm";
 const std::string test_instr_file    = "asm/instr_test.asm";
 
-const bool show_all_output = false;
+const bool SHOW_ALL_OUTPUT = false;
+const bool GLOBAL_VERBOSE = false;
 
 
 /*
@@ -342,7 +343,7 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_mult_add_file);
     test_lexer.lex();
 
@@ -353,7 +354,7 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     src_out = test_lexer.getSourceInfo();
     //REQUIRE(expected_src_out.getTextInfoSize() == src_out.getTextInfoSize());
     
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
@@ -533,7 +534,7 @@ TEST_CASE("test_for_loop", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_for_loop_file);
     test_lexer.lex();
 
@@ -543,11 +544,10 @@ TEST_CASE("test_for_loop", "[classic]")
     expected_src_out = get_for_loop_expected_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
-
 
         std::cout << "Lexer output : " << std::endl;
         std::cout << src_out.toString() << std::endl;
@@ -598,7 +598,7 @@ TEST_CASE("test_array", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_array_file);
     test_lexer.lex();
 
@@ -608,7 +608,7 @@ TEST_CASE("test_array", "[classic]")
     expected_src_out = get_array_expected_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
@@ -710,7 +710,7 @@ TEST_CASE("test_paren_parse", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_paren_file);
     test_lexer.lex();
 
@@ -718,7 +718,7 @@ TEST_CASE("test_paren_parse", "[classic]")
     expected_src_out = get_paren_expected_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
@@ -1022,7 +1022,7 @@ TEST_CASE("test_psuedo_instr", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_psuedo_file);
     test_lexer.lex();
 
@@ -1030,7 +1030,7 @@ TEST_CASE("test_psuedo_instr", "[classic]")
     expected_src_out = get_psuedo_instr_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
@@ -1135,7 +1135,7 @@ TEST_CASE("test_instr", "[classic]")
     SourceInfo src_out;
     SourceInfo expected_src_out;
 
-    test_lexer.setVerbose(true);
+    test_lexer.setVerbose(GLOBAL_VERBOSE);
     test_lexer.loadFile(test_instr_file);
     test_lexer.lex();
 
@@ -1143,7 +1143,7 @@ TEST_CASE("test_instr", "[classic]")
     expected_src_out = get_instr_test_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
