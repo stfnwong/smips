@@ -53,7 +53,6 @@ class Assembler
             21,     // rs   (base)
             0       // imm
         };
-        const int ARG_INVALID_OFFSET  = -1;
 
     // lexer output
     private:

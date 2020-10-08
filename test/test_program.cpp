@@ -1,6 +1,6 @@
 /* 
  * TEST_PROGRAM
- * Unit tests for SMIPS Progran and Instr object 
+ * Unit tests for SMIPS Program and Instr object 
  *
  * Stefan Wong 2019
  */

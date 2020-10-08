@@ -25,7 +25,7 @@ const std::string test_paren_file    = "asm/paren.asm";
 const std::string test_psuedo_file   = "asm/psuedo.asm";
 const std::string test_instr_file    = "asm/instr_test.asm";
 
-const bool show_all_output = false;
+const bool SHOW_ALL_OUTPUT = false;
 const bool GLOBAL_VERBOSE = false;
 
 
@@ -354,7 +354,7 @@ TEST_CASE("test_lex_mult_add", "[classic]")
     src_out = test_lexer.getSourceInfo();
     //REQUIRE(expected_src_out.getTextInfoSize() == src_out.getTextInfoSize());
     
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
@@ -544,11 +544,10 @@ TEST_CASE("test_for_loop", "[classic]")
     expected_src_out = get_for_loop_expected_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
-
 
         std::cout << "Lexer output : " << std::endl;
         std::cout << src_out.toString() << std::endl;
@@ -609,7 +608,7 @@ TEST_CASE("test_array", "[classic]")
     expected_src_out = get_array_expected_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
@@ -719,7 +718,7 @@ TEST_CASE("test_paren_parse", "[classic]")
     expected_src_out = get_paren_expected_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
@@ -1031,7 +1030,7 @@ TEST_CASE("test_psuedo_instr", "[classic]")
     expected_src_out = get_psuedo_instr_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
@@ -1144,7 +1143,7 @@ TEST_CASE("test_instr", "[classic]")
     expected_src_out = get_instr_test_source_info();
     src_out = test_lexer.getSourceInfo();
 
-    if(show_all_output)
+    if(SHOW_ALL_OUTPUT)
     {
         std::cout << "Expected output :" << std::endl;
         std::cout << expected_src_out.toString() << std::endl << std::endl;
@@ -1185,4 +1184,22 @@ TEST_CASE("test_instr", "[classic]")
         }
         REQUIRE(expected_line == output_line);      
     }
+}
+
+TEST_CASE("test_lexer_load_source", "[classic]")
+{
+    Lexer test_lexer;
+    SourceInfo src_out;
+    SourceInfo expected_src_out;
+
+    test_lexer.setVerbose(true);
+    const std::string test_src = "sll $t0, $t0, 2";
+
+    test_lexer.loadSource(test_src);
+    test_lexer.lex();
+
+    src_out = test_lexer.getSourceInfo();
+    std::cout << src_out.getTextInfoSize() << "line in text segment " << std::endl;
+    
+    std::cout << src_out.toString() << std::endl;
 }

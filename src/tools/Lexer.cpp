@@ -25,16 +25,7 @@ Lexer::Lexer()
 {
     this->token_buf_size  = 512;
     this->line_buf_size   = 512;
-    void nextLine(void);
-    this->verbose         = false;
-    this->cur_char        = '\0';
-    this->cur_line        = 0;
-    this->cur_pos         = 0;
-    this->text_addr       = 0;
-    this->data_addr       = 0;
-    this->text_start_addr = TEXT_START_ADDR;
-    this->data_start_addr = DATA_START_ADDR;
-    this->cur_mode        = LEX_TEXT_SEG;
+    this->init_state();
     // create token buffer
     this->alloc_mem();
     this->init_instr_table();
@@ -46,6 +37,22 @@ Lexer::~Lexer()
 {
     delete[] this->token_buf;
     delete[] this->line_buf;
+}
+
+/*
+ * init_state()
+ */
+void Lexer::init_state(void)
+{
+    this->verbose         = false;
+    this->cur_char        = '\0';
+    this->cur_line        = 0;
+    this->cur_pos         = 0;
+    this->text_addr       = 0;
+    this->data_addr       = 0;
+    this->text_start_addr = TEXT_START_ADDR;
+    this->data_start_addr = DATA_START_ADDR;
+    this->cur_mode        = LEX_TEXT_SEG;
 }
 
 /*
@@ -178,6 +185,9 @@ bool Lexer::isSpace(void) const
             this->cur_char == '\t' ||
             this->cur_char == '\n') ? true : false;
 }
+/*
+ * isComment()
+ */
 bool Lexer::isComment(void) const
 {
     return (this->cur_char == ';') || (this->cur_char == '#');
@@ -334,7 +344,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
 
     return out_token;
 }
-
 
 
 /*
@@ -602,7 +611,8 @@ void Lexer::parseWord(void)
     this->data_info.line_num = this->cur_line;
     this->data_info.addr     = this->data_addr;     // the address should be the start address at this time
 
-    std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
+    if(this->verbose)
+        std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
     while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
     {
         this->nextToken();
@@ -619,8 +629,6 @@ void Lexer::parseWord(void)
         word = std::stoi(this->cur_token.val);
         this->data_info.addByte(word);
         word_idx++;
-        std::cout << "[" << __func__ << "] wrote word " << std::hex << word <<
-            " which should be at oddress 0x" << std::hex << this->data_addr << std::endl;
         this->incrDataAddr();
     }
 
@@ -818,6 +826,7 @@ void Lexer::parseInstr(int line_num)
         case LEX_ADDIU:
         case LEX_ANDI:
         case LEX_ORI:
+        case LEX_XORI:
         case LEX_SLTI:
         case LEX_SLTIU:
         case LEX_SLL:
@@ -852,7 +861,7 @@ void Lexer::parseInstr(int line_num)
         case LEX_SLTU:
         case LEX_SUB:
         case LEX_SUBU:
-        //case LEX_XOR:
+        case LEX_XOR:
             this->parse_rrr();
             break;
 
@@ -861,6 +870,14 @@ void Lexer::parseInstr(int line_num)
             this->text_info.is_imm = true;
             this->parse_rri();
             //this->branchInstructionArgSwap();
+            break;
+
+        // Move to hi/lo registers 
+        case LEX_MFHI:
+        case LEX_MTHI:
+        case LEX_MFLO:
+        case LEX_MTLO:
+            this->parse_r();
             break;
 
         // BGX instructions need to be able to handle symbols as immediate arg
@@ -886,13 +903,6 @@ void Lexer::parseInstr(int line_num)
             break;
 
         case LEX_SYSCALL:
-            break;
-
-        case LEX_MFHI:
-        case LEX_MTHI:
-        case LEX_MFLO:
-        case LEX_MTLO:
-            this->parse_r();
             break;
 
         // psudo-ops 
@@ -1278,8 +1288,11 @@ void Lexer::expandPsuedo(void)
     uint32_t instr = this->text_info.opcode.instr;
 
     // TODO : debug, show the psuedo op before expansion 
-    std::cout << "[" << __func__ << "] expanding psuedo op : " << std::endl;
-    std::cout << this->text_info.toString() << std::endl;
+    if(this->verbose)
+    {
+        std::cout << "[" << __func__ << "] expanding psuedo op : " << std::endl;
+        std::cout << this->text_info.toString() << std::endl;
+    }
     switch(instr)
     {
         case LEX_BGT:
@@ -1288,7 +1301,8 @@ void Lexer::expandPsuedo(void)
         case LEX_BLE:
         case LEX_BGTU:
             {
-                std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
+                if(this->verbose)
+                    std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
                 // slt/sltu $at, $t, $s
                 ti.init();
                 ti.opcode    = (instr == LEX_BGTU) ? Opcode(LEX_SLTU, "sltu") : Opcode(LEX_SLT, "slt");
@@ -1480,6 +1494,7 @@ void Lexer::lex(void)
     this->cur_pos = 0;
     this->text_addr = this->text_start_addr;     
     this->data_addr = this->data_start_addr;
+    this->cur_char = this->source_text[0];
 
     while(!this->exhausted())
     {
@@ -1499,6 +1514,7 @@ void Lexer::lex(void)
     }
     // Resolve symbols
     this->resolveLabels();
+    // TODO : reset state?
 }
 
 /*
@@ -1511,6 +1527,7 @@ int Lexer::loadFile(const std::string& filename)
     std::string line;
     int status = 0;     // TODO: faliure checks, etc
 
+    this->source_text.clear();
     // save the filename
     this->filename = filename;
     while(std::getline(infile, line))
@@ -1528,9 +1545,16 @@ int Lexer::loadFile(const std::string& filename)
 
     infile.close();
     this->source_text.push_back('\0');
-    this->cur_char = this->source_text[0];
 
     return status;
+}
+
+/*
+ * loadSource()
+ */
+void Lexer::loadSource(const std::string& src)
+{
+    this->source_text = src;
 }
 
 

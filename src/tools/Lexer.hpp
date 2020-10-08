@@ -22,6 +22,10 @@ enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};
  */
 class Lexer
 {
+    // general
+    private:
+        void init_state(void);
+
     // Instruction table
     private:
         OpcodeTable instr_code_table;
@@ -70,7 +74,6 @@ class Lexer
         unsigned int data_addr;
         void incrTextAddr(void);
         void incrDataAddr(void);
-
 
     // Segments 
     private:
@@ -155,8 +158,22 @@ class Lexer
         ~Lexer();
 
         void  expandPsuedo(void);
+        /*
+         * lex()
+         * Lex the source in this->source_text and produce a 
+         * SourceInfo representation.
+         */
         void  lex(void);
+        /*
+         * loadFile()
+         * Load source from file 
+         */
         int   loadFile(const std::string& filename);
+        /*
+         * loadSource()
+         * Load source from a string
+         */
+        void  loadSource(const std::string& src);   
         // getters 
         bool  getVerbose(void) const;
         const SourceInfo& getSourceInfo(void) const;
