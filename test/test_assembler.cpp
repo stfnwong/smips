@@ -579,10 +579,8 @@ Program get_instr_test_expected_program(void)
 }
 
 
-/*
- * All instructions test
- */
-TEST_CASE("test_instr", "[classic]")
+// ======== INSTRUCTION TESTS ======== //
+TEST_CASE("test_instr_sll", "[classic]")
 {
     Lexer      lexer;
     Assembler  test_asm;
@@ -592,56 +590,16 @@ TEST_CASE("test_instr", "[classic]")
 
     test_asm.setVerbose(GLOBAL_VERBOSE);
     // get some source info for this program
-    lexer.setVerbose(GLOBAL_VERBOSE);
-    lexer.loadFile(test_instr_file);
+    lexer.setVerbose(true);
+
+    const std::string& src = "sll $t0, $t1, 8";
+
+    lexer.loadSource(src);
     lexer.lex();
 
-    // add source info to assembler
     src_out = lexer.getSourceInfo();
     test_asm.loadSource(src_out);
     test_asm.assemble();
 
-    // expected program
-    prog_exp =  get_array_expected_program();
-    prog_out = test_asm.getProgram();
 
-    std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
-    std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
-
-    std::cout << "Expected " << prog_exp.dataSize() << " bytes in data segment" << std::endl;
-    std::cout << "Output program has " << prog_out.dataSize() << " bytes in data segment" << std::endl;
-
-    std::cout << "Expected program data segment: " << std::endl;
-    for(unsigned int d = 0; d < prog_exp.numDataSeg(); ++d)
-    {
-        DataSeg seg = prog_exp.getData(d);
-        std::cout << "Seg " << std::setw(3) << std::dec << d << " : ";
-        std::cout << seg.toString() << std::endl;
-    }
-
-    std::cout << "Output program data segment: " << std::endl;
-    // Print data segment
-    for(unsigned int d = 0; d < prog_out.numDataSeg(); ++d)
-    {
-        DataSeg seg = prog_out.getData(d);
-        std::cout << "Seg " << std::setw(3) << std::dec << d << " : ";
-        std::cout << seg.toString() << std::endl;
-    }
-
-    // Check data segment
-    //for(unsigned int d = 0; d < prog_out.numDataSeg(); ++d)
-    //{
-    //    DataSeg exp_seg = prog_exp.getData(d);
-    //    DataSeg out_seg = prog_out.getData(d);
-
-    //    // Show the diff 
-    //    std::cout << exp_seg.diff(out_seg) << std::endl;
-
-    //    std::cout << "Checking Seg " << std::setw(3) << std::dec << d << "/" 
-    //       << prog_out.numDataSeg() << " : " << std::endl;
-    //    std::cout << "[out]: " << out_seg.toString() << std::endl;
-    //    std::cout << "[exp]: " << exp_seg.toString() << std::endl;
-
-    //    REQUIRE(exp_seg == out_seg);        
-    //}
 }
