@@ -1193,11 +1193,9 @@ TEST_CASE("test_lexer_load_source", "[classic]")
     SourceInfo expected_src_out;
 
     test_lexer.setVerbose(true);
-    const std::string test_src = "sll $t0, $t0, 2\nsll $t1, $t1, 5\n";
+    const std::string test_src = "sll $t0, $t0, 2";
 
     test_lexer.loadSource(test_src);
-    std::cout << "Text in lexer is : " << std::endl;
-    std::cout << test_lexer.getText() << std::endl;
     test_lexer.lex();
 
     src_out = test_lexer.getSourceInfo();

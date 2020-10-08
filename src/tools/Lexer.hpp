@@ -75,10 +75,6 @@ class Lexer
         void incrTextAddr(void);
         void incrDataAddr(void);
 
-    // TODO : debug only, remove
-    public:
-        std::string getText(void) { return this->source_text; }
-
     // Segments 
     private:
         TextInfo     text_info;

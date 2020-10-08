@@ -172,11 +172,13 @@ Instr Assembler::assembleText(const TextInfo& line)
         // I-format instructions 
         case LEX_ADDI:
         case LEX_ADDIU:
+        case LEX_ANDI:
         case LEX_BEQ:
         case LEX_BNE:
         case LEX_LW:
         case LEX_LUI:
         case LEX_ORI:
+        case LEX_XORI:
         case LEX_SW:
             instr = this->asm_i_instr(line, 3);
             break;

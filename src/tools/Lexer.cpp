@@ -826,6 +826,7 @@ void Lexer::parseInstr(int line_num)
         case LEX_ADDIU:
         case LEX_ANDI:
         case LEX_ORI:
+        case LEX_XORI:
         case LEX_SLTI:
         case LEX_SLTIU:
         case LEX_SLL:
@@ -1495,7 +1496,6 @@ void Lexer::lex(void)
     this->data_addr = this->data_start_addr;
     this->cur_char = this->source_text[0];
 
-    std::cout << "this->source_text[0] " << this->source_text[0] << std::endl;
     while(!this->exhausted())
     {
         // eat spaces 
@@ -1512,8 +1512,6 @@ void Lexer::lex(void)
         }
         this->parseLine();
     }
-    std::cout << "this->cur_char : " << this->cur_char << "(" << unsigned(this->cur_char) << ")" << std::endl;
-    std::cout << "exhausted on line " << this->cur_line << " pos " << this->cur_pos << std::endl;
     // Resolve symbols
     this->resolveLabels();
     // TODO : reset state?

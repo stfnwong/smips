@@ -18,7 +18,7 @@ LIBS =
 TEST_LIBS=
 
 # Sources, etc
-MODULES  := cpu tools
+MODULES  := common cpu tools
 SRC_DIR  := $(addprefix src/,$(MODULES))
 OBJ_DIR  := $(addprefix obj/,$(MODULES))
 
