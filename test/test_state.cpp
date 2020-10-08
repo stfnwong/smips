@@ -16,6 +16,23 @@
 // unit(s) under test 
 #include "State.hpp"
 #include "Program.hpp"
+// for assembly helper function
+#include "Lexer.hpp"
+#include "Assembler.hpp"
+
+
+Program assem_helper(const std::string& src)
+{
+    Lexer lex;
+    Assembler assem;
+
+    lex.loadSource(src);
+    lex.lex();
+    assem.loadSource(lex.getSourceInfo());
+    assem.assemble();
+
+    return assem.getProgram();
+}
 
 
 // add $s0, $s1. $s2
@@ -89,6 +106,37 @@ TEST_CASE("test_decode_j", "[classic]")
     REQUIRE(test_state.imm == 257);
 }
 
+// ================ INSTRUCTION UNIT TESTS ======== //
+TEST_CASE("test_instr_sll", "[classic]")
+{
+    State test_state;
+    Program prog;
+
+    const std::string src = "sll $t0, $t0, 2";
+    prog = assem_helper(src);
+    std::vector<uint8_t> vec = prog.toVec();
+
+    std::cout << "got program " << std::endl;
+    std::cout << prog.toString() << std::endl;
+
+    test_state.writeMem(vec, 0);
+
+    // just dump in console to test 
+    std::cout << "Memory :" << std::endl;
+    for(unsigned int i = 0; i < vec.size(); ++i)
+    {
+        std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0')
+            << unsigned(test_state.mem[i]) << " ";
+        if(i > 0 && (i % 8 == 0))
+            std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+
+
+// ================ INSTRUCTION PIPLINES ======== //
+
 TEST_CASE("test_add_pipeline", "[classic]")
 {
     State test_state;
@@ -148,7 +196,6 @@ TEST_CASE("test_lw_pipeline", "[classic]")
     for(unsigned int i = 0; i < dummy_data.size(); ++i)
         REQUIRE(test_state.mem[test_state.mem_addr+i] == dummy_data[i]);
 }
-
 
 TEST_CASE("test_j_pipeline", "[classic]")
 {

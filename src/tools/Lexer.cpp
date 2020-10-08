@@ -25,16 +25,7 @@ Lexer::Lexer()
 {
     this->token_buf_size  = 512;
     this->line_buf_size   = 512;
-    void nextLine(void);
-    this->verbose         = false;
-    this->cur_char        = '\0';
-    this->cur_line        = 0;
-    this->cur_pos         = 0;
-    this->text_addr       = 0;
-    this->data_addr       = 0;
-    this->text_start_addr = TEXT_START_ADDR;
-    this->data_start_addr = DATA_START_ADDR;
-    this->cur_mode        = LEX_TEXT_SEG;
+    this->init_state();
     // create token buffer
     this->alloc_mem();
     this->init_instr_table();
@@ -46,6 +37,22 @@ Lexer::~Lexer()
 {
     delete[] this->token_buf;
     delete[] this->line_buf;
+}
+
+/*
+ * init_state()
+ */
+void Lexer::init_state(void)
+{
+    this->verbose         = false;
+    this->cur_char        = '\0';
+    this->cur_line        = 0;
+    this->cur_pos         = 0;
+    this->text_addr       = 0;
+    this->data_addr       = 0;
+    this->text_start_addr = TEXT_START_ADDR;
+    this->data_start_addr = DATA_START_ADDR;
+    this->cur_mode        = LEX_TEXT_SEG;
 }
 
 /*
@@ -178,6 +185,9 @@ bool Lexer::isSpace(void) const
             this->cur_char == '\t' ||
             this->cur_char == '\n') ? true : false;
 }
+/*
+ * isComment()
+ */
 bool Lexer::isComment(void) const
 {
     return (this->cur_char == ';') || (this->cur_char == '#');
@@ -334,7 +344,6 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
 
     return out_token;
 }
-
 
 
 /*
@@ -1484,7 +1493,9 @@ void Lexer::lex(void)
     this->cur_pos = 0;
     this->text_addr = this->text_start_addr;     
     this->data_addr = this->data_start_addr;
+    this->cur_char = this->source_text[0];
 
+    std::cout << "this->source_text[0] " << this->source_text[0] << std::endl;
     while(!this->exhausted())
     {
         // eat spaces 
@@ -1501,8 +1512,11 @@ void Lexer::lex(void)
         }
         this->parseLine();
     }
+    std::cout << "this->cur_char : " << this->cur_char << "(" << unsigned(this->cur_char) << ")" << std::endl;
+    std::cout << "exhausted on line " << this->cur_line << " pos " << this->cur_pos << std::endl;
     // Resolve symbols
     this->resolveLabels();
+    // TODO : reset state?
 }
 
 /*
@@ -1515,6 +1529,7 @@ int Lexer::loadFile(const std::string& filename)
     std::string line;
     int status = 0;     // TODO: faliure checks, etc
 
+    this->source_text.clear();
     // save the filename
     this->filename = filename;
     while(std::getline(infile, line))
@@ -1532,9 +1547,16 @@ int Lexer::loadFile(const std::string& filename)
 
     infile.close();
     this->source_text.push_back('\0');
-    this->cur_char = this->source_text[0];
 
     return status;
+}
+
+/*
+ * loadSource()
+ */
+void Lexer::loadSource(const std::string& src)
+{
+    this->source_text = src;
 }
 
 
