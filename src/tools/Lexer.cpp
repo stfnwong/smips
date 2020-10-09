@@ -1495,6 +1495,10 @@ void Lexer::lex(void)
     this->text_addr = this->text_start_addr;     
     this->data_addr = this->data_start_addr;
     this->cur_char = this->source_text[0];
+    
+    this->text_info.init();
+    this->data_info.init();
+    this->source_info.init();
 
     while(!this->exhausted())
     {

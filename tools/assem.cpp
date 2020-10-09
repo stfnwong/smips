@@ -19,21 +19,20 @@ struct AsmOpts
 {
     std::string infile;
     std::string outfile;
+    std::string literal;
     bool verbose;
 
     public:
-        AsmOpts()
-        {
-            infile = "\0";
-            outfile = "\0";
-            verbose = false;
-        }
+        AsmOpts() : infile("\0"), 
+                    outfile("\0"),
+                    literal("\0"),
+                    verbose(false) {} 
 };
 
 int main(int argc, char *argv[])
 {
     AsmOpts asm_opts;
-    const char* const short_opts = "vhi:o:";
+    const char* const short_opts = "vhi:o:l:";
     const option long_opts[] = {};
     int argn = 0;
     int status;
@@ -47,16 +46,20 @@ int main(int argc, char *argv[])
 
         switch(opt)
         {
-            case 'v':
+            case 'v':   // verbose
                 asm_opts.verbose = true;
                 break;
                 
-            case 'i':
+            case 'i':   // input file
                 asm_opts.infile = std::string(optarg);
                 break;
 
-            case 'o':
+            case 'o':   // output file
                 asm_opts.outfile = std::string(optarg);
+                break;
+
+            case 'l':   // literal
+                asm_opts.literal = std::string(optarg);
                 break;
 
             default:
@@ -67,21 +70,6 @@ int main(int argc, char *argv[])
         }
         argn++;
     }
-
-    // check that what we got was valid
-    if(asm_opts.infile == "\0")
-    {
-        std::cerr << "Invalid input filename" << std::endl;
-        std::cerr << "Use -i <filename> to specify" << std::endl;
-        exit(-1);
-    }
-    if(asm_opts.outfile == "\0")
-    {
-        std::cerr << "Invalid output filename" << std::endl;
-        std::cerr << "Use -o <filename> to specify" << std::endl;
-        exit(-1);
-    }
-
     // Get a Lexer and assembler
     Lexer lexer;
     SourceInfo lexed_source;
@@ -89,13 +77,36 @@ int main(int argc, char *argv[])
     Program program;
 
     lexer.setVerbose(asm_opts.verbose);
-    status = lexer.loadFile(asm_opts.infile);
-    if(status < 0)
+
+    if(asm_opts.literal != "\0")
     {
-        std::cerr << "Failed to load input file [" << 
-            asm_opts.infile << "]" << std::endl;
+        lexer.loadSource(asm_opts.literal);
+    }
+    // check that what we got was valid
+    else if(asm_opts.infile != "\0")
+    {
+        status = lexer.loadFile(asm_opts.infile);
+        if(status < 0)
+        {
+            std::cerr << "Failed to load input file [" << 
+                asm_opts.infile << "]" << std::endl;
+            exit(-1);
+        }
+    }
+    else
+    {
+        std::cerr << "Invalid input filename" << std::endl;
+        std::cerr << "Use -i <filename> to specify" << std::endl;
         exit(-1);
     }
+
+    //if(asm_opts.outfile == "\0")
+    //{
+    //    std::cerr << "Invalid output filename" << std::endl;
+    //    std::cerr << "Use -o <filename> to specify" << std::endl;
+    //    exit(-1);
+    //}
+
 
     lexer.lex();
     lexed_source = lexer.getSourceInfo();
@@ -125,14 +136,21 @@ int main(int argc, char *argv[])
     assembler.assemble();
     
     // Save the program to disk
-    program.setVerbose(asm_opts.verbose);
     program = assembler.getProgram();
-    status = program.save(asm_opts.outfile);
-    if(status < 0)
+
+    if(asm_opts.outfile != "\0")
     {
-        std::cerr << "[ERROR] writing program to file [" <<
-            asm_opts.outfile << "]" << std::endl;
-        exit(-1);
+        status = program.save(asm_opts.outfile);
+        if(status < 0)
+        {
+            std::cerr << "[ERROR] writing program to file [" <<
+                asm_opts.outfile << "]" << std::endl;
+            exit(-1);
+        }
+    }
+    else
+    {
+        std::cout << program.toString() << std::endl;
     }
 
     return 0;

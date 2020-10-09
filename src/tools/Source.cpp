@@ -918,6 +918,15 @@ bool SourceInfo::hasError(void) const
 }
 
 /*
+ * init()
+ */
+void SourceInfo::init(void)
+{
+    this->text_info.clear();
+    this->data_info.clear();
+}
+
+/*
  * SourceInfo::getTextInfoSize()
  */
 unsigned int SourceInfo::getTextInfoSize(void) const

@@ -271,6 +271,7 @@ class SourceInfo
         unsigned int getNumErr(void) const;
         unsigned int getNumLines(void) const;
         bool         hasError(void) const;
+        void         init(void);
 
         unsigned int getTextInfoSize(void) const;
         unsigned int getDataInfoSize(void) const;
