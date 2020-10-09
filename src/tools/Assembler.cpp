@@ -45,6 +45,7 @@ void Assembler::init_instr_to_code_map(void)
     this->instr_to_code[LEX_LUI]   = 0x0F;
     this->instr_to_code[LEX_ORI]   = 0x0D;
     this->instr_to_code[LEX_SW]    = 0x2B;
+    this->instr_to_code[LEX_ANDI]  = 0x0C;
 
     // J-format instructions 
     this->instr_to_code[LEX_J]    = 0x02;

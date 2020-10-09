@@ -44,8 +44,8 @@ class Assembler
         // 
         // Note that for an instruction with OP rs, IMM(rs) format, the lexer 
         // LineInfo order will be 
-        // 0 -> rs 
-        // 1 -> rt
+        // 0 -> rt 
+        // 1 -> rs
         // 2 -> imm
         // hence the below ordering
         const uint8_t i_instr_offsets[3] = {

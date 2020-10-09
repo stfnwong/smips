@@ -146,13 +146,20 @@ TEST_CASE("test_asm_mult_add", "[classic]")
     {
         instr_exp = prog_exp.getInstr(ins);
         instr_out = prog_out.getInstr(ins);
-        std::cout << "Checking instruction [" << ins+1 << 
-            "/" << prog_out.size() << "]" << std::endl; 
+
+        if(SHOW_ALL_OUTPUT)
+        {
+            std::cout << "Checking instruction [" << ins+1 << 
+                "/" << prog_out.size() << "]" << std::endl; 
+            
+            std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
+            std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        }
         
-        std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
-        std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
         REQUIRE(instr_exp == instr_out);
-        std::cout << "[OK]" << std::endl;
+
+        if(SHOW_ALL_OUTPUT)
+            std::cout << "[OK]" << std::endl;
     }
     std::cout << prog_out.toString() << std::endl;
 }
@@ -299,17 +306,22 @@ TEST_CASE("test_for_loop", "[classic]")
     {
         instr_exp = prog_exp.getInstr(ins);
         instr_out = prog_out.getInstr(ins);
-        std::cout << "Checking instruction [" << ins+1 << 
-            "/" << prog_out.size() << "]" << std::endl; 
-        
-        if(SHOW_ALL_OUTPUT)
-            std::cout << src_out.getText(ins).toString() << std::endl;
 
-        std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
-        std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        if(SHOW_ALL_OUTPUT)
+        {
+            std::cout << "Checking instruction [" << ins+1 << 
+                "/" << prog_out.size() << "]" << std::endl; 
+            
+                std::cout << src_out.getText(ins).toString() << std::endl;
+
+            std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
+            std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        }
         
         REQUIRE(instr_exp ==instr_out);
-        std::cout << "[OK]" << std::endl;
+
+        if(SHOW_ALL_OUTPUT)
+            std::cout << "[OK]" << std::endl;
     }
     std::cout << prog_out.toString() << std::endl;
 }
@@ -529,14 +541,17 @@ TEST_CASE("test_array", "[classic]")
     {
         instr_exp = prog_exp.getInstr(ins);
         instr_out = prog_out.getInstr(ins);
-        std::cout << "Checking instruction [" << ins+1 << 
-            "/" << prog_out.size() << "]" << std::endl; 
-        
-        if(SHOW_ALL_OUTPUT)
-            std::cout << src_out.getText(ins).toString() << std::endl;
 
-        std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
-        std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        if(SHOW_ALL_OUTPUT)
+        {
+            std::cout << "Checking instruction [" << ins+1 << 
+                "/" << prog_out.size() << "]" << std::endl; 
+            
+                std::cout << src_out.getText(ins).toString() << std::endl;
+
+            std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
+            std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        }
         
         REQUIRE(instr_exp == instr_out);
     }

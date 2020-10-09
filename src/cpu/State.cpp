@@ -345,7 +345,7 @@ void State::execute(void)
                 this->alu = this->reg[this->rs] ^ (this->imm & 0xFFFF);
                 break;
 
-            case I_LUI: // R[$rt] <- {imm, 0x0000}
+            case I_LUI:     // R[$rt] <- {imm, 0x0000}
                 this->alu = (this->imm << 16);
                 break;
 
@@ -362,7 +362,6 @@ void State::execute(void)
                 break;
         }
     }
-
 }
 
 /*
