@@ -36,6 +36,11 @@ void Assembler::init_instr_to_code_map(void)
     this->instr_to_code[LEX_SUB]  = 0x22;
     this->instr_to_code[LEX_SUBU] = 0x23;
     this->instr_to_code[LEX_DIV]  = 0x1A;
+    this->instr_to_code[LEX_MFHI] = 0x10;
+    this->instr_to_code[LEX_MTHI] = 0x11;
+    this->instr_to_code[LEX_MFLO] = 0x12;
+    this->instr_to_code[LEX_MTLO] = 0x13;
+
     
     // I-format instructions
     this->instr_to_code[LEX_ADDI]  = 0x08;
@@ -85,6 +90,35 @@ Instr Assembler::asm_r_instr_rs_rt(const TextInfo& l)
         instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i+1]);
     }
 
+
+    return instr;
+}
+
+/*
+ * asm_r_instr_rd()
+ * Assemble the arguments for an R-format instruction with only $rd
+ */
+Instr Assembler::asm_r_instr_rd(const TextInfo& l)
+{
+    Instr instr;
+
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->r_instr_offsets[0]);
+
+    return instr;
+}
+
+
+/*
+ * asm_r_instr_rs()
+ * Assemble the arguments for an R-format instruction with only $rs
+ */
+Instr Assembler::asm_r_instr_rs(const TextInfo& l)
+{
+    Instr instr;
+
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->r_instr_offsets[1]);
 
     return instr;
 }
@@ -147,6 +181,19 @@ Instr Assembler::asm_i_instr_rt(const TextInfo& l)
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->i_instr_op_offset);
     instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->i_instr_offsets[0]);
     instr.ins = instr.ins | (l.args[2].val & 0xFFFF);
+
+    return instr;
+}
+
+/*
+ * asm_i_instr_branch()
+ * Assemble the arguments for an I-format branch instruction 
+ * 
+ */
+Instr Assembler::asm_i_instr_branch(const TextInfo& l)
+{
+    Instr instr;
+
 
     return instr;
 }

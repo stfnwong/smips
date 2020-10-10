@@ -50,17 +50,22 @@ Program get_mult_add_expected_program(void)
     prog.add(instr);
 
     instr.init();
-    // MULT $t0, $t0, $t0
+    // mul $t0, $t0, $t0
+    // mult $t0, $t0
     instr.adr = 0x00400004;
     instr.ins = 0x18;
     instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RS_OFFSET);
     instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RT_OFFSET);
+    prog.add(instr);
+    // mflo $t0
+    instr.adr = 0x00400008;
+    instr.ins = 0x18;
     instr.ins = instr.ins | (REG_TEMP_0 << R_INSTR_RD_OFFSET);
     prog.add(instr);
 
     instr.init();
     // LW $t1, 4($gp)
-    instr.adr = 0x00400008;
+    instr.adr = 0x0040000C;
     instr.ins = 35 << I_INSTR_OP_OFFSET;
     instr.ins = instr.ins | (REG_TEMP_1 << I_INSTR_RT_OFFSET);
     instr.ins = instr.ins | (REG_GLOBAL << I_INSTR_RS_OFFSET);
@@ -69,7 +74,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // ORI $t2, $zero, 3
-    instr.adr = 0x0040000C;
+    instr.adr = 0x00400010;
     instr.ins = 0xD << I_INSTR_OP_OFFSET;
     instr.ins = instr.ins | (REG_TEMP_2 << I_INSTR_RT_OFFSET);
     instr.ins = instr.ins | (REG_ZERO << I_INSTR_RS_OFFSET);
@@ -78,7 +83,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // MULT $t1, $t1, $t2
-    instr.adr = 0x00400010;
+    instr.adr = 0x00400014;
     instr.ins = 0x18;
     instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RD_OFFSET);
     instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RS_OFFSET);
@@ -87,7 +92,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // ADD $t2, $t0, $t1
-    instr.adr = 0x00400014;
+    instr.adr = 0x00400018;
     instr.ins = 0x20;
     instr.ins = instr.ins | (REG_TEMP_2 << R_INSTR_RD_OFFSET);
     instr.ins = instr.ins | (REG_TEMP_0  << R_INSTR_RS_OFFSET);
@@ -96,7 +101,7 @@ Program get_mult_add_expected_program(void)
 
     instr.init();
     // SW $t2, 0($gp) 
-    instr.adr = 0x00400018;
+    instr.adr = 0x0040001C;
     instr.ins = 0x2B << I_INSTR_OP_OFFSET;
     instr.ins = instr.ins | (REG_TEMP_2 << I_INSTR_RT_OFFSET);
     instr.ins = instr.ins | (REG_GLOBAL << I_INSTR_RS_OFFSET);
@@ -144,7 +149,6 @@ TEST_CASE("test_asm_mult_add", "[classic]")
     Instr instr_exp;
     Instr instr_out;
 
-    //std::cout << "\t           Address    Data   " << instr_exp.toString() << std::endl;
     for(unsigned int ins = 0; ins < prog_out.size(); ++ins)
     {
         instr_exp = prog_exp.getInstr(ins);
@@ -596,7 +600,7 @@ Program get_instr_test_expected_program(void)
 
 
 // ======== INSTRUCTION TESTS ======== //
-TEST_CASE("test_instr_assemble", "[classic]")
+TEST_CASE("test_asm_instr", "[classic]")
 {
     Lexer      lexer;
     Assembler  test_asm;
@@ -616,11 +620,14 @@ TEST_CASE("test_instr_assemble", "[classic]")
         "addi $t1, $t1, 1",
         "and $t1, $t2, $t3",
         "andi $t0, $t1, 255",
+        "beq $a0, $s2, 1024",
         "div $t2, $s4",
         "lw $t1, 4($s4)",
         "lui $at, 4096",
         "mult $t2, $s4",
-        "sll $t0, $t1, 8"
+        "ori $t0, $t1, 4095",
+        "sll $t0, $t1, 8",
+        "xori $t2, $t0, 255"
     };
     // expected outputs
     const std::vector<Instr> exp_instrs = {
@@ -630,6 +637,9 @@ TEST_CASE("test_instr_assemble", "[classic]")
         // 0011 0001 0010 1000 0000 0000 1111 1111 
         // 0x31      0x28      0x00      0xFF
         Instr(TEXT_START_ADDR, 0x312800FF),     // andi $t0, $t1, 255
+        // 0001 0000 1001 0010 0000 0100 0000 0000
+        // 0x10      0x92      0x04      0x00
+        Instr(TEXT_START_ADDR, 0x10920400),     // beq $a0, $s2, 1024
         // 0000 0001 0101 0100 0000 0000 0001 1010
         // 0x01      0x54      0x00      0x1A
         Instr(TEXT_START_ADDR, 0x0154001A),     // div $t2, $s4
@@ -640,7 +650,13 @@ TEST_CASE("test_instr_assemble", "[classic]")
         // 0x3C      0x01      0x10      0x00
         Instr(TEXT_START_ADDR, 0x3C011000),     // lui $at 4096
         Instr(TEXT_START_ADDR, 0x01540018),     // mult $t2, $s4
-        Instr(TEXT_START_ADDR, 0x00094200),     // sll $t0, $t1, 8
+        // 0011 0101 0010 1000 0000 1111 1111 1111
+        // 0x35      0x28      0x0F      0xFF
+        Instr(TEXT_START_ADDR, 0x35280FFF),     // ori $t0, $t1, 4095
+        Instr(TEXT_START_ADDR, 0x00094200),     // sll $t0, $t1, 255
+        // 0011 1001 0010 1010 0000 0000 1111 1111
+        // 0x39      0x2A      0x00      0xFF
+        Instr(TEXT_START_ADDR, 0x392A00FF),     // xori $t2, $t0, 255
     };
 
     // Sanity check that we didn't leave any pairs unmatched 

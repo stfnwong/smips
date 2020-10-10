@@ -62,10 +62,19 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
                 << op_bits << std::endl;
     }
 
-    // arguments 
-    ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
-    ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
-    ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));
+    // TODO: Do we need to flip the order of $s and $t for branch instructions?
+    if(ti.opcode.instr == LEX_BEQ || ti.opcode.instr == LEX_BNE)
+    {
+        // we have to flip branch args
+        ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
+        ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
+    }
+    else
+    {
+        ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
+        ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
+    }
+    ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));   // imm
 
     return ti;
 }
@@ -120,9 +129,18 @@ TextInfo dis_r_instr(uint32_t instr, uint32_t addr)
         case 0x18:
             ti.opcode = Opcode(LEX_MULT, "mult");
             break;
+        case 0x19:
+            ti.opcode = Opcode(LEX_MULTU, "multu");
+            break;
+        case 0x1A:
+            ti.opcode = Opcode(LEX_DIV, "div");
+            break;
+        case 0x1B:
+            ti.opcode = Opcode(LEX_DIVU, "divu");
+            break;
         default:
             std::cerr << "[" << __func__ << "] unknown R-Instruction with func bits 0x" << std::hex
-                << std::setw(2) << std::setfill('0') << func_bits << std::endl;
+                << std::setw(2) << std::setfill('0') << unsigned(func_bits) << std::endl;
             break;
     }
 

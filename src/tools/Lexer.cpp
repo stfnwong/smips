@@ -846,11 +846,16 @@ void Lexer::parseInstr(int line_num)
             this->parse_ri();
             break;
 
+        case LEX_MUL:
+            this->parse_rrr();
+            this->text_info.psuedo = true;
+            break;
+
         case LEX_DIV:
         case LEX_DIVU:
         case LEX_MULT:
         case LEX_MULTU:
-            this->parse_rrr();
+            this->parse_rr();
             break;
 
         case LEX_ADD:
@@ -1287,14 +1292,41 @@ void Lexer::expandPsuedo(void)
     TextInfo ti;
     uint32_t instr = this->text_info.opcode.instr;
 
-    // TODO : debug, show the psuedo op before expansion 
     if(this->verbose)
     {
         std::cout << "[" << __func__ << "] expanding psuedo op : " << std::endl;
         std::cout << this->text_info.toString() << std::endl;
     }
+
     switch(instr)
     {
+        case LEX_MUL:
+            {
+                if(this->verbose)
+                    std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
+                // mult $s, $t
+                ti.init();
+                ti.opcode   = Opcode(LEX_MULT, "mult");
+                ti.addr     = this->text_info.addr;
+                ti.line_num = this->text_info.line_num;
+                ti.args[0]  = this->text_info.args[1];
+                ti.args[1]  = this->text_info.args[2];
+                this->source_info.addText(ti);
+                this->incrTextAddr();
+                
+                // mflo $rd
+                ti.init();
+                ti.opcode    = Opcode(LEX_MFLO, "mflo");
+                ti.addr      = this->text_info.addr + 4;
+                ti.line_num  = this->text_info.line_num;
+                ti.args[0]   = this->text_info.args[0];
+                
+                this->source_info.addText(ti);
+                this->incrTextAddr();
+                break;
+            }
+            break;
+
         case LEX_BGT:
         case LEX_BLT:
         case LEX_BGE:
