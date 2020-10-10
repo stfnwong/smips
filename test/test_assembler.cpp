@@ -134,25 +134,33 @@ TEST_CASE("test_asm_mult_add", "[classic]")
 
     // show the resulting program
     prog_out = test_asm.getProgram();
-    std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
-    std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
+    if(SHOW_ALL_OUTPUT)
+    {
+        std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
+        std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
+    }
     REQUIRE(prog_exp.size() == prog_out.size());
 
     Instr instr_exp;
     Instr instr_out;
 
-    std::cout << "\t           Address    Data   " << instr_exp.toString() << std::endl;
+    //std::cout << "\t           Address    Data   " << instr_exp.toString() << std::endl;
     for(unsigned int ins = 0; ins < prog_out.size(); ++ins)
     {
         instr_exp = prog_exp.getInstr(ins);
         instr_out = prog_out.getInstr(ins);
-        std::cout << "Checking instruction [" << ins+1 << 
-            "/" << prog_out.size() << "]" << std::endl; 
-        
-        std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
-        std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+
+        if(SHOW_ALL_OUTPUT)
+        {
+            std::cout << "Checking instruction [" << ins+1 << 
+                "/" << prog_out.size() << "]" << std::endl; 
+            std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
+            std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        }
+
         REQUIRE(instr_exp == instr_out);
-        std::cout << "[OK]" << std::endl;
+        if(SHOW_ALL_OUTPUT)
+            std::cout << "[OK]" << std::endl;
     }
     std::cout << prog_out.toString() << std::endl;
 }
@@ -287,8 +295,11 @@ TEST_CASE("test_for_loop", "[classic]")
 
     // show the resulting program
     prog_out = test_asm.getProgram();
-    std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
-    std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
+    if(SHOW_ALL_OUTPUT)
+    {
+        std::cout << "Expected " << prog_exp.size() << " instructions" << std::endl;
+        std::cout << "Output program has " << prog_out.size() << " instructions" << std::endl;
+    }
     REQUIRE(prog_exp.size() == prog_out.size());
 
     Instr instr_exp;
@@ -299,11 +310,11 @@ TEST_CASE("test_for_loop", "[classic]")
     {
         instr_exp = prog_exp.getInstr(ins);
         instr_out = prog_out.getInstr(ins);
-        std::cout << "Checking instruction [" << ins+1 << 
-            "/" << prog_out.size() << "]" << std::endl; 
         
         if(SHOW_ALL_OUTPUT)
         {
+            std::cout << "Checking instruction [" << ins+1 << 
+                "/" << prog_out.size() << "]" << std::endl; 
             std::cout << src_out.getText(ins).toString() << std::endl;
             std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
             std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
@@ -513,12 +524,14 @@ TEST_CASE("test_array", "[classic]")
         DataSeg out_seg = prog_out.getData(d);
 
         // Show the diff 
-        std::cout << exp_seg.diff(out_seg) << std::endl;
-
-        std::cout << "Checking Seg " << std::setw(3) << std::dec << d << "/" 
-           << prog_out.numDataSeg() << " : " << std::endl;
-        std::cout << "[out]: " << out_seg.toString() << std::endl;
-        std::cout << "[exp]: " << exp_seg.toString() << std::endl;
+        if(SHOW_ALL_OUTPUT)
+        {
+            std::cout << exp_seg.diff(out_seg) << std::endl;
+            std::cout << "Checking Seg " << std::setw(3) << std::dec << d << "/" 
+               << prog_out.numDataSeg() << " : " << std::endl;
+            std::cout << "[out]: " << out_seg.toString() << std::endl;
+            std::cout << "[exp]: " << exp_seg.toString() << std::endl;
+        }
 
         REQUIRE(exp_seg == out_seg);        // TODO : data segment issue....
     }
@@ -531,11 +544,11 @@ TEST_CASE("test_array", "[classic]")
     {
         instr_exp = prog_exp.getInstr(ins);
         instr_out = prog_out.getInstr(ins);
-        std::cout << "Checking instruction [" << ins+1 << 
-            "/" << prog_out.size() << "]" << std::endl; 
         
         if(SHOW_ALL_OUTPUT)
         {
+            std::cout << "Checking instruction [" << ins+1 << 
+                "/" << prog_out.size() << "]" << std::endl; 
             std::cout << src_out.getText(ins).toString() << std::endl;
             std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
             std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
@@ -591,7 +604,24 @@ TEST_CASE("test_instr_addi", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    
+    Instr exp_instr(TEXT_START_ADDR, 0x21290001);
+    prog_exp.add(exp_instr);
+
+    const std::string& src = "addi $t1, $t1, 1";
+
+    test_asm.setVerbose(GLOBAL_VERBOSE);
+    lexer.setVerbose(GLOBAL_VERBOSE);
+    lexer.loadSource(src);
+    lexer.lex();
+    src_out = lexer.getSourceInfo();
+    test_asm.loadSource(src_out);
+    test_asm.assemble();
+
+    prog_out = test_asm.getProgram();
+    REQUIRE(prog_out.numInstrs() == 1);
+    Instr out_instr = prog_out.getInstr(0);
+
+    REQUIRE(out_instr == exp_instr);
 }
 
 TEST_CASE("test_instr_sll", "[classic]")
