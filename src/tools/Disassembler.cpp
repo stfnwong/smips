@@ -126,13 +126,19 @@ TextInfo dis_r_instr(uint32_t instr, uint32_t addr)
             break;
     }
 
-    // arguments 
-    ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rs 
-    ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);       // rd
     if(ti.opcode.instr == LEX_SLL || ti.opcode.instr == LEX_SRL)
-        ti.args[2] = Argument(SYM_LITERAL, (instr & (0x1F << 6)) >> 6);      // rt
+    {
+        ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
+        ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
+        ti.args[2] = Argument(SYM_LITERAL, (instr & (0x1F << 6)) >> 6);      // shamt
+    }
     else
+    {
+        // arguments 
+        ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);   // rs 
+        ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
         ti.args[2] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
+    }
 
     return ti;
 }

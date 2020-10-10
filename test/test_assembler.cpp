@@ -187,7 +187,7 @@ Program get_for_loop_expected_program(void)
     instr.adr = 0x00400008;
     instr.ins = 0x0;
     instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RD_OFFSET);
-    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (REG_TEMP_1 << R_INSTR_RT_OFFSET);
     instr.ins = instr.ins | (2 << R_INSTR_SHAMT_OFFSET);
     prog.add(instr);
 
@@ -283,7 +283,7 @@ TEST_CASE("test_for_loop", "[classic]")
     test_asm.assemble();
 
     // expected program
-    prog_exp =  get_for_loop_expected_program();
+    prog_exp = get_for_loop_expected_program();
 
     // show the resulting program
     prog_out = test_asm.getProgram();
@@ -303,13 +303,15 @@ TEST_CASE("test_for_loop", "[classic]")
             "/" << prog_out.size() << "]" << std::endl; 
         
         if(SHOW_ALL_OUTPUT)
+        {
             std::cout << src_out.getText(ins).toString() << std::endl;
-
-        std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
-        std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+            std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
+            std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        }
         
         REQUIRE(instr_exp ==instr_out);
-        std::cout << "[OK]" << std::endl;
+        if(SHOW_ALL_OUTPUT)
+            std::cout << "[OK]" << std::endl;
     }
     std::cout << prog_out.toString() << std::endl;
 }
@@ -533,10 +535,11 @@ TEST_CASE("test_array", "[classic]")
             "/" << prog_out.size() << "]" << std::endl; 
         
         if(SHOW_ALL_OUTPUT)
+        {
             std::cout << src_out.getText(ins).toString() << std::endl;
-
-        std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
-        std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+            std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
+            std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
+        }
         
         REQUIRE(instr_exp == instr_out);
     }
