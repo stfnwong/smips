@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
         argn++;
     }
 
+    // we can disassemble a uint32_t literal from the command line 
     if(dis_opts.literal != "\0")
     {
         uint32_t instr_literal = std::stoi(dis_opts.literal, nullptr, 16);
@@ -93,23 +94,15 @@ int main(int argc, char *argv[])
 
         return 0;
     }
-    // check that what we got was valid
+    // otherwise, check that we have a valid infile 
     else if(dis_opts.infile == "\0")
     {
         std::cerr << "Invalid input filename" << std::endl;
         std::cerr << "Use -i <filename> to specify" << std::endl;
         exit(-1);
     }
-    //if(dis_opts.outfile == "\0")
-    //{
-    //    std::cerr << "Invalid output filename" << std::endl;
-    //    std::cerr << "Use -o <filename> to specify" << std::endl;
-    //    exit(-1);
-    //}
 
     Program prog;
-
-    // TODO; this is broken
     status = prog.load(dis_opts.infile);
     if(status < 0)
     {

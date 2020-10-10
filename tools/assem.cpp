@@ -100,14 +100,6 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    //if(asm_opts.outfile == "\0")
-    //{
-    //    std::cerr << "Invalid output filename" << std::endl;
-    //    std::cerr << "Use -o <filename> to specify" << std::endl;
-    //    exit(-1);
-    //}
-
-
     lexer.lex();
     lexed_source = lexer.getSourceInfo();
 

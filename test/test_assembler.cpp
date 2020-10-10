@@ -580,6 +580,17 @@ Program get_instr_test_expected_program(void)
 
 
 // ======== INSTRUCTION TESTS ======== //
+TEST_CASE("test_instr_addi", "[classic]")
+{
+    Lexer      lexer;
+    Assembler  test_asm;
+    SourceInfo src_out;
+    Program    prog_out;
+    Program    prog_exp;
+
+    
+}
+
 TEST_CASE("test_instr_sll", "[classic]")
 {
     Lexer      lexer;
@@ -588,18 +599,26 @@ TEST_CASE("test_instr_sll", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    test_asm.setVerbose(GLOBAL_VERBOSE);
-    // get some source info for this program
-    lexer.setVerbose(true);
+    // 0000 0000 0000 1001 0100 0010 0000 0000
+    // 0x00      0x09      0x42      0x00
+
+    // expected program
+    Instr exp_instr(TEXT_START_ADDR, 0x00094200);
+    prog_exp.add(exp_instr);
 
     const std::string& src = "sll $t0, $t1, 8";
 
+    test_asm.setVerbose(GLOBAL_VERBOSE);
+    lexer.setVerbose(GLOBAL_VERBOSE);
     lexer.loadSource(src);
     lexer.lex();
-
     src_out = lexer.getSourceInfo();
     test_asm.loadSource(src_out);
     test_asm.assemble();
 
+    prog_out = test_asm.getProgram();
+    REQUIRE(prog_out.numInstrs() == 1);
+    Instr out_instr = prog_out.getInstr(0);
 
+    REQUIRE(out_instr == exp_instr);
 }
