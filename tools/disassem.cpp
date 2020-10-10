@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
     // we can disassemble a uint32_t literal from the command line 
     if(dis_opts.literal != "\0")
     {
-        uint32_t instr_literal = std::stoi(dis_opts.literal, nullptr, 16);
+        uint32_t instr_literal = std::strtoul(dis_opts.literal.c_str(), nullptr, 16);
         TextInfo dis_out = dis_instr(instr_literal, 0);
 
         if(dis_opts.print_adr)

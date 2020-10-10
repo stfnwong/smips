@@ -149,8 +149,9 @@ TEST_CASE("test_dis_mult_add", "[classic]")
     }
 }
 
-
-
+/*
+ * for_loop expected output
+ */
 SourceInfo get_for_loop_expected_dis(void)
 {
     SourceInfo info;
@@ -263,10 +264,7 @@ TEST_CASE("test_dis_for_loop", "[classic]")
     const std::string test_for_loop_file = "asm/for_loop.asm";
 
     SourceInfo expected_out = get_for_loop_expected_dis(); 
-
     test_program = assem(test_for_loop_file);
-    //int status = test_program.save("bin/test_for_loop.bin");
-    //REQUIRE(status == 0);
     REQUIRE(test_program.numInstrs() == expected_out.getTextInfoSize());
 
     Instr cur_instr;
@@ -293,4 +291,65 @@ TEST_CASE("test_dis_for_loop", "[classic]")
         REQUIRE(exp_out == dis_out);
         std::cout << "    [OK]" << std::endl;
     }
+}
+
+
+SourceInfo get_dis_instr_expected_out(void)
+{
+    SourceInfo info;
+    TextInfo line;
+
+    // add $t2, $t0, $t1
+    line.addr = TEXT_START_ADDR;
+    line.opcode = Opcode(LEX_ADD, "add");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_1);
+    info.addText(line);
+    // addi $t1, $t1, 1
+    line.addr = TEXT_START_ADDR;
+    line.opcode = Opcode(LEX_ADDI, "addi");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[2] = Argument(SYM_LITERAL, 1);
+    info.addText(line);
+    // and $t1, $t2, $t3
+    line.addr = TEXT_START_ADDR;
+    line.opcode = Opcode(LEX_AND, "and");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_2);
+    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_3);
+    info.addText(line);
+    // andi $t0, $t1, 255
+    line.addr = TEXT_START_ADDR;
+    line.opcode = Opcode(LEX_ANDI, "andi");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[2] = Argument(SYM_LITERAL, 255);
+    info.addText(line);
+    // sll $t0, $t1, 8
+    line.addr = TEXT_START_ADDR;
+    line.opcode = Opcode(LEX_SLL, "sll");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[2] = Argument(SYM_LITERAL, 8);
+    info.addText(line);
+
+    return info;
+}
+
+
+TEST_CASE("test_dis_instr", "[classic]")
+{
+    // Instructions to disassemble
+    const std::vector<Instr> inp_instr = {
+        Instr(TEXT_START_ADDR, 0x01095020),     // add $t2, $t0, $1
+        Instr(TEXT_START_ADDR, 0x21290001),     // addi $t1, $t1, 1
+        Instr(TEXT_START_ADDR, 0x014B4824),     // and $t1, $t2 ,$t3
+        Instr(TEXT_START_ADDR, 0x314800FF),     // andi $t0, $t1, 255
+        Instr(TEXT_START_ADDR, 0x00094200),     // sll $t0, $t1, 8
+    };
+
+    SourceInfo exp_out_info = get_dis_instr_expected_out();
+    REQUIRE(exp_out_info.getTextInfoSize() == inp_instr.size());
 }

@@ -596,7 +596,7 @@ Program get_instr_test_expected_program(void)
 
 
 // ======== INSTRUCTION TESTS ======== //
-TEST_CASE("test_instr_addi", "[classic]")
+TEST_CASE("test_instr_assemble", "[classic]")
 {
     Lexer      lexer;
     Assembler  test_asm;
@@ -604,54 +604,67 @@ TEST_CASE("test_instr_addi", "[classic]")
     Program    prog_out;
     Program    prog_exp;
 
-    Instr exp_instr(TEXT_START_ADDR, 0x21290001);
-    prog_exp.add(exp_instr);
-
-    const std::string& src = "addi $t1, $t1, 1";
+    Instr      out_instr;
+    Instr      exp_instr;
 
     test_asm.setVerbose(GLOBAL_VERBOSE);
     lexer.setVerbose(GLOBAL_VERBOSE);
-    lexer.loadSource(src);
-    lexer.lex();
-    src_out = lexer.getSourceInfo();
-    test_asm.loadSource(src_out);
-    test_asm.assemble();
 
-    prog_out = test_asm.getProgram();
-    REQUIRE(prog_out.numInstrs() == 1);
-    Instr out_instr = prog_out.getInstr(0);
+    // inputs
+    const std::vector<std::string> input_src = {
+        "add $t2, $t0, $t1",
+        "addi $t1, $t1, 1",
+        "and $t1, $t2, $t3",
+        "andi $t0, $t1, 255",
+        "div $t2, $s4",
+        "lw $t1, 4($s4)",
+        "lui $at, 4096",
+        "mult $t2, $s4",
+        "sll $t0, $t1, 8"
+    };
+    // expected outputs
+    const std::vector<Instr> exp_instrs = {
+        Instr(TEXT_START_ADDR, 0x01095020),     // add $t2, $t0, $t1
+        Instr(TEXT_START_ADDR, 0x21290001),     // addi $t1, $t1, 1
+        Instr(TEXT_START_ADDR, 0x014B4824),     // and $t1, $t2 ,$t3
+        // 0011 0001 0010 1000 0000 0000 1111 1111 
+        // 0x31      0x28      0x00      0xFF
+        Instr(TEXT_START_ADDR, 0x312800FF),     // andi $t0, $t1, 255
+        // 0000 0001 0101 0100 0000 0000 0001 1010
+        // 0x01      0x54      0x00      0x1A
+        Instr(TEXT_START_ADDR, 0x0154001A),     // div $t2, $s4
+        // 1000 1110 1000 1001 0000 0000 0000 0100
+        // 0x8E      0x89      0x00      0x04
+        Instr(TEXT_START_ADDR, 0x8E890004),     // lw $t1 4($s4)
+        // 0011 1100 0000 0001 0001 0000 0000 0000
+        // 0x3C      0x01      0x10      0x00
+        Instr(TEXT_START_ADDR, 0x3C011000),     // lui $at 4096
+        Instr(TEXT_START_ADDR, 0x01540018),     // mult $t2, $s4
+        Instr(TEXT_START_ADDR, 0x00094200),     // sll $t0, $t1, 8
+    };
 
-    REQUIRE(out_instr == exp_instr);
-}
+    // Sanity check that we didn't leave any pairs unmatched 
+    REQUIRE(input_src.size() == exp_instrs.size());
 
-TEST_CASE("test_instr_sll", "[classic]")
-{
-    Lexer      lexer;
-    Assembler  test_asm;
-    SourceInfo src_out;
-    Program    prog_out;
-    Program    prog_exp;
+    for(unsigned int i = 0; i < input_src.size(); ++i)
+    {
+        lexer.loadSource(input_src[i]);
+        lexer.lex();
+        src_out = lexer.getSourceInfo();
+        test_asm.loadSource(src_out);
+        test_asm.assemble();
 
-    // 0000 0000 0000 1001 0100 0010 0000 0000
-    // 0x00      0x09      0x42      0x00
+        prog_out = test_asm.getProgram();
+        REQUIRE(prog_out.numInstrs() == 1);
+        out_instr = prog_out.getInstr(0);
 
-    // expected program
-    Instr exp_instr(TEXT_START_ADDR, 0x00094200);
-    prog_exp.add(exp_instr);
+        if(out_instr != exp_instrs[i])
+        {
+            std::cout << "[" << input_src[i] << "]" << " assembly failed" << std::endl;
+            std::cout << "[out]: " << out_instr.toString() << std::endl;
+            std::cout << "[exp]: " << exp_instrs[i].toString() << std::endl;
+        }
 
-    const std::string& src = "sll $t0, $t1, 8";
-
-    test_asm.setVerbose(GLOBAL_VERBOSE);
-    lexer.setVerbose(GLOBAL_VERBOSE);
-    lexer.loadSource(src);
-    lexer.lex();
-    src_out = lexer.getSourceInfo();
-    test_asm.loadSource(src_out);
-    test_asm.assemble();
-
-    prog_out = test_asm.getProgram();
-    REQUIRE(prog_out.numInstrs() == 1);
-    Instr out_instr = prog_out.getInstr(0);
-
-    REQUIRE(out_instr == exp_instr);
+        REQUIRE(out_instr == exp_instrs[i]);
+    }
 }
