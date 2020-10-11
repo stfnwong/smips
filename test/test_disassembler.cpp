@@ -225,11 +225,12 @@ SourceInfo get_for_loop_expected_dis(void)
     info.addText(line);
 
     // beq $t3, $zero, done 
+    // NOTE: that $rs and $rt get flipped
     line.init();
     line.addr = 0x00400018;
     line.opcode = Opcode(LEX_BEQ, "beq");
-    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_3);
-    line.args[1] = Argument(SYM_REGISTER, REG_ZERO);
+    line.args[0] = Argument(SYM_REGISTER, REG_ZERO);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_3);
     line.args[2] = Argument(SYM_LITERAL, 0x00400028 - 0x00400018);
     line.is_imm  = true;
     info.addText(line);
@@ -286,7 +287,7 @@ TEST_CASE("test_dis_for_loop", "[classic]")
         TextInfo dis_out = dis_instr(cur_instr.ins, cur_instr.adr);
         TextInfo exp_out = expected_out.getText(idx);
 
-        std::cout << "Line " << std::dec << idx << " expected: " << std::endl;
+        std::cout << "Line " << std::dec << idx+1 << " expected: " << std::endl;
         std::cout << exp_out.toString() << std::endl;
 
         std::cout << "Got :" << std::endl;
@@ -297,6 +298,9 @@ TEST_CASE("test_dis_for_loop", "[classic]")
             std::cout << "Line " << std::dec << idx + 1 <<  "/" << 
                 std::dec << expected_out.getTextInfoSize() << 
                 " mismatch" << std::endl;
+            std::cout << "Input was [0x" << std::hex << std::setw(8)
+                << std::setfill('0') << cur_instr.ins << "]" << std::endl;
+
             std::cout << std::endl << "    diff : " << std::endl;
             std::cout << exp_out.diff(dis_out) << std::endl;
         }

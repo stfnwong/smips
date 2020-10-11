@@ -147,18 +147,36 @@ TextInfo dis_r_instr(uint32_t instr, uint32_t addr)
             break;
     }
 
+    switch(func_bits)
+    {
+        case 0x0:   // sll
+        case 0x2:   // srl
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
+            ti.args[2] = Argument(SYM_LITERAL, (instr & (0x1F << 6)) >> 6);      // shamt
+            break;
+
+        case 0x1A:  // div
+        case 0x1B:  // divu
+        case 0x18:  // mult
+        case 0x19:  // multu
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);  // rs 
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);  // rt
+            break;
+
+        default:
+            // arguments 
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);   // rs 
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
+            ti.args[2] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
+            break;
+    }
+
     if(ti.opcode.instr == LEX_SLL || ti.opcode.instr == LEX_SRL)
     {
-        ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
-        ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
-        ti.args[2] = Argument(SYM_LITERAL, (instr & (0x1F << 6)) >> 6);      // shamt
     }
     else
     {
-        // arguments 
-        ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);   // rs 
-        ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
-        ti.args[2] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
     }
 
     return ti;
