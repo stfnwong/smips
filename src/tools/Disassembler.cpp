@@ -170,28 +170,28 @@ TextInfo dis_r_instr(uint32_t instr, uint32_t addr)
     // which operands?
     switch(func_bits)
     {
-        case R_SLL:   // sll
-        case R_SRL:   // srl
+        case R_SLL:   
+        case R_SRL:   
             ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
             ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
             ti.args[2] = Argument(SYM_LITERAL, (instr & (0x1F << 6)) >> 6);      // shamt
             break;
 
-        case R_DIV:  // div
-        case R_DIVU:  // divu
-        case R_MULT:  // mult
-        case R_MULTU:  // multu
+        case R_DIV:    
+        case R_DIVU:   
+        case R_MULT:   
+        case R_MULTU:  
             ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);  // rs 
             ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);  // rt
             break;
 
-        case R_MFHI:  // mfhi 
-        case R_MFLO:  // mflo
+        case R_MFHI:  
+        case R_MFLO:  
             ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11); // rd 
             break;
 
-        case R_MTHI:  // mthi
-        case R_MTLO:  // mtlo
+        case R_MTHI:  
+        case R_MTLO:  
             ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21); // rs
             break;
 
@@ -224,9 +224,13 @@ TextInfo dis_j_instr(uint32_t instr, uint32_t addr)
     else 
         return ti;      // Invalid/unsupported J instruction
 
+    std::cout << "[" << __func__ << "] disassembly :" << std::endl;
+    std::cout << ti.toString() << std::endl;
+
     // this ensures the output is such that if we put it back in
     // the lexer we'd be able to assemble the same program again
-    ti.args[2] = Argument(SYM_LITERAL, (instr & 0x02FFFFFF) << 2);
+    ti.args[0] = Argument(SYM_LITERAL, (instr & 0x02FFFFFF) << 2);
+    ti.is_imm = true;
 
     return ti;
 }
@@ -257,7 +261,6 @@ TextInfo dis_instr(uint32_t instr, uint32_t addr)
         case 0x3:
             return dis_j_instr(instr, addr);
             
-        // TODO : need a special case to deal with mtlo, mflo, etc here
         case 0x0:
             return dis_r_instr(instr, addr);
 

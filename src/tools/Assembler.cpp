@@ -24,23 +24,27 @@ Assembler::Assembler()
 void Assembler::init_instr_to_code_map(void)
 {
     // R-format instructions 
-    this->instr_to_code[LEX_ADD]  = 0x20;
-    this->instr_to_code[LEX_ADDU] = 0x21;
-    this->instr_to_code[LEX_AND]  = 0x24;
-    this->instr_to_code[LEX_JR]   = 0x08;
-    this->instr_to_code[LEX_MULT] = 0x18;
-    this->instr_to_code[LEX_OR]   = 0x25;
-    this->instr_to_code[LEX_SLL]  = 0x00;
-    this->instr_to_code[LEX_SLT]  = 0x2A;
-    this->instr_to_code[LEX_SLTU] = 0x2B;
-    this->instr_to_code[LEX_SUB]  = 0x22;
-    this->instr_to_code[LEX_SUBU] = 0x23;
-    this->instr_to_code[LEX_DIV]  = 0x1A;
-    this->instr_to_code[LEX_MFHI] = 0x10;
-    this->instr_to_code[LEX_MTHI] = 0x11;
-    this->instr_to_code[LEX_MFLO] = 0x12;
-    this->instr_to_code[LEX_MTLO] = 0x13;
-    this->instr_to_code[LEX_XOR]  = 0x26;
+    this->instr_to_code[LEX_ADD]   = 0x20;
+    this->instr_to_code[LEX_ADDU]  = 0x21;
+    this->instr_to_code[LEX_AND]   = 0x24;
+    this->instr_to_code[LEX_JR]    = 0x08;
+    this->instr_to_code[LEX_JALR]  = 0x09;
+    this->instr_to_code[LEX_JR]    = 0x08;
+    this->instr_to_code[LEX_MULT]  = 0x18;
+    this->instr_to_code[LEX_MULTU] = 0x19;
+    this->instr_to_code[LEX_OR]    = 0x25;
+    this->instr_to_code[LEX_SLL]   = 0x00;
+    this->instr_to_code[LEX_SLT]   = 0x2A;
+    this->instr_to_code[LEX_SLTU]  = 0x2B;
+    this->instr_to_code[LEX_SUB]   = 0x22;
+    this->instr_to_code[LEX_SUBU]  = 0x23;
+    this->instr_to_code[LEX_DIV]   = 0x1A;
+    this->instr_to_code[LEX_DIVU]  = 0x1B;
+    this->instr_to_code[LEX_MFHI]  = 0x10;
+    this->instr_to_code[LEX_MTHI]  = 0x11;
+    this->instr_to_code[LEX_MFLO]  = 0x12;
+    this->instr_to_code[LEX_MTLO]  = 0x13;
+    this->instr_to_code[LEX_XOR]   = 0x26;
 
     
     // I-format instructions
@@ -202,7 +206,10 @@ Instr Assembler::asm_j_instr(const TextInfo& l)
     Instr instr;
 
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->j_instr_op_offset);
-    instr.ins = instr.ins | ((l.args[2].val & 0x0FFFFFFC) >> 2);
+    // TODO: debug, remove 
+    std::cout << "[" << __func__ << "] val is 0x" << std::hex << unsigned(l.args[0].val) << " before shift " << std::endl;
+    std::cout << "[" << __func__ << "] val is 0x" << std::hex << unsigned((l.args[0].val & 0x0FFFFFFC) >> 2) << " after shift " << std::endl;
+    instr.ins = instr.ins | ((l.args[0].val & 0x0FFFFFFC) >> 2);
 
     return instr;
 }
@@ -283,6 +290,8 @@ Instr Assembler::assembleText(const TextInfo& line)
         // J-format instructions 
         case LEX_J:
         case LEX_JAL:
+            // TODO : debug 
+            std::cout << "[" << __func__ << "] assembling a J instruction..." << std::endl;
             instr = this->asm_j_instr(line);
             break;
 

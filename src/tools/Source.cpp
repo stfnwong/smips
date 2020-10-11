@@ -192,7 +192,7 @@ std::string TextInfo::toString(void) const
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    oss << "Line  Type   Addr       Mnemonic   Opcode   Arguments   literal   error" << std::endl;
+    oss << "Line  Type   Addr       Mnemonic   Opcode  Arguments   literal   error" << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
@@ -267,6 +267,8 @@ std::string TextInfo::toString(void) const
     else if(this->is_imm && (this->args[1].type == SYM_LITERAL))
         oss << "  " << std::hex << std::setw(8) << this->args[1].val << "h";
     else if(this->is_imm && (this->args[2].type == SYM_LITERAL))
+        oss << "  " << std::hex << std::setw(8) << this->args[2].val << "h";
+    else if(this->is_imm && this->args[0].type == SYM_LITERAL)
         oss << "  " << std::hex << std::setw(8) << this->args[2].val << "h";
     else
         oss << "            ";  // TODO: what spacing options do I have for keeping constant width?

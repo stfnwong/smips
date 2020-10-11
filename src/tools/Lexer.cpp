@@ -817,11 +817,15 @@ void Lexer::parseInstr(int line_num)
 
         case LEX_J:
         case LEX_JAL:
-        case LEX_JALR:
             this->parse_i();
+            this->text_info.is_imm = true;
+            break;
+
+        case LEX_JALR:
+            this->parse_r();
             break;
         
-        // TODO : re-org by instruction format
+        // Immediate mode arithmetic
         case LEX_ADDI:
         case LEX_ADDIU:
         case LEX_ANDI:
@@ -883,9 +887,6 @@ void Lexer::parseInstr(int line_num)
         case LEX_MFLO:
         case LEX_MTLO:
             this->parse_r();
-            // TODO ; debug, remove 
-            std::cout << "[" << __func__ << "] parsed a hi/lo instr" << std::endl;
-            std::cout << this->text_info.toString() << std::endl;
             break;
 
         // BGX instructions need to be able to handle symbols as immediate arg
@@ -1233,11 +1234,11 @@ void Lexer::resolveLabels(void)
                     break;
 
                     case LEX_J:
+                    case LEX_JAL:
                     {
-                        // same as default, except we also reset arg[0]
-                        line.args[2].type = SYM_LITERAL;
-                        line.args[2].val = label_addr;
-                        line.args[0] = Argument();
+                        line.args[0].type = SYM_LITERAL;
+                        line.args[0].val = label_addr;
+                        //line.args[0] = Argument();
                     }
                     break;
 

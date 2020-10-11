@@ -326,16 +326,16 @@ TEST_CASE("test_for_loop", "[classic]")
         instr_exp = prog_exp.getInstr(ins);
         instr_out = prog_out.getInstr(ins);
         
-        if(SHOW_ALL_OUTPUT)
+        if(instr_exp != instr_out)
         {
-            std::cout << "Checking instruction [" << ins+1 << 
+            std::cout << "Error in instruction [" << ins+1 << 
                 "/" << prog_out.size() << "]" << std::endl; 
             std::cout << src_out.getText(ins).toString() << std::endl;
             std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
             std::cout << "\tOutput   : " << instr_out.toString() << std::endl;
         }
         
-        REQUIRE(instr_exp ==instr_out);
+        REQUIRE(instr_exp == instr_out);
         if(SHOW_ALL_OUTPUT)
             std::cout << "[OK]" << std::endl;
     }
@@ -625,7 +625,7 @@ TEST_CASE("test_asm_instr", "[classic]")
     test_asm.setVerbose(GLOBAL_VERBOSE);
     lexer.setVerbose(GLOBAL_VERBOSE);
 
-    // inputs
+    // inputs (these are mostly fragments from sample programs)
     const std::vector<std::string> input_src = {
         "add $t2, $t0, $t1",
         "addi $t1, $t1, 1",
@@ -633,6 +633,9 @@ TEST_CASE("test_asm_instr", "[classic]")
         "andi $t0, $t1, 255",
         "beq $a0, $s2, 1024",
         "div $t2, $s4",
+        "divu $t6, $s4",
+        "j 2228",   // note that we drop the lower 2 bits in instruction
+        "jal 4004", // note that we drop the lower 2 bits in instruction
         "lw $t1, 4($s4)",
         "lui $at, 4096",
         "mfhi $s0",
@@ -641,6 +644,7 @@ TEST_CASE("test_asm_instr", "[classic]")
         "or $t0, $t1, $t2",
         "ori $t0, $t1, 4095",
         "sll $t0, $t1, 8",
+        "slt $s0, $t0, $t1",
         "sw $s0 4($sp)",
         "xori $t2, $t1, 255"
     };
@@ -656,8 +660,18 @@ TEST_CASE("test_asm_instr", "[classic]")
         // 0x10      0x92      0x04      0x00
         Instr(TEXT_START_ADDR, 0x12440400),     // beq $a0, $s2, 1024
         // 0000 0001 0101 0100 0000 0000 0001 1010
-        // 0x01      0x54      0x00      0x1A
+        // 0x01      054       0x00      0x1A
         Instr(TEXT_START_ADDR, 0x0154001A),     // div $t2, $s4
+        // 0000 0001 1101 0100 0000 0000 0001 1011
+        // 0x01      0xD4      0x00      0x1B
+        Instr(TEXT_START_ADDR, 0x01D4001B),     // divu $t6, $s4
+        // 0000 1000 0000 0000 0000 1000 1010 1110
+        //                          0010 0010 1101
+        // 0x08      0x00      0x02      0x2D
+        Instr(TEXT_START_ADDR, 0x0800022D),     // j 2228 
+        // 0000 1100 0000 0000 0000 0011 1110 1001
+        // 0x0C      0x00      0x03      0xE9
+        Instr(TEXT_START_ADDR, 0x0C0003E9),     // jal 4004
         // 1000 1110 1000 1001 0000 0000 0000 0100
         // 0x8E      0x89      0x00      0x04
         Instr(TEXT_START_ADDR, 0x8E890004),     // lw $t1 4($s4)
@@ -678,6 +692,9 @@ TEST_CASE("test_asm_instr", "[classic]")
         // 0x35      0x28      0x0F      0xFF
         Instr(TEXT_START_ADDR, 0x35280FFF),     // ori $t0, $t1, 4095
         Instr(TEXT_START_ADDR, 0x00094200),     // sll $t0, $t1, 255
+        // 0000 0001 0000 1001 1000 0000 0010 1010
+        // 0x01      0x09      0x80      0x2A
+        Instr(TEXT_START_ADDR, 0x0109802A),     // slt $s0, $t0, $t1
         // 1010 1111 1011 0000 0000 0000 0000 0100
         // 0xAF      0xB0      0x00      0x04
         Instr(TEXT_START_ADDR, 0xAFB00004),     // sw $s0 4($sp)
@@ -694,6 +711,10 @@ TEST_CASE("test_asm_instr", "[classic]")
         lexer.loadSource(input_src[i]);
         lexer.lex();
         src_out = lexer.getSourceInfo();
+        
+        std::cout << "Input [" << input_src[i] << "]" << std::endl;
+        std::cout << src_out.toString() << std::endl;
+
         test_asm.loadSource(src_out);
         test_asm.assemble();
 

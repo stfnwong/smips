@@ -378,6 +378,20 @@ SourceInfo get_dis_instr_expected_out(void)
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1] = Argument(SYM_REGISTER, REG_SAVED_4);
     info.addText(line);
+    // j 2228
+    line.init();
+    line.addr = TEXT_START_ADDR;
+    line.opcode = Opcode(LEX_J, "j");
+    line.args[0] = Argument(SYM_LITERAL, 2228);
+    line.is_imm = true;
+    info.addText(line);
+    // jal 4004
+    line.init();
+    line.addr = TEXT_START_ADDR;
+    line.opcode = Opcode(LEX_JAL, "jal");
+    line.args[0] = Argument(SYM_LITERAL, 4004);
+    line.is_imm = true;
+    info.addText(line);
     // lw $t1, 4($s4)
     line.init();
     line.addr = TEXT_START_ADDR;
@@ -427,11 +441,20 @@ SourceInfo get_dis_instr_expected_out(void)
 
     // sll $t0, $t1, 8
     line.init();
-    line.addr = TEXT_START_ADDR;
-    line.opcode = Opcode(LEX_SLL, "sll");
+    line.addr    = TEXT_START_ADDR;
+    line.opcode  = Opcode(LEX_SLL, "sll");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
     line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
     line.args[2] = Argument(SYM_LITERAL, 8);
+    info.addText(line);
+
+    // slt $s0, $t0, $t1
+    line.init();
+    line.addr    = TEXT_START_ADDR;
+    line.opcode  = Opcode(LEX_SLT, "slt");
+    line.args[0] = Argument(SYM_REGISTER, REG_SAVED_0);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_2);
     info.addText(line);
 
     return info;
@@ -451,6 +474,8 @@ TEST_CASE("test_dis_instr", "[classic]")
         // 0000 0001 0101 0100 0000 0000 0001 1010
         // 0x01      0x54      0x00      0x1A
         Instr(TEXT_START_ADDR, 0x0154001A),     // div $t2, $s4
+        Instr(TEXT_START_ADDR, 0x0800022D),     // j 2222 
+        Instr(TEXT_START_ADDR, 0x0C0003E9),     // jal 4004
         // 1000 1110 1000 1001 0000 0000 0000 0100
         // 0x8E      0x89      0x00      0x04
         Instr(TEXT_START_ADDR, 0x8E890004),     // lw $t1 4($s4)
@@ -462,6 +487,7 @@ TEST_CASE("test_dis_instr", "[classic]")
         Instr(TEXT_START_ADDR, 0x01540018),     // mult $t2, $s4
         Instr(TEXT_START_ADDR, 0x012A4025),     // or $t0, $t1, $t2
         Instr(TEXT_START_ADDR, 0x00094200),     // sll $t0, $t1, 8
+        Instr(TEXT_START_ADDR, 0x0109802A),     // slt $s0, $t0, $t1
     };
 
     SourceInfo expected_out = get_dis_instr_expected_out();

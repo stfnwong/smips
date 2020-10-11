@@ -251,8 +251,6 @@ SourceInfo get_array_expected_source_info(void)
     line.label    = "loop";
     info.addText(line);
     // [bne $at, $zero, end_loop]
-    // TODO : some args are flippped to pass a test.. but actually its better if we 
-    // don't need to do this because its confusing...
     line.init();
     line.line_num  = 15;
     line.addr      = 0x00400014;
