@@ -9,6 +9,7 @@
 #include <iomanip>
 #include "Codes.hpp"
 #include "Disassembler.hpp"
+#include "Common.hpp"
 
 
 /*
@@ -21,40 +22,44 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
     ti.addr = addr;
     ti.is_imm = true;
     uint8_t op_bits = (instr & 0xFC000000) >> 26;
+
     switch(op_bits)
     {
-        case 4:
+        case I_BEQ:
             ti.opcode = Opcode(LEX_BEQ, "beq");
             break;
-        case 5:
+        case I_BNE:
             ti.opcode = Opcode(LEX_BNE, "bne");
             break;
-        case 8:
+        case I_ADDI:
             ti.opcode = Opcode(LEX_ADDI, "addi");
             break;
-        case 9:
+        case I_ADDIU:
             ti.opcode = Opcode(LEX_ADDIU, "addiu");
             break;
-        case 12:
+        case I_ANDI:
             ti.opcode = Opcode(LEX_ANDI, "andi");
             break;
-        case 13:
+        case I_ORI:
             ti.opcode = Opcode(LEX_ORI, "ori");
             break;
-        case 10:
+        case I_SLTI:
             ti.opcode = Opcode(LEX_SLTI, "slti");
             break;
-        case 11:
+        case I_SLTIU:
             ti.opcode = Opcode(LEX_SLTIU, "sltiu");
             break;
-        case 15:
+        case I_LUI:
             ti.opcode = Opcode(LEX_LUI, "lui");
             break;
-        case 35:
+        case I_LW:
             ti.opcode = Opcode(LEX_LW, "lw");
             break;
-        case 43:
+        case I_SW:
             ti.opcode = Opcode(LEX_SW, "sw");
+            break;
+        case I_XORI:
+            ti.opcode = Opcode(LEX_XORI, "xori");
             break;
         default:
             std::cerr << "[" << __func__ << " unknown I-instruction with op bits 0x" 
@@ -62,10 +67,22 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
                 << op_bits << std::endl;
     }
 
-    // arguments 
-    ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
-    ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
-    ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));
+    switch(ti.opcode.instr)
+    {
+        case LEX_BEQ:
+        case LEX_BNE:
+            // we have to flip branch args
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
+            ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));   // imm
+            break;
+
+        default:
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
+            ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));   // imm
+            break;
+    }
 
     return ti;
 }
@@ -81,58 +98,108 @@ TextInfo dis_r_instr(uint32_t instr, uint32_t addr)
     ti.addr = addr;
     switch(func_bits)
     {
-        case 0x20:
+        case R_ADD:
             ti.opcode = Opcode(LEX_ADD, "add");
             break;
-        case 0x21:
+        case R_ADDU:
             ti.opcode = Opcode(LEX_ADDU, "addu");
             break;
-        case 0x22:
+        case R_SUB:
             ti.opcode = Opcode(LEX_SUB, "sub");
             break;
-        case 0x23:
+        case R_SUBU:
             ti.opcode = Opcode(LEX_SUBU, "subu");
             break;
-        case 0x24:
+        case R_AND:
             ti.opcode = Opcode(LEX_AND, "and");
             break;
-        case 0x25:
+        case R_OR:
             ti.opcode = Opcode(LEX_OR, "or");
             break;
-        case 0x27:
+        case R_NOR:
             ti.opcode = Opcode(LEX_NOR, "nor");
             break;
-        case 0x2A:
+        case R_SLT:
             ti.opcode = Opcode(LEX_SLT, "slt");
             break;
-        case 0x2B:
+        case R_SLTU:
             ti.opcode = Opcode(LEX_SLTU, "sltu");
             break;
-        case 0x0:
+        case R_SLL:
             ti.opcode = Opcode(LEX_SLL, "sll");
             break;
-        case 0x2:
+        case R_SRL:
             ti.opcode = Opcode(LEX_SRL, "srl");
             break;
-        case 0x4:
+        case R_JR:
             ti.opcode = Opcode(LEX_JR, "jr");
             break;
-        case 0x18:
+        case R_MULT:
             ti.opcode = Opcode(LEX_MULT, "mult");
             break;
+        case R_MULTU:
+            ti.opcode = Opcode(LEX_MULTU, "multu");
+            break;
+        case R_DIV:
+            ti.opcode = Opcode(LEX_DIV, "div");
+            break;
+        case R_DIVU:
+            ti.opcode = Opcode(LEX_DIVU, "divu");
+            break;
+        case R_MFHI:
+            ti.opcode = Opcode(LEX_MFHI, "mfhi");
+            break;
+        case R_MTHI:
+            ti.opcode = Opcode(LEX_MTHI, "mthi");
+            break;
+        case R_MFLO:
+            ti.opcode = Opcode(LEX_MFLO, "mflo");
+            break;
+        case R_MTLO:
+            ti.opcode = Opcode(LEX_MTLO, "mtlo");
+            break;
+
         default:
             std::cerr << "[" << __func__ << "] unknown R-Instruction with func bits 0x" << std::hex
-                << std::setw(2) << std::setfill('0') << func_bits << std::endl;
+                << std::setw(2) << std::setfill('0') << unsigned(func_bits) << std::endl;
             break;
     }
 
-    // arguments 
-    ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rs 
-    ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);       // rd
-    if(ti.opcode.instr == LEX_SLL || ti.opcode.instr == LEX_SRL)
-        ti.args[2] = Argument(SYM_LITERAL, (instr & (0x1F << 6)) >> 6);      // rt
-    else
-        ti.args[2] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
+    // which operands?
+    switch(func_bits)
+    {
+        case R_SLL:   
+        case R_SRL:   
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
+            ti.args[2] = Argument(SYM_LITERAL, (instr & (0x1F << 6)) >> 6);      // shamt
+            break;
+
+        case R_DIV:    
+        case R_DIVU:   
+        case R_MULT:   
+        case R_MULTU:  
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);  // rs 
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);  // rt
+            break;
+
+        case R_MFHI:  
+        case R_MFLO:  
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11); // rd 
+            break;
+
+        case R_MTHI:  
+        case R_MTLO:  
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21); // rs
+            break;
+
+        default:
+            // arguments 
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);   // rs 
+            ti.args[2] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
+            break;
+    }
 
     return ti;
 }
@@ -157,7 +224,8 @@ TextInfo dis_j_instr(uint32_t instr, uint32_t addr)
 
     // this ensures the output is such that if we put it back in
     // the lexer we'd be able to assemble the same program again
-    ti.args[2] = Argument(SYM_LITERAL, (instr & 0x02FFFFFF) << 2);
+    ti.args[0] = Argument(SYM_LITERAL, (instr & 0x02FFFFFF) << 2);
+    ti.is_imm = true;
 
     return ti;
 }

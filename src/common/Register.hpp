@@ -8,7 +8,6 @@
 #ifndef __SMIPS_REGISTER_HPP
 #define __SMIPS_REGISTER_HPP
 
-
 #include <string>
 #include <unordered_map>
 

@@ -17,9 +17,9 @@
 typedef enum instr_code 
 {
     LEX_NULL,
-    // arith / logic 
+
     LEX_ADD, LEX_ADDU, LEX_ADDI, LEX_ADDIU, 
-    LEX_AND, LEX_ANDI, LEX_DIV, LEX_DIVU,
+    LEX_AND, LEX_ANDI, LEX_DIV, LEX_DIVU, LEX_MUL,
     LEX_MULT, LEX_MULTU, LEX_NOR, LEX_OR,
     LEX_ORI, LEX_SUB, LEX_SUBU, LEX_XOR, LEX_XORI,
     LEX_SLL, LEX_SLLV, LEX_SRL, LEX_SRV,        // shifts
@@ -77,6 +77,7 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_ANDI,  "andi"),
     Opcode(LEX_DIV,   "div"),
     Opcode(LEX_DIVU,  "divu"),
+    Opcode(LEX_MUL,   "mul"),
     Opcode(LEX_MULT,  "mult"),
     Opcode(LEX_MULTU, "multu"),
     Opcode(LEX_NOR,   "nor"),
@@ -86,6 +87,13 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_SLLV,  "sllv"),
     Opcode(LEX_SRL,   "srl"),
     Opcode(LEX_SRV,   "srv"),
+    Opcode(LEX_XOR,   "xor"),
+    Opcode(LEX_XORI,  "xori"),
+    // hi/lo register 
+    Opcode(LEX_MFHI,  "mfhi"),
+    Opcode(LEX_MTHI,  "mthi"),
+    Opcode(LEX_MFLO,  "mflo"),
+    Opcode(LEX_MTLO,  "mtlo"),
     // comparison
     Opcode(LEX_SLT,   "slt"),
     Opcode(LEX_SLTU,  "sltu"),

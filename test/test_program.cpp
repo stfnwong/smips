@@ -56,7 +56,7 @@ TEST_CASE("test_program_save_load", "[classic]")
     // the alternative is to commit a binary to the repo, but that sees like 
     // it create a new set of problems
     src_program = assem(test_mult_add_file);
-    REQUIRE(src_program.numInstrs() == 7);
+    REQUIRE(src_program.numInstrs() == 9);   // note that mul is a psuedo op 
 
     // write the test program to disk 
     src_program.save(test_load_filename);

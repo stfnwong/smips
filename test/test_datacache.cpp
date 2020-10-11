@@ -66,7 +66,7 @@ TEST_CASE("test_datacahe_read_half", "[classic]")
     REQUIRE(test_cache[1] == 0xAD);
 
     int16_t half = test_cache.readHalf(0);
-    REQUIRE(uint16_t(half) == 0xDEAD);
+    REQUIRE(half == int16_t(0xDEAD));
 }
 
 TEST_CASE("test_datacahe_read_word", "[classic]")
@@ -81,5 +81,5 @@ TEST_CASE("test_datacahe_read_word", "[classic]")
     REQUIRE(test_cache[3] == 0xEF);
 
     int32_t word = test_cache.readWord(0);
-    REQUIRE(word == 0xDEADBEEF);
+    REQUIRE(word == int32_t(0xDEADBEEF));
 }

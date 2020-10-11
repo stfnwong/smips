@@ -35,6 +35,15 @@ Instr::Instr(const Instr& that)
     this->ins = that.ins;
 }
 
+/*
+ * move ctor
+ */
+Instr::Instr(const Instr&& that)
+{
+    this->adr = std::move(that.adr);
+    this->ins = std::move(that.ins);
+}
+
 
 /*
  * ==
@@ -54,12 +63,7 @@ bool Instr::operator==(const Instr& that) const
  */
 bool Instr::operator!=(const Instr& that) const
 {
-    if(this->adr == that.adr)
-        return false;
-    if(this->ins == that.ins)
-        return false;
-
-    return true;
+    return !(*this == that);
 }
 
 Instr& Instr::operator=(const Instr& that)

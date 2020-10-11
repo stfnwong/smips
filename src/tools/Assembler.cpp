@@ -24,17 +24,28 @@ Assembler::Assembler()
 void Assembler::init_instr_to_code_map(void)
 {
     // R-format instructions 
-    this->instr_to_code[LEX_ADD]  = 0x20;
-    this->instr_to_code[LEX_ADDU] = 0x21;
-    this->instr_to_code[LEX_AND]  = 0x24;
-    this->instr_to_code[LEX_JR]   = 0x08;
-    this->instr_to_code[LEX_MULT] = 0x18;
-    this->instr_to_code[LEX_OR]   = 0x25;
-    this->instr_to_code[LEX_SLL]  = 0x00;
-    this->instr_to_code[LEX_SLT]  = 0x2A;
-    this->instr_to_code[LEX_SLTU] = 0x2B;
-    this->instr_to_code[LEX_SUB]  = 0x22;
-    this->instr_to_code[LEX_SUBU] = 0x23;
+    this->instr_to_code[LEX_ADD]   = 0x20;
+    this->instr_to_code[LEX_ADDU]  = 0x21;
+    this->instr_to_code[LEX_AND]   = 0x24;
+    this->instr_to_code[LEX_JR]    = 0x08;
+    this->instr_to_code[LEX_JALR]  = 0x09;
+    this->instr_to_code[LEX_JR]    = 0x08;
+    this->instr_to_code[LEX_MULT]  = 0x18;
+    this->instr_to_code[LEX_MULTU] = 0x19;
+    this->instr_to_code[LEX_OR]    = 0x25;
+    this->instr_to_code[LEX_SLL]   = 0x00;
+    this->instr_to_code[LEX_SLT]   = 0x2A;
+    this->instr_to_code[LEX_SLTU]  = 0x2B;
+    this->instr_to_code[LEX_SUB]   = 0x22;
+    this->instr_to_code[LEX_SUBU]  = 0x23;
+    this->instr_to_code[LEX_DIV]   = 0x1A;
+    this->instr_to_code[LEX_DIVU]  = 0x1B;
+    this->instr_to_code[LEX_MFHI]  = 0x10;
+    this->instr_to_code[LEX_MTHI]  = 0x11;
+    this->instr_to_code[LEX_MFLO]  = 0x12;
+    this->instr_to_code[LEX_MTLO]  = 0x13;
+    this->instr_to_code[LEX_XOR]   = 0x26;
+
     
     // I-format instructions
     this->instr_to_code[LEX_ADDI]  = 0x08;
@@ -46,6 +57,7 @@ void Assembler::init_instr_to_code_map(void)
     this->instr_to_code[LEX_ORI]   = 0x0D;
     this->instr_to_code[LEX_SW]    = 0x2B;
     this->instr_to_code[LEX_ANDI]  = 0x0C;
+    this->instr_to_code[LEX_XORI]  = 0x0E;
 
     // J-format instructions 
     this->instr_to_code[LEX_J]    = 0x02;
@@ -63,8 +75,56 @@ Instr Assembler::asm_r_instr(const TextInfo& l, const int n)
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
     for(int i = 0; i < n; ++i)
     {
-        instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i]);
+        instr.ins = instr.ins | ((l.args[i].val & 0x1F) << this->r_instr_offsets[i]);
     }
+
+    return instr;
+}
+
+/*
+ * asm_r_instr_rs_rt()
+ * Assemble the arguments for an R-format instruction
+ * which doesn't have an $rd operand
+ */
+Instr Assembler::asm_r_instr_rs_rt(const TextInfo& l)
+{
+    Instr instr;
+
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
+    for(int i = 0; i < 2; ++i)
+    {
+        instr.ins = instr.ins | ((l.args[i].val & 0x1F) << this->r_instr_offsets[i+1]);
+    }
+
+
+    return instr;
+}
+
+/*
+ * asm_r_instr_rd()
+ * Assemble the arguments for an R-format instruction with only $rd
+ */
+Instr Assembler::asm_r_instr_rd(const TextInfo& l)
+{
+    Instr instr;
+
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->r_instr_offsets[0]);
+
+    return instr;
+}
+
+
+/*
+ * asm_r_instr_rs()
+ * Assemble the arguments for an R-format instruction with only $rs
+ */
+Instr Assembler::asm_r_instr_rs(const TextInfo& l)
+{
+    Instr instr;
+
+    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->r_instr_offsets[1]);
 
     return instr;
 }
@@ -80,13 +140,9 @@ Instr Assembler::asm_r_instr_shamt(const TextInfo& l, const int n)
     Instr instr;
 
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
-    for(int i = 0; i < n; ++i)
-    {
-        if(i == 2)
-            instr.ins = instr.ins | (l.args[i].val & 0xFF) << 6;
-        else
-            instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i]);
-    }
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->r_instr_offsets[0]);
+    instr.ins = instr.ins | ((l.args[1].val & 0x1F) << this->r_instr_offsets[2]);
+    instr.ins = instr.ins | (l.args[2].val & 0x1F) << 6;
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
 
     return instr;
@@ -103,12 +159,43 @@ Instr Assembler::asm_i_instr(const TextInfo& l, const int n)
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->i_instr_op_offset);
     for(int i = 0; i < n; ++i)
     {
-        instr.ins = instr.ins | ((l.args[i].val & 0xFFFF) << this->i_instr_offsets[i]);
+        if(i == 2)
+            instr.ins = instr.ins | ((l.args[i].val & 0xFFFF) << this->i_instr_offsets[i]);
+        else
+            instr.ins = instr.ins | ((l.args[i].val & 0x1F) << this->i_instr_offsets[i]);
     }
 
     return instr;
 }
 
+/*
+ * asm_i_instr_rt()
+ * Assemble the arguments for an I-format instruction that 
+ * only accepts $rt and imm
+ */
+Instr Assembler::asm_i_instr_rt(const TextInfo& l)
+{
+    Instr instr;
+
+    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->i_instr_op_offset);
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->i_instr_offsets[0]);
+    instr.ins = instr.ins | (l.args[2].val & 0xFFFF);
+
+    return instr;
+}
+
+/*
+ * asm_i_instr_branch()
+ * Assemble the arguments for an I-format branch instruction 
+ * 
+ */
+Instr Assembler::asm_i_instr_branch(const TextInfo& l)
+{
+    Instr instr;
+
+
+    return instr;
+}
 
 /*
  * asm_j_instr()
@@ -119,7 +206,7 @@ Instr Assembler::asm_j_instr(const TextInfo& l)
     Instr instr;
 
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->j_instr_op_offset);
-    instr.ins = instr.ins | ((l.args[2].val & 0x0FFFFFFC) >> 2);
+    instr.ins = instr.ins | ((l.args[0].val & 0x0FFFFFFC) >> 2);
 
     return instr;
 }
@@ -149,12 +236,12 @@ Instr Assembler::assembleText(const TextInfo& line)
         case LEX_ADDU:
         case LEX_AND:
         case LEX_JR:
-        case LEX_MULT:
         case LEX_OR:
         case LEX_SLT:
         case LEX_SLTU:
         case LEX_SUB:
         case LEX_SUBU:
+        case LEX_XOR:
             instr = this->asm_r_instr(line, 3);
             break;
 
@@ -163,11 +250,21 @@ Instr Assembler::assembleText(const TextInfo& line)
             instr = this->asm_r_instr_shamt(line, 3);
             break;
 
+        case LEX_DIV:
+        case LEX_DIVU:
+        case LEX_MULT:
+        case LEX_MULTU:
+            instr = this->asm_r_instr_rs_rt(line);
+            break;
+
         case LEX_MFHI:
-        case LEX_MTHI:
         case LEX_MFLO:
+            instr = this->asm_r_instr_rd(line);
+            break;
+
+        case LEX_MTHI:
         case LEX_MTLO:
-            instr = this->asm_r_instr(line, 1);
+            instr = this->asm_r_instr_rs(line);
             break;
 
         // I-format instructions 
@@ -177,11 +274,14 @@ Instr Assembler::assembleText(const TextInfo& line)
         case LEX_BEQ:
         case LEX_BNE:
         case LEX_LW:
-        case LEX_LUI:
         case LEX_ORI:
         case LEX_XORI:
         case LEX_SW:
             instr = this->asm_i_instr(line, 3);
+            break;
+
+        case LEX_LUI:
+            instr = this->asm_i_instr_rt(line);
             break;
 
         // J-format instructions 

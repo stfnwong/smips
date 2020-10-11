@@ -817,11 +817,15 @@ void Lexer::parseInstr(int line_num)
 
         case LEX_J:
         case LEX_JAL:
-        case LEX_JALR:
             this->parse_i();
+            this->text_info.is_imm = true;
+            break;
+
+        case LEX_JALR:
+            this->parse_r();
             break;
         
-        // TODO : re-org by instruction format
+        // Immediate mode arithmetic
         case LEX_ADDI:
         case LEX_ADDIU:
         case LEX_ANDI:
@@ -846,11 +850,16 @@ void Lexer::parseInstr(int line_num)
             this->parse_ri();
             break;
 
+        case LEX_MUL:
+            this->parse_rrr();
+            this->text_info.psuedo = true;
+            break;
+
         case LEX_DIV:
         case LEX_DIVU:
         case LEX_MULT:
         case LEX_MULTU:
-            this->parse_rrr();
+            this->parse_rr();
             break;
 
         case LEX_ADD:
@@ -1092,8 +1101,6 @@ Argument Lexer::parseImmediate(void)
 
 /*
  * parseLine()
- * TODO : consider a more functional design where we return a TextInfo .
- * The problem with that is that we would need to call it twice to expand psuedo-ops...
  */
 void Lexer::parseLine(void)
 {
@@ -1225,11 +1232,10 @@ void Lexer::resolveLabels(void)
                     break;
 
                     case LEX_J:
+                    case LEX_JAL:
                     {
-                        // same as default, except we also reset arg[0]
-                        line.args[2].type = SYM_LITERAL;
-                        line.args[2].val = label_addr;
-                        line.args[0] = Argument();
+                        line.args[0].type = SYM_LITERAL;
+                        line.args[0].val = label_addr;
                     }
                     break;
 
@@ -1287,14 +1293,41 @@ void Lexer::expandPsuedo(void)
     TextInfo ti;
     uint32_t instr = this->text_info.opcode.instr;
 
-    // TODO : debug, show the psuedo op before expansion 
     if(this->verbose)
     {
         std::cout << "[" << __func__ << "] expanding psuedo op : " << std::endl;
         std::cout << this->text_info.toString() << std::endl;
     }
+
     switch(instr)
     {
+        case LEX_MUL:
+            {
+                if(this->verbose)
+                    std::cout << "[" << __func__ << "] expanding " << this->text_info.opcode.toString() << std::endl;
+                // mult $s, $t
+                ti.init();
+                ti.opcode   = Opcode(LEX_MULT, "mult");
+                ti.addr     = this->text_info.addr;
+                ti.line_num = this->text_info.line_num;
+                ti.args[0]  = this->text_info.args[1];
+                ti.args[1]  = this->text_info.args[2];
+                this->source_info.addText(ti);
+                this->incrTextAddr();
+                
+                // mflo $rd
+                ti.init();
+                ti.opcode    = Opcode(LEX_MFLO, "mflo");
+                ti.addr      = this->text_info.addr + 4;
+                ti.line_num  = this->text_info.line_num;
+                ti.args[0]   = this->text_info.args[0];
+                
+                this->source_info.addText(ti);
+                this->incrTextAddr();
+                break;
+            }
+            break;
+
         case LEX_BGT:
         case LEX_BLT:
         case LEX_BGE:

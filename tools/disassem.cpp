@@ -19,17 +19,16 @@ struct DisOpts
 {
     std::string infile;
     std::string outfile;
+    std::string literal;
     bool verbose;
     bool print_adr;
 
     public:
-        DisOpts()
-        {
-            infile = "\0";
-            outfile = "\0";
-            verbose = false;
-            print_adr = false;
-        }
+        DisOpts() : infile("\0"), 
+                    outfile("\0"), 
+                    literal("\0"), 
+                    verbose(false), 
+                    print_adr(false) {}
 };
 
 
@@ -37,7 +36,7 @@ struct DisOpts
 int main(int argc, char *argv[])
 {
     DisOpts dis_opts;
-    const char* const short_opts = "avhi:o:";
+    const char* const short_opts = "avhi:o:l:";
     const option long_opts[] = {};
     int argn = 0;
     int status;
@@ -51,20 +50,24 @@ int main(int argc, char *argv[])
 
         switch(opt)
         {
-            case 'v':
+            case 'v':   // verbose mode
                 dis_opts.verbose = true;
                 break;
 
-            case 'a':
+            case 'a':   // print addresses
                 dis_opts.print_adr = true;
                 break;
                 
-            case 'i':
+            case 'i':   // input file 
                 dis_opts.infile = std::string(optarg);
                 break;
 
-            case 'o':
+            case 'o':   // output file
                 dis_opts.outfile = std::string(optarg);
+                break;
+
+            case 'l':
+                dis_opts.literal = std::string(optarg);
                 break;
 
             default:
@@ -76,23 +79,30 @@ int main(int argc, char *argv[])
         argn++;
     }
 
-    // check that what we got was valid
-    if(dis_opts.infile == "\0")
+    // we can disassemble a uint32_t literal from the command line 
+    if(dis_opts.literal != "\0")
+    {
+        uint32_t instr_literal = std::strtoul(dis_opts.literal.c_str(), nullptr, 16);
+        TextInfo dis_out = dis_instr(instr_literal, 0);
+
+        if(dis_opts.print_adr)
+        {
+            std::cout << "[0x" << std::hex << std::setw(8) << std::setfill('0')
+                << dis_out.addr << "] ";
+        }
+        std::cout << dis_out.toInstrString() << std::endl;
+
+        return 0;
+    }
+    // otherwise, check that we have a valid infile 
+    else if(dis_opts.infile == "\0")
     {
         std::cerr << "Invalid input filename" << std::endl;
         std::cerr << "Use -i <filename> to specify" << std::endl;
         exit(-1);
     }
-    //if(dis_opts.outfile == "\0")
-    //{
-    //    std::cerr << "Invalid output filename" << std::endl;
-    //    std::cerr << "Use -o <filename> to specify" << std::endl;
-    //    exit(-1);
-    //}
 
     Program prog;
-
-    // TODO; this is broken
     status = prog.load(dis_opts.infile);
     if(status < 0)
     {

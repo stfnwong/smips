@@ -70,8 +70,13 @@ class Assembler
     // assemble by instruction type
     private:
         Instr asm_r_instr(const TextInfo& l, const int n);
+        Instr asm_r_instr_rs_rt(const TextInfo& l);
+        Instr asm_r_instr_rd(const TextInfo& l);
+        Instr asm_r_instr_rs(const TextInfo& l);
         Instr asm_r_instr_shamt(const TextInfo& l, const int n);
         Instr asm_i_instr(const TextInfo& l, const int n);
+        Instr asm_i_instr_rt(const TextInfo& l);
+        Instr asm_i_instr_branch(const TextInfo& l);
         Instr asm_j_instr(const TextInfo& l) ;
 
     // disable copy and move construction, 

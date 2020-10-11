@@ -26,7 +26,6 @@
  */
 
 
-
 // ================ TOKEN ================ //
 /* 
  * TOKEN
@@ -193,7 +192,7 @@ std::string TextInfo::toString(void) const
     std::ostringstream oss;
 
     oss << "---------------------------------------------------------------------" << std::endl;
-    oss << "Line  Type   Addr       Mnemonic   Opcode   Arguments   literal   error" << std::endl;
+    oss << "Line  Type   Addr       Mnemonic   Opcode  Arguments   literal   error" << std::endl;
 
     oss << std::left << std::setw(6) << std::setfill(' ') << this->line_num;
     oss << "[";
@@ -221,15 +220,10 @@ std::string TextInfo::toString(void) const
     // Insert arg/register chars
     for(int i = 0; i < 3; ++i)
     {
-        // TODO : come back to this... temp registers are in two places in register map
-        //if(this->args[i].type == SYM_REG_TEMP)
-        //    oss << "t" << this->args[i].val << " ";
         if(this->args[i].type == SYM_REGISTER)
         {
             if(this->args[i].val == REG_AT)
                 oss << "at" << " ";     
-            else if(this->args[i].val >= REG_ARG_0 && this->args[i].val <= REG_ARG_3)
-                oss << "a" << std::dec << this->args[i].val << " ";
             else if(this->args[i].val == REG_RETURN)
                 oss << "r" << std::dec << this->args[i].val << " ";
             else if(this->args[i].val == REG_RETURN)
@@ -242,8 +236,14 @@ std::string TextInfo::toString(void) const
                 oss << "F+" << std::dec << this->args[i].val;
             else if(this->args[i].val == REG_STACK)
                 oss << "S+" << std::dec << this->args[i].val;
+            else if(this->args[i].val >= REG_ARG_0 && this->args[i].val <= REG_ARG_3)
+                oss << "a" << std::dec << this->args[i].val << " ";
             else if(this->args[i].val >= REG_SAVED_0 && this->args[i].val <= REG_SAVED_7)
                 oss << "s" << std::dec << this->args[i].val << " ";
+            else if(this->args[i].val >= REG_TEMP_0 && this->args[i].val <= REG_TEMP_7)
+                oss << "t" << std::dec << this->args[i].val << " ";
+            else
+                oss << std::dec << this->args[i].val << " ";
         }
         // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
         else if(this->args[i].type == SYM_LITERAL)       
@@ -252,22 +252,24 @@ std::string TextInfo::toString(void) const
             oss << "   ";
     }
     oss << "  "; 
-    // TODO : maybe add the 'symbol' first, then print the correct value
-    // literal (if applicable)
+
+    // Add symbols, literals etc, with symbols for upper, lower and so on
     if(this->is_symbol)
-        oss << "0x" << std::hex << std::setw(8) << this->args[2].val;
+        oss << std::hex << std::setw(8) << this->args[2].val << "h";
     else if(!this->is_imm && (this->args[1].type == SYM_LITERAL))
-        oss << " +0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
+        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h  ";
     else if(!this->is_imm && (this->args[2].type == SYM_LITERAL))
-        oss << "   +" << std::left << std::dec << std::setw(8) << std::setfill(' ') << this->args[2].val << "  ";
+        oss << " +" << std::left << std::dec << std::setw(8) << std::setfill(' ') << this->args[2].val << "h  ";
     else if(this->is_imm && this->upper)
-        oss << "U 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
+        oss << "U " << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h  ";
     else if(this->is_imm && this->lower)
-        oss << "L 0x" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "  ";
+        oss << "L " << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h  ";
     else if(this->is_imm && (this->args[1].type == SYM_LITERAL))
-        oss << "  0x" << std::hex << std::setw(8) << this->args[1].val;
+        oss << "  " << std::hex << std::setw(8) << this->args[1].val << "h";
     else if(this->is_imm && (this->args[2].type == SYM_LITERAL))
-        oss << "  0x" << std::hex << std::setw(8) << this->args[2].val;
+        oss << "  " << std::hex << std::setw(8) << this->args[2].val << "h";
+    else if(this->is_imm && this->args[0].type == SYM_LITERAL)
+        oss << "  " << std::hex << std::setw(8) << this->args[2].val << "h";
     else
         oss << "            ";  // TODO: what spacing options do I have for keeping constant width?
     // spacing chars
@@ -305,8 +307,8 @@ std::string TextInfo::toInstrString(void) const
     // Jump is just the address in args[2]
     if(this->opcode.mnemonic == "j" || this->opcode.mnemonic == "jal")
     {
-        oss << "0x" << std::hex << std::setw(8) << std::setfill('0')
-            << this->args[2].val;
+        oss << std::hex << std::setw(8) << std::setfill(' ')
+            << this->args[2].val << "h";
         return oss.str();
     }
 
