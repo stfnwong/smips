@@ -635,9 +635,13 @@ TEST_CASE("test_asm_instr", "[classic]")
         "div $t2, $s4",
         "lw $t1, 4($s4)",
         "lui $at, 4096",
+        "mfhi $s0",
+        "mflo $t1",
         "mult $t2, $s4",
+        "or $t0, $t1, $t2",
         "ori $t0, $t1, 4095",
         "sll $t0, $t1, 8",
+        "sw $s0 4($sp)",
         "xori $t2, $t1, 255"
     };
     // expected outputs
@@ -660,11 +664,23 @@ TEST_CASE("test_asm_instr", "[classic]")
         // 0011 1100 0000 0001 0001 0000 0000 0000
         // 0x3C      0x01      0x10      0x00
         Instr(TEXT_START_ADDR, 0x3C011000),     // lui $at 4096
+        // 0000 0000 0000 0000 1000 0000 0001 0000
+        // 0x00      0x00      0x80      0x10
+        Instr(TEXT_START_ADDR, 0x00008010),     // mfhi $s0
+        // 0000 0000 0000 0000 0100 1000 0001 0010
+        // 0x00      0x00      0x48      0x12
+        Instr(TEXT_START_ADDR, 0x00004812),     // mflo $t1
         Instr(TEXT_START_ADDR, 0x01540018),     // mult $t2, $s4
+        // 0000 0001 0010 1010 0100 0000 0010 0101
+        // 0x01      0x2A      0x40      0x25
+        Instr(TEXT_START_ADDR, 0x012A4025),     // or $t0, $t1, $t2
         // 0011 0101 0010 1000 0000 1111 1111 1111
         // 0x35      0x28      0x0F      0xFF
         Instr(TEXT_START_ADDR, 0x35280FFF),     // ori $t0, $t1, 4095
         Instr(TEXT_START_ADDR, 0x00094200),     // sll $t0, $t1, 255
+        // 1010 1111 1011 0000 0000 0000 0000 0100
+        // 0xAF      0xB0      0x00      0x04
+        Instr(TEXT_START_ADDR, 0xAFB00004),     // sw $s0 4($sp)
         // 0011 1001 0100 1010 0000 0000 1111 1111
         // 0x39      0x4A      0x00      0xFF
         Instr(TEXT_START_ADDR, 0x392A00FF),     // xori $t2, $t1, 255

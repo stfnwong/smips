@@ -71,7 +71,7 @@ Instr Assembler::asm_r_instr(const TextInfo& l, const int n)
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
     for(int i = 0; i < n; ++i)
     {
-        instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i]);
+        instr.ins = instr.ins | ((l.args[i].val & 0x1F) << this->r_instr_offsets[i]);
     }
 
     return instr;
@@ -89,7 +89,7 @@ Instr Assembler::asm_r_instr_rs_rt(const TextInfo& l)
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
     for(int i = 0; i < 2; ++i)
     {
-        instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i+1]);
+        instr.ins = instr.ins | ((l.args[i].val & 0x1F) << this->r_instr_offsets[i+1]);
     }
 
 
@@ -136,13 +136,6 @@ Instr Assembler::asm_r_instr_shamt(const TextInfo& l, const int n)
     Instr instr;
 
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
-    //for(int i = 0; i < n; ++i)
-    //{
-    //    if(i == 2)
-    //        instr.ins = instr.ins | (l.args[i].val & 0xFF) << 6;
-    //    else
-    //        instr.ins = instr.ins | ((l.args[i].val & 0xFF) << this->r_instr_offsets[i]);
-    //}
     instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->r_instr_offsets[0]);
     instr.ins = instr.ins | ((l.args[1].val & 0x1F) << this->r_instr_offsets[2]);
     instr.ins = instr.ins | (l.args[2].val & 0x1F) << 6;

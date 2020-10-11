@@ -52,7 +52,7 @@ static constexpr int J_INSTR_OP_OFFSET = 26;
 #define R_SLT     42
 #define R_SLTU    43
 
-// I-instructions 
+// I-instruction codes
 #define I_BEQ     4
 #define I_BNE     5
 #define I_BLEZ    6

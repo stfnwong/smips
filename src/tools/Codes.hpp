@@ -89,6 +89,11 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_SRV,   "srv"),
     Opcode(LEX_XOR,   "xor"),
     Opcode(LEX_XORI,  "xori"),
+    // hi/lo register 
+    Opcode(LEX_MFHI,  "mfhi"),
+    Opcode(LEX_MTHI,  "mthi"),
+    Opcode(LEX_MFLO,  "mflo"),
+    Opcode(LEX_MTLO,  "mtlo"),
     // comparison
     Opcode(LEX_SLT,   "slt"),
     Opcode(LEX_SLTU,  "sltu"),

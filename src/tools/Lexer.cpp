@@ -883,6 +883,9 @@ void Lexer::parseInstr(int line_num)
         case LEX_MFLO:
         case LEX_MTLO:
             this->parse_r();
+            // TODO ; debug, remove 
+            std::cout << "[" << __func__ << "] parsed a hi/lo instr" << std::endl;
+            std::cout << this->text_info.toString() << std::endl;
             break;
 
         // BGX instructions need to be able to handle symbols as immediate arg

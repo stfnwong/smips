@@ -57,8 +57,8 @@ SourceInfo get_mult_add_expected_dis(void)
 
     // lw $t0, 4($gp)
     line.init();
-    line.addr = 0x00400000;
-    line.opcode = Opcode(LEX_LW, "lw");
+    line.addr    = 0x00400000;
+    line.opcode  = Opcode(LEX_LW, "lw");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
     line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);
     line.args[2] = Argument(SYM_LITERAL, 4);
@@ -68,22 +68,22 @@ SourceInfo get_mult_add_expected_dis(void)
     // mul $t0, $t0, $t0
     // mult $t0, $t0
     line.init();
-    line.addr = 0x00400004;
-    line.opcode = Opcode(LEX_MULT, "mult");
+    line.addr    = 0x00400004;
+    line.opcode  = Opcode(LEX_MULT, "mult");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
     line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
     info.addText(line);
     // mflo $t0
     line.init();
-    line.addr = 0x00400008;
-    line.opcode = Opcode(LEX_MFLO, "mflo");
+    line.addr    = 0x00400008;
+    line.opcode  = Opcode(LEX_MFLO, "mflo");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
     info.addText(line);
 
     // lw $t1 4($gp)
     line.init();
-    line.addr = 0x0040000C;
-    line.opcode = Opcode(LEX_LW, "lw");
+    line.addr    = 0x0040000C;
+    line.opcode  = Opcode(LEX_LW, "lw");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
     line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);
     line.args[2] = Argument(SYM_LITERAL, 4);
@@ -92,8 +92,8 @@ SourceInfo get_mult_add_expected_dis(void)
 
     // ori $t2, $zero, 3
     line.init();
-    line.addr = 0x00400010;
-    line.opcode = Opcode(LEX_ORI, "ori");
+    line.addr    = 0x00400010;
+    line.opcode  = Opcode(LEX_ORI, "ori");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1] = Argument(SYM_REGISTER, REG_ZERO);
     line.args[2] = Argument(SYM_LITERAL, 3);
@@ -103,22 +103,22 @@ SourceInfo get_mult_add_expected_dis(void)
     // mul $t1, $t1, $t2
     // mult $t1, $t2
     line.init();
-    line.addr = 0x00400014;
-    line.opcode = Opcode(LEX_MULT, "mult");
+    line.addr    = 0x00400014;
+    line.opcode  = Opcode(LEX_MULT, "mult");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
     line.args[1] = Argument(SYM_REGISTER, REG_TEMP_2);
     info.addText(line);
     // mflo  $t1
     line.init();
-    line.addr = 0x00400018;
-    line.opcode = Opcode(LEX_MFLO, "mflo");
+    line.addr    = 0x00400018;
+    line.opcode  = Opcode(LEX_MFLO, "mflo");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
     info.addText(line);
 
     // add $t2, $t0, $t1
     line.init();
-    line.addr = 0x0040001C;
-    line.opcode = Opcode(LEX_ADD, "add");
+    line.addr    = 0x0040001C;
+    line.opcode  = Opcode(LEX_ADD, "add");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
     line.args[2] = Argument(SYM_REGISTER, REG_TEMP_1);
@@ -138,7 +138,6 @@ SourceInfo get_mult_add_expected_dis(void)
 }
 
 
-
 /*
  * Test mult_add example
  */
@@ -150,12 +149,35 @@ TEST_CASE("test_dis_mult_add", "[classic]")
     test_program = assem(test_mult_add_file);
     REQUIRE(test_program.numInstrs() == expected_out.getTextInfoSize());
 
+    // TODO: debug, remove 
+    for(unsigned int idx = 0; idx < expected_out.getTextInfoSize(); ++idx)
+    {
+        TextInfo cur_line = expected_out.getText(idx);
+        std::cout << cur_line.toString() << std::endl;
+    }
+
+    std::cout << test_program.toString() << std::endl;
+
     Instr cur_instr;
     for(unsigned int idx = 0; idx < test_program.numInstrs(); ++idx)
     {
         cur_instr = test_program.getInstr(idx);
         TextInfo dis_out = dis_instr(cur_instr.ins, cur_instr.adr);
         TextInfo exp_out = expected_out.getText(idx);
+
+        if(exp_out != dis_out)
+        {
+            std::cout << "Instr " << idx+1 << "/" << test_program.numInstrs() 
+                << " does not match" << std::endl;
+            std::cout << "Input was [0x" << std::hex << std::setw(8) 
+                << std::setfill('0') << cur_instr.ins << "]" << std::endl;
+
+            std::cout << "Line " << std::dec << idx+1 << " expected: " << std::endl;
+            std::cout << exp_out.toString() << std::endl;
+
+            std::cout << "Got :" << std::endl;
+            std::cout << dis_out.toString() << std::endl;
+        }
 
         REQUIRE(exp_out == dis_out);
     }
@@ -374,12 +396,33 @@ SourceInfo get_dis_instr_expected_out(void)
     line.args[2] = Argument(SYM_LITERAL, 4096);
     line.is_imm = true;
     info.addText(line);
+    //mfhi $s0
+    line.init();
+    line.addr    = TEXT_START_ADDR;
+    line.opcode  = Opcode(LEX_MFHI, "mfhi");
+    line.args[0] = Argument(SYM_REGISTER, REG_SAVED_0);
+    info.addText(line);
+    // mflo $t1
+    line.init();
+    line.addr    = TEXT_START_ADDR;
+    line.opcode  = Opcode(LEX_MFLO, "mflo");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
+    info.addText(line);
+
     // mult $t2, $s4 
     line.init();
-    line.addr = TEXT_START_ADDR;
-    line.opcode = Opcode(LEX_MULT, "mult");
+    line.addr    = TEXT_START_ADDR;
+    line.opcode  = Opcode(LEX_MULT, "mult");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1] = Argument(SYM_REGISTER, REG_SAVED_4);
+    info.addText(line);
+    // or $t0, $t1, $t2
+    line.init();
+    line.addr    = TEXT_START_ADDR;
+    line.opcode  = Opcode(LEX_OR, "or");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
+    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_2);
     info.addText(line);
 
     // sll $t0, $t1, 8
@@ -414,7 +457,10 @@ TEST_CASE("test_dis_instr", "[classic]")
         // 0011 1100 0000 0001 0001 0000 0000 0000
         // 0x3C      0x01      0x10      0x00
         Instr(TEXT_START_ADDR, 0x3C011000),     // lui $at 4096
+        Instr(TEXT_START_ADDR, 0x00008010),     // mfhi $s0
+        Instr(TEXT_START_ADDR, 0x00004812),     // mflo $t1
         Instr(TEXT_START_ADDR, 0x01540018),     // mult $t2, $s4
+        Instr(TEXT_START_ADDR, 0x012A4025),     // or $t0, $t1, $t2
         Instr(TEXT_START_ADDR, 0x00094200),     // sll $t0, $t1, 8
     };
 

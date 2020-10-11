@@ -9,6 +9,7 @@
 #include <iomanip>
 #include "Codes.hpp"
 #include "Disassembler.hpp"
+#include "Common.hpp"
 
 
 /*
@@ -21,42 +22,45 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
     ti.addr = addr;
     ti.is_imm = true;
     uint8_t op_bits = (instr & 0xFC000000) >> 26;
+
+    // TODO : since these are the same constants used all over the place 
+    // we should factor these out into a common header
     switch(op_bits)
     {
-        case 4:
+        case I_BEQ:
             ti.opcode = Opcode(LEX_BEQ, "beq");
             break;
-        case 5:
+        case I_BNE:
             ti.opcode = Opcode(LEX_BNE, "bne");
             break;
-        case 8:
+        case I_ADDI:
             ti.opcode = Opcode(LEX_ADDI, "addi");
             break;
-        case 9:
+        case I_ADDIU:
             ti.opcode = Opcode(LEX_ADDIU, "addiu");
             break;
-        case 12:
+        case I_ANDI:
             ti.opcode = Opcode(LEX_ANDI, "andi");
             break;
-        case 13:
+        case I_ORI:
             ti.opcode = Opcode(LEX_ORI, "ori");
             break;
-        case 0xA:
+        case I_SLTI:
             ti.opcode = Opcode(LEX_SLTI, "slti");
             break;
-        case 11:
+        case I_SLTIU:
             ti.opcode = Opcode(LEX_SLTIU, "sltiu");
             break;
-        case 0xF:
+        case I_LUI:
             ti.opcode = Opcode(LEX_LUI, "lui");
             break;
-        case 35:
+        case I_LW:
             ti.opcode = Opcode(LEX_LW, "lw");
             break;
-        case 43:
+        case I_SW:
             ti.opcode = Opcode(LEX_SW, "sw");
             break;
-        case 0xE:
+        case I_XORI:
             ti.opcode = Opcode(LEX_XORI, "xori");
             break;
         default:
@@ -65,19 +69,22 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
                 << op_bits << std::endl;
     }
 
-    // TODO: Do we need to flip the order of $s and $t for branch instructions?
-    if(ti.opcode.instr == LEX_BEQ || ti.opcode.instr == LEX_BNE)
+    switch(ti.opcode.instr)
     {
-        // we have to flip branch args
-        ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
-        ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
+        case LEX_BEQ:
+        case LEX_BNE:
+            // we have to flip branch args
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
+            ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));   // imm
+            break;
+
+        default:
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
+            ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));   // imm
+            break;
     }
-    else
-    {
-        ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
-        ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
-    }
-    ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));   // imm
 
     return ti;
 }
@@ -93,90 +100,107 @@ TextInfo dis_r_instr(uint32_t instr, uint32_t addr)
     ti.addr = addr;
     switch(func_bits)
     {
-        case 0x20:
+        case R_ADD:
             ti.opcode = Opcode(LEX_ADD, "add");
             break;
-        case 0x21:
+        case R_ADDU:
             ti.opcode = Opcode(LEX_ADDU, "addu");
             break;
-        case 0x22:
+        case R_SUB:
             ti.opcode = Opcode(LEX_SUB, "sub");
             break;
-        case 0x23:
+        case R_SUBU:
             ti.opcode = Opcode(LEX_SUBU, "subu");
             break;
-        case 0x24:
+        case R_AND:
             ti.opcode = Opcode(LEX_AND, "and");
             break;
-        case 0x25:
+        case R_OR:
             ti.opcode = Opcode(LEX_OR, "or");
             break;
-        case 0x27:
+        case R_NOR:
             ti.opcode = Opcode(LEX_NOR, "nor");
             break;
-        case 0x2A:
+        case R_SLT:
             ti.opcode = Opcode(LEX_SLT, "slt");
             break;
-        case 0x2B:
+        case R_SLTU:
             ti.opcode = Opcode(LEX_SLTU, "sltu");
             break;
-        case 0x0:
+        case R_SLL:
             ti.opcode = Opcode(LEX_SLL, "sll");
             break;
-        case 0x2:
+        case R_SRL:
             ti.opcode = Opcode(LEX_SRL, "srl");
             break;
-        case 0x4:
+        case R_JR:
             ti.opcode = Opcode(LEX_JR, "jr");
             break;
-        case 0x18:
+        case R_MULT:
             ti.opcode = Opcode(LEX_MULT, "mult");
             break;
-        case 0x19:
+        case R_MULTU:
             ti.opcode = Opcode(LEX_MULTU, "multu");
             break;
-        case 0x1A:
+        case R_DIV:
             ti.opcode = Opcode(LEX_DIV, "div");
             break;
-        case 0x1B:
+        case R_DIVU:
             ti.opcode = Opcode(LEX_DIVU, "divu");
             break;
+        case R_MFHI:
+            ti.opcode = Opcode(LEX_MFHI, "mfhi");
+            break;
+        case R_MTHI:
+            ti.opcode = Opcode(LEX_MTHI, "mthi");
+            break;
+        case R_MFLO:
+            ti.opcode = Opcode(LEX_MFLO, "mflo");
+            break;
+        case R_MTLO:
+            ti.opcode = Opcode(LEX_MTLO, "mtlo");
+            break;
+
         default:
             std::cerr << "[" << __func__ << "] unknown R-Instruction with func bits 0x" << std::hex
                 << std::setw(2) << std::setfill('0') << unsigned(func_bits) << std::endl;
             break;
     }
 
+    // which operands?
     switch(func_bits)
     {
-        case 0x0:   // sll
-        case 0x2:   // srl
+        case R_SLL:   // sll
+        case R_SRL:   // srl
             ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
             ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
             ti.args[2] = Argument(SYM_LITERAL, (instr & (0x1F << 6)) >> 6);      // shamt
             break;
 
-        case 0x1A:  // div
-        case 0x1B:  // divu
-        case 0x18:  // mult
-        case 0x19:  // multu
+        case R_DIV:  // div
+        case R_DIVU:  // divu
+        case R_MULT:  // mult
+        case R_MULTU:  // multu
             ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);  // rs 
             ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);  // rt
             break;
 
+        case R_MFHI:  // mfhi 
+        case R_MFLO:  // mflo
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11); // rd 
+            break;
+
+        case R_MTHI:  // mthi
+        case R_MTLO:  // mtlo
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21); // rs
+            break;
+
         default:
             // arguments 
-            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);   // rs 
             ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 11)) >> 11);   // rd
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);   // rs 
             ti.args[2] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);   // rt 
             break;
-    }
-
-    if(ti.opcode.instr == LEX_SLL || ti.opcode.instr == LEX_SRL)
-    {
-    }
-    else
-    {
     }
 
     return ti;
@@ -233,6 +257,7 @@ TextInfo dis_instr(uint32_t instr, uint32_t addr)
         case 0x3:
             return dis_j_instr(instr, addr);
             
+        // TODO : need a special case to deal with mtlo, mflo, etc here
         case 0x0:
             return dis_r_instr(instr, addr);
 
