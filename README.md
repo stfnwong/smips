@@ -23,7 +23,7 @@ assem -l "beq $a0, $s2, 1024"
 ```
 In bash this requires escaping each `$`. 
 ```bash
-assem -l "beq \\$a0, \\$s2, 1024"
+assem -l "beq \$a0, \$s2, 1024"
 ```
 
 
