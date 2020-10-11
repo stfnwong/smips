@@ -281,7 +281,8 @@ SourceInfo get_for_loop_expected_dis(void)
     line.init();
     line.addr = 0x00400024;
     line.opcode = Opcode(LEX_J, "j");
-    line.args[2]   = Argument(SYM_LITERAL, 0x00400014);
+    line.args[0]   = Argument(SYM_LITERAL, 0x00400014);
+    line.is_imm = true;
     info.addText(line);
 
     // noop instr
@@ -387,15 +388,15 @@ SourceInfo get_dis_instr_expected_out(void)
     info.addText(line);
     // jal 4004
     line.init();
-    line.addr = TEXT_START_ADDR;
-    line.opcode = Opcode(LEX_JAL, "jal");
+    line.addr    = TEXT_START_ADDR;
+    line.opcode  = Opcode(LEX_JAL, "jal");
     line.args[0] = Argument(SYM_LITERAL, 4004);
-    line.is_imm = true;
+    line.is_imm  = true;
     info.addText(line);
     // lw $t1, 4($s4)
     line.init();
-    line.addr = TEXT_START_ADDR;
-    line.opcode = Opcode(LEX_LW, "lw");
+    line.addr    = TEXT_START_ADDR;
+    line.opcode  = Opcode(LEX_LW, "lw");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
     line.args[1] = Argument(SYM_REGISTER, REG_SAVED_4);
     line.args[2] = Argument(SYM_LITERAL, 4);
@@ -453,8 +454,8 @@ SourceInfo get_dis_instr_expected_out(void)
     line.addr    = TEXT_START_ADDR;
     line.opcode  = Opcode(LEX_SLT, "slt");
     line.args[0] = Argument(SYM_REGISTER, REG_SAVED_0);
-    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
-    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_2);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
+    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_1);
     info.addText(line);
 
     return info;
@@ -474,7 +475,7 @@ TEST_CASE("test_dis_instr", "[classic]")
         // 0000 0001 0101 0100 0000 0000 0001 1010
         // 0x01      0x54      0x00      0x1A
         Instr(TEXT_START_ADDR, 0x0154001A),     // div $t2, $s4
-        Instr(TEXT_START_ADDR, 0x0800022D),     // j 2222 
+        Instr(TEXT_START_ADDR, 0x0800022D),     // j 2228 
         Instr(TEXT_START_ADDR, 0x0C0003E9),     // jal 4004
         // 1000 1110 1000 1001 0000 0000 0000 0100
         // 0x8E      0x89      0x00      0x04

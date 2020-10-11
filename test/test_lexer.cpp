@@ -329,8 +329,9 @@ SourceInfo get_array_expected_source_info(void)
     line.addr      = 0x0040002C;
     line.opcode    = Opcode(LEX_J, "j");
     line.is_symbol = true;
+    line.is_imm    = true;
     line.symbol    = "loop";
-    line.args[2]   = Argument(SYM_LITERAL, 0x00400010);
+    line.args[0]   = Argument(SYM_LITERAL, 0x00400010);
     info.addText(line);
 
     // line 25
@@ -522,8 +523,9 @@ SourceInfo get_for_loop_expected_source_info(void)
     line.addr      = 0x00400024;
     line.opcode    = Opcode(LEX_J, "j");
     line.is_symbol = true;
+    line.is_imm    = true;
     line.symbol    = "top";
-    line.args[2]   = Argument(SYM_LITERAL, 0x00400014);
+    line.args[0]   = Argument(SYM_LITERAL, 0x00400014);
     info.addText(line);
 
     // DONE
@@ -799,9 +801,6 @@ SourceInfo get_psuedo_instr_source_info(void)
 
     // li $t2, 5
     // 16-bit immediate, therefore we can transform to just ori
-    // TODO : check what type[1] should be.... The literal could go
-    // in slot 1, its only supposed to go into slot 2 when there is a 
-    // offset in front of a register..
     line.init();
     line.line_num = 9;
     line.addr     = 0x00400008;
@@ -1212,7 +1211,7 @@ TEST_CASE("test_lexer_load_source", "[classic]")
     test_lexer.lex();
 
     src_out = test_lexer.getSourceInfo();
-    std::cout << src_out.getTextInfoSize() << "line in text segment " << std::endl;
+    std::cout << src_out.getTextInfoSize() << " line in text segment " << std::endl;
     
     std::cout << src_out.toString() << std::endl;
 }

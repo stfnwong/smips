@@ -1101,8 +1101,6 @@ Argument Lexer::parseImmediate(void)
 
 /*
  * parseLine()
- * TODO : consider a more functional design where we return a TextInfo .
- * The problem with that is that we would need to call it twice to expand psuedo-ops...
  */
 void Lexer::parseLine(void)
 {
@@ -1238,7 +1236,6 @@ void Lexer::resolveLabels(void)
                     {
                         line.args[0].type = SYM_LITERAL;
                         line.args[0].val = label_addr;
-                        //line.args[0] = Argument();
                     }
                     break;
 

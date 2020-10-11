@@ -23,8 +23,6 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
     ti.is_imm = true;
     uint8_t op_bits = (instr & 0xFC000000) >> 26;
 
-    // TODO : since these are the same constants used all over the place 
-    // we should factor these out into a common header
     switch(op_bits)
     {
         case I_BEQ:

@@ -206,9 +206,6 @@ Instr Assembler::asm_j_instr(const TextInfo& l)
     Instr instr;
 
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->j_instr_op_offset);
-    // TODO: debug, remove 
-    std::cout << "[" << __func__ << "] val is 0x" << std::hex << unsigned(l.args[0].val) << " before shift " << std::endl;
-    std::cout << "[" << __func__ << "] val is 0x" << std::hex << unsigned((l.args[0].val & 0x0FFFFFFC) >> 2) << " after shift " << std::endl;
     instr.ins = instr.ins | ((l.args[0].val & 0x0FFFFFFC) >> 2);
 
     return instr;
@@ -290,8 +287,6 @@ Instr Assembler::assembleText(const TextInfo& line)
         // J-format instructions 
         case LEX_J:
         case LEX_JAL:
-            // TODO : debug 
-            std::cout << "[" << __func__ << "] assembling a J instruction..." << std::endl;
             instr = this->asm_j_instr(line);
             break;
 
