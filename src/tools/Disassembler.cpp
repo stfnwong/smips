@@ -222,9 +222,6 @@ TextInfo dis_j_instr(uint32_t instr, uint32_t addr)
     else 
         return ti;      // Invalid/unsupported J instruction
 
-    std::cout << "[" << __func__ << "] disassembly :" << std::endl;
-    std::cout << ti.toString() << std::endl;
-
     // this ensures the output is such that if we put it back in
     // the lexer we'd be able to assemble the same program again
     ti.args[0] = Argument(SYM_LITERAL, (instr & 0x02FFFFFF) << 2);

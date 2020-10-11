@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
                 break;
 
             default:
-                std::cerr << "Uknown option " << std::string(optarg) << 
+                std::cerr << "Unknown option " << std::string(optarg) << 
                     "(arg " << argn << ")" << std::endl;
                 exit(-1);
                 break;
