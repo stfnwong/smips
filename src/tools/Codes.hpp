@@ -87,6 +87,8 @@ const Opcode lex_instr_codes[] = {
     Opcode(LEX_SLLV,  "sllv"),
     Opcode(LEX_SRL,   "srl"),
     Opcode(LEX_SRV,   "srv"),
+    Opcode(LEX_XOR,   "xor"),
+    Opcode(LEX_XORI,  "xori"),
     // comparison
     Opcode(LEX_SLT,   "slt"),
     Opcode(LEX_SLTU,  "sltu"),

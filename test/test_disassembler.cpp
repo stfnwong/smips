@@ -65,18 +65,24 @@ SourceInfo get_mult_add_expected_dis(void)
     line.is_imm  = true;
     info.addText(line);
 
-    // mult $t0, $t0, $t0
+    // mul $t0, $t0, $t0
+    // mult $t0, $t0
     line.init();
     line.addr = 0x00400004;
     line.opcode = Opcode(LEX_MULT, "mult");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
     line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
-    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_0);
+    info.addText(line);
+    // mflo $t0
+    line.init();
+    line.addr = 0x00400008;
+    line.opcode = Opcode(LEX_MFLO, "mflo");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_0);
     info.addText(line);
 
     // lw $t1 4($gp)
     line.init();
-    line.addr = 0x00400008;
+    line.addr = 0x0040000C;
     line.opcode = Opcode(LEX_LW, "lw");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
     line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);
@@ -86,7 +92,7 @@ SourceInfo get_mult_add_expected_dis(void)
 
     // ori $t2, $zero, 3
     line.init();
-    line.addr = 0x0040000C;
+    line.addr = 0x00400010;
     line.opcode = Opcode(LEX_ORI, "ori");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1] = Argument(SYM_REGISTER, REG_ZERO);
@@ -94,18 +100,24 @@ SourceInfo get_mult_add_expected_dis(void)
     line.is_imm = true;
     info.addText(line);
 
-    // mult $t1, $t1, $t2
+    // mul $t1, $t1, $t2
+    // mult $t1, $t2
     line.init();
-    line.addr = 0x00400010;
+    line.addr = 0x00400014;
     line.opcode = Opcode(LEX_MULT, "mult");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
-    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_1);
-    line.args[2] = Argument(SYM_REGISTER, REG_TEMP_2);
+    line.args[1] = Argument(SYM_REGISTER, REG_TEMP_2);
+    info.addText(line);
+    // mflo  $t1
+    line.init();
+    line.addr = 0x00400018;
+    line.opcode = Opcode(LEX_MFLO, "mflo");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_1);
     info.addText(line);
 
     // add $t2, $t0, $t1
     line.init();
-    line.addr = 0x00400014;
+    line.addr = 0x0040001C;
     line.opcode = Opcode(LEX_ADD, "add");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1] = Argument(SYM_REGISTER, REG_TEMP_0);
@@ -114,7 +126,7 @@ SourceInfo get_mult_add_expected_dis(void)
 
     // sw $t2, $0($gp)
     line.init();
-    line.addr = 0x00400018;
+    line.addr = 0x00400020;
     line.opcode = Opcode(LEX_SW, "sw");
     line.args[0] = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1] = Argument(SYM_REGISTER, REG_GLOBAL);

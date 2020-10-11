@@ -40,6 +40,7 @@ void Assembler::init_instr_to_code_map(void)
     this->instr_to_code[LEX_MTHI] = 0x11;
     this->instr_to_code[LEX_MFLO] = 0x12;
     this->instr_to_code[LEX_MTLO] = 0x13;
+    this->instr_to_code[LEX_XOR]  = 0x26;
 
     
     // I-format instructions
@@ -52,6 +53,7 @@ void Assembler::init_instr_to_code_map(void)
     this->instr_to_code[LEX_ORI]   = 0x0D;
     this->instr_to_code[LEX_SW]    = 0x2B;
     this->instr_to_code[LEX_ANDI]  = 0x0C;
+    this->instr_to_code[LEX_XORI]  = 0x0E;
 
     // J-format instructions 
     this->instr_to_code[LEX_J]    = 0x02;
@@ -242,6 +244,7 @@ Instr Assembler::assembleText(const TextInfo& line)
         case LEX_SLTU:
         case LEX_SUB:
         case LEX_SUBU:
+        case LEX_XOR:
             instr = this->asm_r_instr(line, 3);
             break;
 
@@ -258,10 +261,13 @@ Instr Assembler::assembleText(const TextInfo& line)
             break;
 
         case LEX_MFHI:
-        case LEX_MTHI:
         case LEX_MFLO:
+            instr = this->asm_r_instr_rd(line);
+            break;
+
+        case LEX_MTHI:
         case LEX_MTLO:
-            instr = this->asm_r_instr(line, 1);
+            instr = this->asm_r_instr_rs(line);
             break;
 
         // I-format instructions 

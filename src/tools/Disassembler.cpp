@@ -41,13 +41,13 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
         case 13:
             ti.opcode = Opcode(LEX_ORI, "ori");
             break;
-        case 10:
+        case 0xA:
             ti.opcode = Opcode(LEX_SLTI, "slti");
             break;
         case 11:
             ti.opcode = Opcode(LEX_SLTIU, "sltiu");
             break;
-        case 15:
+        case 0xF:
             ti.opcode = Opcode(LEX_LUI, "lui");
             break;
         case 35:
@@ -55,6 +55,9 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
             break;
         case 43:
             ti.opcode = Opcode(LEX_SW, "sw");
+            break;
+        case 0xE:
+            ti.opcode = Opcode(LEX_XORI, "xori");
             break;
         default:
             std::cerr << "[" << __func__ << " unknown I-instruction with op bits 0x" 
