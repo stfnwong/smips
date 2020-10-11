@@ -19,9 +19,12 @@ assem -i inp_file.asm -o out_file.bin
 If `-o` is not present the output program is pretty-printed to the console. The assembler also accepts a `-v` argument (verbose) which sets verbose mode for both. Its possible to assemble a single string literal using `-l`
 
 ```bash
-assem -l "beq $a0, $s2, 1024
+assem -l "beq $a0, $s2, 1024"
 ```
-In bash this requires escaping each `$`.
+In bash this requires escaping each `$`. 
+```bash
+assem -l "beq \\$a0, \\$s2, 1024"
+```
 
 
 ## Disassembler
