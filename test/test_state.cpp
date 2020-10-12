@@ -107,39 +107,39 @@ TEST_CASE("test_decode_j", "[classic]")
 }
 
 // ================ INSTRUCTION UNIT TESTS ======== //
-//TEST_CASE("test_instr_sll", "[classic]")
-//{
-//    State test_state;
-//    Program prog;
-//
-//    const std::string src = "sll $t0, $t0, 2";
-//    prog = assem_helper(src);
-//    std::cout << "sll prog: " << std::endl;
-//    std::cout << prog.toString() << std::endl;
-//    std::vector<uint8_t> vec = prog.toVec();
-//
-//    test_state.writeMem(vec, 0);
-//    
-//    for(unsigned int i = 0; i < vec.size(); ++i)
-//        REQUIRE(test_state.mem[i] == vec[i]);
-//
-//    // check each stage in the pipeline
-//    REQUIRE(test_state.pc == 0);
-//    test_state.fetch();
-//    REQUIRE(test_state.pc == 4);
-//    //REQUIRE(test_state.instr == 0x01080080);
-//
-//    test_state.decode();
-//    REQUIRE(test_state.rd == REG_TEMP_0);
-//    REQUIRE(test_state.rt == REG_TEMP_0);
-//    REQUIRE(test_state.shamt == 2);
-//
-//    test_state.execute();
-//
-//    test_state.memory();
-//
-//    test_state.write_back();
-//}
+TEST_CASE("test_instr_add", "[classic]")
+{
+    State test_state;
+    Program prog;
+
+    const std::string src = "add $t1, $s2, $t6";
+    prog = assem_helper(src);
+    std::vector<uint8_t> vec = prog.toVec();
+
+    test_state.writeMem(vec, 0);
+
+    // check each stage in the pipeline
+    REQUIRE(test_state.pc == 0);
+    test_state.fetch();
+    REQUIRE(test_state.pc == 4);
+    REQUIRE(test_state.instr == 0x024E4820);
+
+    test_state.decode();
+    REQUIRE(test_state.rd == REG_TEMP_1);
+    REQUIRE(test_state.rs == REG_SAVED_2);
+    REQUIRE(test_state.rt == REG_TEMP_6);
+
+    // setup registers for execute stage 
+    test_state.reg[REG_SAVED_2] = 0xF0;
+    test_state.reg[REG_TEMP_6] = 0x0F;
+    test_state.reg[REG_TEMP_1] = 0xDEADBEEF;
+
+    test_state.execute();
+    REQUIRE(test_state.alu == 0xFF);
+
+    test_state.write_back();
+    REQUIRE(test_state.reg[REG_TEMP_1] == 0xFF);
+}
 
 TEST_CASE("test_instr_andi", "[classic]")
 {
@@ -148,8 +148,6 @@ TEST_CASE("test_instr_andi", "[classic]")
 
     const std::string src = "andi $t1, $t2, 255";
     prog = assem_helper(src);
-    std::cout << "andi prog: " << std::endl;
-    std::cout << prog.toString() << std::endl;
     std::vector<uint8_t> vec = prog.toVec();
 
     test_state.writeMem(vec, 0);
@@ -164,39 +162,134 @@ TEST_CASE("test_instr_andi", "[classic]")
     REQUIRE(test_state.rt == REG_TEMP_1);
     REQUIRE(test_state.rs == REG_TEMP_2);
     REQUIRE(test_state.imm == 0xFF);
+    // setup registers for execute stage 
+    test_state.reg[REG_TEMP_2] = 0xFFFF;
+    test_state.reg[REG_TEMP_1] = 0xDEADBEEF;        // this should be overwritten 
+
+    test_state.execute();
+    REQUIRE(test_state.alu == 0xFF);
+    test_state.memory();
+
+    test_state.write_back();
+    REQUIRE(test_state.reg[REG_TEMP_1] == 0xFF);
+}
+
+//TEST_CASE("test_instr_lw", "[classic]")
+//{
+//    State test_state;
+//    Program prog;
+//
+//    const std::string src = "lw $t0 32($s3)";
+//    prog = assem_helper(src);
+//    std::vector<uint8_t> vec = prog.toVec();
+//    test_state.writeMem(vec, 0);
+//    
+//    test_state.fetch();
+//    REQUIRE(test_state.instr == 0x8E680020);
+//    //REQUIRE(test_state.instr == 0x8c080000);
+//    REQUIRE(test_state.pc == 4);
+//    test_state.decode();
+//    REQUIRE(test_state.rs == REG_SAVED_3);
+//    REQUIRE(test_state.rt == REG_TEMP_0);
+//    REQUIRE(test_state.imm == 32);
+//    // Set the test up so that the word we want to load is at offset 64
+//    // Since the offset in the example instruction is 32, we place 32
+//    // in $rs and pre-load the memory. 
+//    test_state.reg[test_state.rs] = 32;
+//    const std::vector<uint8_t> dummy_data = {0xDE, 0xAD, 0xBE, 0xEF};
+//    test_state.writeMem(dummy_data, 64);
+//
+//    // now execute this lw
+//    test_state.execute();
+//    REQUIRE(test_state.mem_addr == 64);
+//    test_state.memory();
+//    REQUIRE(test_state.mem_data == int32_t(0xDEADBEEF));       
+//    test_state.write_back();
+//    REQUIRE(test_state.reg[REG_TEMP_0] == int32_t(0xDEADBEEF));       
+//    
+//    for(unsigned int i = 0; i < dummy_data.size(); ++i)
+//        REQUIRE(test_state.mem[test_state.mem_addr+i] == dummy_data[i]);
+//}
+
+TEST_CASE("test_instr_sll", "[classic]")
+{
+    State test_state;
+    Program prog;
+
+    const std::string src = "sll $t0, $t0, 2";
+    prog = assem_helper(src);
+    std::vector<uint8_t> vec = prog.toVec();
+
+    test_state.writeMem(vec, 0);
+    
+    for(unsigned int i = 0; i < vec.size(); ++i)
+        REQUIRE(test_state.mem[i] == vec[i]);
+
+    // check each stage in the pipeline
+    REQUIRE(test_state.pc == 0);
+    test_state.fetch();
+    REQUIRE(test_state.pc == 4);
+    REQUIRE(test_state.instr == 0x00084080);
+
+    test_state.decode();
+    REQUIRE(test_state.rd == REG_TEMP_0);
+    REQUIRE(test_state.rt == REG_TEMP_0);
+    REQUIRE(test_state.shamt == 2);
+
+    // set up some values for execute stage
+    test_state.reg[REG_TEMP_0] = 0x80;
+
+    test_state.execute();
+    REQUIRE(test_state.alu == 0x200);
+
+    test_state.memory();
+
+    test_state.write_back();
+    REQUIRE(test_state.reg[REG_TEMP_0] == 0x200);
+}
+
+TEST_CASE("test_instr_srl", "[classic]")
+{
+    State test_state;
+    Program prog;
+
+    const std::string src = "srl $t0, $s5, 2";
+    prog = assem_helper(src);
+    std::vector<uint8_t> vec = prog.toVec();
+
+    test_state.writeMem(vec, 0);
+    
+    for(unsigned int i = 0; i < vec.size(); ++i)
+        REQUIRE(test_state.mem[i] == vec[i]);
+
+    // check each stage in the pipeline
+    REQUIRE(test_state.pc == 0);
+    test_state.fetch();
+    REQUIRE(test_state.pc == 4);
+    REQUIRE(test_state.instr == 0x00154082);
+
+    test_state.decode();
+    REQUIRE(test_state.rd == REG_TEMP_0);
+    REQUIRE(test_state.rt == REG_SAVED_5);
+    REQUIRE(test_state.shamt == 2);
+    REQUIRE(test_state.op_bits == 0);
+
+    // set up some values for execute stage
+    test_state.reg[REG_SAVED_5] = 0x80;
+
+    test_state.execute();
+    REQUIRE(test_state.alu == 0x20);
+
+    test_state.memory();
+
+    test_state.write_back();
+    REQUIRE(test_state.reg[REG_TEMP_0] == 0x20);
 }
 
 
 
 // ================ INSTRUCTION PIPLINES ======== //
 
-TEST_CASE("test_add_pipeline", "[classic]")
-{
-    State test_state;
-
-    test_state.writeMem(add_example, 0);
-    // ensure all registers are zero'd at start up time 
-    for(int i = 0; i < 32; ++i)
-        REQUIRE(test_state.reg[i] == 0);
-
-    test_state.fetch();
-    REQUIRE(test_state.instr == 0x02328020);
-    REQUIRE(test_state.pc == 4);
-    test_state.decode();
-    REQUIRE(test_state.rd == REG_SAVED_0);
-    REQUIRE(test_state.rs == REG_SAVED_1);
-    REQUIRE(test_state.rt == REG_SAVED_2);
-    // lets set the values of those registers to be
-    // R[rs] = 1
-    // R[rt] = 2
-    // so that R[rd] will be 3
-    test_state.reg[test_state.rs] = 1;
-    test_state.reg[test_state.rt] = 2;
-
-    // now execute this add
-    test_state.execute();
-    REQUIRE(test_state.alu == 3);
-}
 
 TEST_CASE("test_lw_pipeline", "[classic]")
 {

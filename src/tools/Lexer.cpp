@@ -834,6 +834,7 @@ void Lexer::parseInstr(int line_num)
         case LEX_SLTI:
         case LEX_SLTIU:
         case LEX_SLL:
+        case LEX_SRL:
             this->text_info.is_imm = true;
             this->parse_rri();
             break;

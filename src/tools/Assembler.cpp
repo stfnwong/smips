@@ -34,6 +34,7 @@ void Assembler::init_instr_to_code_map(void)
     this->instr_to_code[LEX_MULTU] = 0x19;
     this->instr_to_code[LEX_OR]    = 0x25;
     this->instr_to_code[LEX_SLL]   = 0x00;
+    this->instr_to_code[LEX_SRL]   = 0x02;
     this->instr_to_code[LEX_SLT]   = 0x2A;
     this->instr_to_code[LEX_SLTU]  = 0x2B;
     this->instr_to_code[LEX_SUB]   = 0x22;

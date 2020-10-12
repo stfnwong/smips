@@ -114,9 +114,9 @@ void State::decode(void)
         // R-instruction
         case 0x0:
             {
-                this->rs    = (this->instr & 0x03E00000) >> R_INSTR_RS_OFFSET;
-                this->rt    = (this->instr & 0x001F0000) >> R_INSTR_RT_OFFSET;
-                this->rd    = (this->instr & 0x0000F700) >> R_INSTR_RD_OFFSET;
+                this->rs    = (this->instr & (0x1F << R_INSTR_RS_OFFSET)) >> R_INSTR_RS_OFFSET;
+                this->rt    = (this->instr & (0x1F << R_INSTR_RT_OFFSET)) >> R_INSTR_RT_OFFSET;
+                this->rd    = (this->instr & (0x1F << R_INSTR_RD_OFFSET)) >> R_INSTR_RD_OFFSET;
                 this->shamt = (this->instr & 0x000003E0) >> R_INSTR_SHAMT_OFFSET;
                 this->func  = (this->instr & 0x0000003F);
             }
@@ -270,8 +270,12 @@ void State::execute(void)
                 this->alu = (unsigned(this->reg[this->rs]) < unsigned(this->reg[this->rt])) ? 1 : 0;
                 break;
 
-
             default:
+                if(this->verbose)
+                {
+                    std::cout << "[" << __func__ << "] no R-instruction with op bits 0x" 
+                        << std::hex << unsigned(this->func) << std::endl;
+                }
                 break;      // No-op
         }
     }
@@ -411,9 +415,12 @@ void State::memory(void)
             break;
 
         default:
-            std::cout << "[" << __func__ << "] no operation for op_bits: 0x" 
-                << std::hex << std::setw(5) << std::setfill('0') 
-                << this->op_bits << std::endl;
+            if(this->verbose)
+            {
+                std::cout << "[" << __func__ << "] no operation for op_bits: 0x" 
+                    << std::hex << std::setw(5) << std::setfill('0') 
+                    << this->op_bits << std::endl;
+            }
             break;
     }
 }
