@@ -11,6 +11,7 @@
 #include "Assembler.hpp"
 #include "Lexer.hpp"
 #include "Codes.hpp"
+#include "Common.hpp"
 
 
 // ======== Assembler ======= //
@@ -34,6 +35,7 @@ void Assembler::init_instr_to_code_map(void)
     this->instr_to_code[LEX_MULTU] = 0x19;
     this->instr_to_code[LEX_OR]    = 0x25;
     this->instr_to_code[LEX_SLL]   = 0x00;
+    this->instr_to_code[LEX_SRL]   = 0x02;
     this->instr_to_code[LEX_SLT]   = 0x2A;
     this->instr_to_code[LEX_SLTU]  = 0x2B;
     this->instr_to_code[LEX_SUB]   = 0x22;
@@ -73,10 +75,9 @@ Instr Assembler::asm_r_instr(const TextInfo& l, const int n)
     Instr instr;
 
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
-    for(int i = 0; i < n; ++i)
-    {
-        instr.ins = instr.ins | ((l.args[i].val & 0x1F) << this->r_instr_offsets[i]);
-    }
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << R_INSTR_RD_OFFSET);
+    instr.ins = instr.ins | ((l.args[1].val & 0x1F) << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | ((l.args[2].val & 0x1F) << R_INSTR_RT_OFFSET);
 
     return instr;
 }
@@ -91,11 +92,8 @@ Instr Assembler::asm_r_instr_rs_rt(const TextInfo& l)
     Instr instr;
 
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
-    for(int i = 0; i < 2; ++i)
-    {
-        instr.ins = instr.ins | ((l.args[i].val & 0x1F) << this->r_instr_offsets[i+1]);
-    }
-
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << R_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | ((l.args[1].val & 0x1F) << R_INSTR_RT_OFFSET);
 
     return instr;
 }
@@ -109,7 +107,7 @@ Instr Assembler::asm_r_instr_rd(const TextInfo& l)
     Instr instr;
 
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
-    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->r_instr_offsets[0]);
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << R_INSTR_RD_OFFSET);
 
     return instr;
 }
@@ -124,7 +122,7 @@ Instr Assembler::asm_r_instr_rs(const TextInfo& l)
     Instr instr;
 
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
-    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->r_instr_offsets[1]);
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << R_INSTR_RS_OFFSET);
 
     return instr;
 }
@@ -140,10 +138,9 @@ Instr Assembler::asm_r_instr_shamt(const TextInfo& l, const int n)
     Instr instr;
 
     instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
-    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->r_instr_offsets[0]);
-    instr.ins = instr.ins | ((l.args[1].val & 0x1F) << this->r_instr_offsets[2]);
-    instr.ins = instr.ins | (l.args[2].val & 0x1F) << 6;
-    instr.ins = instr.ins | this->instr_to_code[l.opcode.instr];
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << R_INSTR_RD_OFFSET);
+    instr.ins = instr.ins | ((l.args[1].val & 0x1F) << R_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (l.args[2].val & 0x1F) << R_INSTR_SHAMT_OFFSET;
 
     return instr;
 }
@@ -156,14 +153,10 @@ Instr Assembler::asm_i_instr(const TextInfo& l, const int n)
 {
     Instr instr;
 
-    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->i_instr_op_offset);
-    for(int i = 0; i < n; ++i)
-    {
-        if(i == 2)
-            instr.ins = instr.ins | ((l.args[i].val & 0xFFFF) << this->i_instr_offsets[i]);
-        else
-            instr.ins = instr.ins | ((l.args[i].val & 0x1F) << this->i_instr_offsets[i]);
-    }
+    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << I_INSTR_OP_OFFSET);
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | ((l.args[1].val & 0x1F) << I_INSTR_RS_OFFSET);
+    instr.ins = instr.ins | (l.args[2].val & 0xFFFF); 
 
     return instr;
 }
@@ -177,9 +170,9 @@ Instr Assembler::asm_i_instr_rt(const TextInfo& l)
 {
     Instr instr;
 
-    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->i_instr_op_offset);
-    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << this->i_instr_offsets[0]);
-    instr.ins = instr.ins | (l.args[2].val & 0xFFFF);
+    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << I_INSTR_OP_OFFSET);
+    instr.ins = instr.ins | ((l.args[0].val & 0x1F) << I_INSTR_RT_OFFSET);
+    instr.ins = instr.ins | (l.args[2].val & 0xFFFF);           // TODO : check if this should be index 1 or 2
 
     return instr;
 }
@@ -205,7 +198,7 @@ Instr Assembler::asm_j_instr(const TextInfo& l)
 {
     Instr instr;
 
-    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << this->j_instr_op_offset);
+    instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << J_INSTR_OP_OFFSET);
     instr.ins = instr.ins | ((l.args[0].val & 0x0FFFFFFC) >> 2);
 
     return instr;

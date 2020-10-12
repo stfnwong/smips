@@ -25,18 +25,9 @@ class Assembler
     private:
         bool verbose;
         int  num_err;
-        // instruction arg offsets      (TODO : move these to a new common location?)
-        const uint8_t j_instr_op_offset = 26;
-        const uint8_t i_instr_op_offset = 26;
-        const uint8_t r_instr_op_offset = 26;
 
         // R-format is 
         // OP rd, rs, rt
-        const uint8_t r_instr_offsets[3] = {
-            11,     // rd offset
-            21,     // rs offset 
-            16      // rt offset
-        };
         // I-format is 
         // OP rt, IMM(rs)
         // except for BEQ and BNE, which are 
@@ -47,12 +38,6 @@ class Assembler
         // 0 -> rt 
         // 1 -> rs
         // 2 -> imm
-        // hence the below ordering
-        const uint8_t i_instr_offsets[3] = {
-            16,     // rt   (dest))
-            21,     // rs   (base)
-            0       // imm
-        };
 
     // lexer output
     private:
