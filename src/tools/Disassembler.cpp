@@ -72,15 +72,20 @@ TextInfo dis_i_instr(uint32_t instr, uint32_t addr)
         case LEX_BEQ:
         case LEX_BNE:
             // we have to flip branch args
-            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
-            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
-            ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));   // imm
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);  // rs
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);  // rt
+            ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));               // imm
+            break;
+
+        case LEX_LUI:
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);  // rt
+            ti.args[1] = Argument(SYM_LITERAL, (instr & 0xFFFF));
             break;
 
         default:
-            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);       // rs
-            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);       // rt
-            ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));   // imm
+            ti.args[0] = Argument(SYM_REGISTER, (instr & (0x1F << 16)) >> 16);  // rt
+            ti.args[1] = Argument(SYM_REGISTER, (instr & (0x1F << 21)) >> 21);  // rs
+            ti.args[2] = Argument(SYM_LITERAL, (instr & 0xFFFF));               // imm
             break;
     }
 

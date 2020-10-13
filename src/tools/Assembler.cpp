@@ -172,7 +172,7 @@ Instr Assembler::asm_i_instr_rt(const TextInfo& l)
 
     instr.ins = instr.ins | (this->instr_to_code[l.opcode.instr] << I_INSTR_OP_OFFSET);
     instr.ins = instr.ins | ((l.args[0].val & 0x1F) << I_INSTR_RT_OFFSET);
-    instr.ins = instr.ins | (l.args[2].val & 0xFFFF);           // TODO : check if this should be index 1 or 2
+    instr.ins = instr.ins | (l.args[1].val & 0xFFFF);           // TODO : check if this should be index 1 or 2
 
     return instr;
 }

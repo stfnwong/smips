@@ -539,10 +539,10 @@ TEST_CASE("test_array", "[classic]")
         DataSeg out_seg = prog_out.getData(d);
 
         // Show the diff 
-        if(SHOW_ALL_OUTPUT)
+        if(exp_seg != out_seg)
         {
             std::cout << exp_seg.diff(out_seg) << std::endl;
-            std::cout << "Checking Seg " << std::setw(3) << std::dec << d << "/" 
+            std::cout << "Error in Seg " << std::setw(3) << std::dec << d << "/" 
                << prog_out.numDataSeg() << " : " << std::endl;
             std::cout << "[out]: " << out_seg.toString() << std::endl;
             std::cout << "[exp]: " << exp_seg.toString() << std::endl;
@@ -560,9 +560,9 @@ TEST_CASE("test_array", "[classic]")
         instr_exp = prog_exp.getInstr(ins);
         instr_out = prog_out.getInstr(ins);
         
-        if(SHOW_ALL_OUTPUT)
+        if(instr_exp != instr_out)
         {
-            std::cout << "Checking instruction [" << ins+1 << 
+            std::cout << "Error in instruction [" << ins+1 << 
                 "/" << prog_out.size() << "]" << std::endl; 
             std::cout << src_out.getText(ins).toString() << std::endl;
             std::cout << "\tExpected : " << instr_exp.toString() << std::endl;
@@ -571,7 +571,7 @@ TEST_CASE("test_array", "[classic]")
         
         REQUIRE(instr_exp == instr_out);
     }
-    //REQUIRE(prog_exp.size() == prog_out.size());
+    REQUIRE(prog_exp.size() == prog_out.size());
 }
 
 
@@ -637,6 +637,8 @@ TEST_CASE("test_asm_instr", "[classic]")
         "j 2228",   // note that we drop the lower 2 bits in instruction
         "jal 4004", // note that we drop the lower 2 bits in instruction
         "lw $t1, 4($s4)",
+        "lw $a2, 9($s2)",
+        //"lw $t0, 32($s3)",
         "lui $at, 4096",
         "mfhi $s0",
         "mflo $t1",
@@ -645,6 +647,7 @@ TEST_CASE("test_asm_instr", "[classic]")
         "ori $t0, $t1, 4095",
         "sll $t0, $t1, 8",
         "slt $s0, $t0, $t1",
+        "srl $t4, $s2, 1",
         "sw $s0 4($sp)",
         "xori $t2, $t1, 255"
     };
@@ -675,6 +678,13 @@ TEST_CASE("test_asm_instr", "[classic]")
         // 1000 1110 1000 1001 0000 0000 0000 0100
         // 0x8E      0x89      0x00      0x04
         Instr(TEXT_START_ADDR, 0x8E890004),     // lw $t1 4($s4)
+        Instr(TEXT_START_ADDR, 0x8e460009),     // lw $a2 9$(s2)
+        // TODO : lw $t0 32($s3) will be fixed after lexer refactor
+        // which will better handle multi-char offsets in load and 
+        // store instructions
+        // 1000 1110 0110 1000 0000 0010 0000 0000
+        // 0x8E      0x68      0x02      0x00
+        //Instr(TEXT_START_ADDR, 0x8E680200),     // lw $t0 32($s3)
         // 0011 1100 0000 0001 0001 0000 0000 0000
         // 0x3C      0x01      0x10      0x00
         Instr(TEXT_START_ADDR, 0x3C011000),     // lui $at 4096
@@ -695,6 +705,9 @@ TEST_CASE("test_asm_instr", "[classic]")
         // 0000 0001 0000 1001 1000 0000 0010 1010
         // 0x01      0x09      0x80      0x2A
         Instr(TEXT_START_ADDR, 0x0109802A),     // slt $s0, $t0, $t1
+        // 0000 0000 0001 0010 0110 0000 0100 0010
+        // 0x00      0x12      0x60      0x42
+        Instr(TEXT_START_ADDR, 0x00126042),     //srl $t4, $s2, 1
         // 1010 1111 1011 0000 0000 0000 0000 0100
         // 0xAF      0xB0      0x00      0x04
         Instr(TEXT_START_ADDR, 0xAFB00004),     // sw $s0 4($sp)

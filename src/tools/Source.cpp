@@ -247,29 +247,29 @@ std::string TextInfo::toString(void) const
         }
         // TODO: SYM_OFFSET? Would work the same as literal except for string formatting
         else if(this->args[i].type == SYM_LITERAL)       
-            oss << "L  ";
+            oss << "L ";
         else
-            oss << "   ";
+            oss << "  ";
     }
-    oss << "  "; 
+    //oss << "  "; 
 
     // Add symbols, literals etc, with symbols for upper, lower and so on
     if(this->is_symbol)
         oss << std::hex << std::setw(8) << this->args[2].val << "h";
     else if(!this->is_imm && (this->args[1].type == SYM_LITERAL))
-        oss << " +" << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h  ";
+        oss << " +" << std::right << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h  ";
     else if(!this->is_imm && (this->args[2].type == SYM_LITERAL))
-        oss << " +" << std::left << std::dec << std::setw(8) << std::setfill(' ') << this->args[2].val << "h  ";
+        oss << " +" << std::right << std::dec << std::setw(8) << std::setfill(' ') << this->args[2].val << "h  ";
     else if(this->is_imm && this->upper)
-        oss << "U " << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h  ";
+        oss << "U " << std::right << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h  ";
     else if(this->is_imm && this->lower)
-        oss << "L " << std::left << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h  ";
+        oss << "L " << std::right << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h  ";
     else if(this->is_imm && (this->args[1].type == SYM_LITERAL))
-        oss << "  " << std::hex << std::setw(8) << this->args[1].val << "h";
+        oss << "  " << std::hex << std::setw(8) << std::setfill(' ') << this->args[1].val << "h";
     else if(this->is_imm && (this->args[2].type == SYM_LITERAL))
-        oss << "  " << std::hex << std::setw(8) << this->args[2].val << "h";
+        oss << "  " << std::hex << std::setw(8) << std::setfill(' ') << this->args[2].val << "h";
     else if(this->is_imm && this->args[0].type == SYM_LITERAL)
-        oss << "  " << std::hex << std::setw(8) << this->args[2].val << "h";
+        oss << "  " << std::hex << std::setw(8) << std::setfill(' ') << this->args[2].val << "h";
     else
         oss << "            ";  // TODO: what spacing options do I have for keeping constant width?
     // spacing chars

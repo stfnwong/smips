@@ -841,7 +841,11 @@ void Lexer::parseInstr(int line_num)
 
         // memory access with offsets
         case LEX_LW:
+        case LEX_LH:
+        case LEX_LB:
         case LEX_SW:
+        case LEX_SH:
+        case LEX_SB:
             this->parse_rro();
             break;
         
@@ -988,39 +992,72 @@ void Lexer::parse_rr(void)
         this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
 }
 
+/*
+ * parse_ri()
+ */
 void Lexer::parse_ri(void)
 {
     this->text_info.args[0] = this->parseRegister();
-    this->text_info.args[1] = Argument(SYM_NONE, 0);
-    this->text_info.args[2] = this->parseImmediate();
+    //this->text_info.args[1] = Argument(SYM_NONE, 0);
+    this->text_info.args[1] = this->parseImmediate();
 
     // immediate must be either a symbol (label) or literal
-    if(this->text_info.args[2].type == SYM_LABEL)
+    if(this->text_info.args[1].type == SYM_LABEL)
     {
         this->text_info.is_symbol = true;
         this->text_info.symbol = this->cur_token.val;
     }
-    else if(this->text_info.args[2].type != SYM_LITERAL)
+    else if(this->text_info.args[1].type != SYM_LITERAL)
     {
         this->text_info.errstr = "Argument (1) expected literal or symbol, got [" + 
-            TokenToString(this->text_info.args[2].type) + 
+            TokenToString(this->text_info.args[1].type) + 
             "]";
         this->text_info.error = true;
     }
 }
 
+/*
+ * parse_rro()
+ */
 void Lexer::parse_rro(void)
 {
+    // TODO : this only works when offset is a single character
     this->text_info.args[0] = this->parseRegister();
     this->text_info.args[1] = this->parseRegister();
+
     if(this->text_info.args[1].offset > -1)
         this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
     else
         this->text_info.args[2] = Argument(SYM_LITERAL, 0);
 
+
+    //// TODO : this only works when offset is a single character
+    //this->text_info.args[0] = this->parseRegister();
+
+    //this->nextToken();
+    //if(this->cur_token.type == SYM_REGISTER)
+    //{
+    //    this->text_info.args[1] = Argument(SYM_REGISTER, std::stoi(this->cur_token.val));
+    //    //this->text_info.args[2] = this->parseRegister();
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+    //}
+    //else if(this->cur_token.type == SYM_LITERAL)
+    //{
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, std::stoi(this->cur_token.val));
+    //    this->text_info.args[1] = this->parseRegister();
+    //}
+    //this->text_info.args[1] = this->parseRegister();
+
+    //if(this->text_info.args[1].offset > -1)
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+    //else
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, 0);
 }
 
 // parse register, register, immediate
+/*
+ * parse_rri()
+ */
 void Lexer::parse_rri(void)
 {
     this->text_info.args[0] = this->parseRegister();
@@ -1050,6 +1087,9 @@ void Lexer::parse_rri(void)
 }
 
 // parse register, register, register
+/*
+ * parse_rrr()
+ */
 void Lexer::parse_rrr(void)
 {
     this->text_info.args[0] = this->parseRegister();
@@ -1057,6 +1097,9 @@ void Lexer::parse_rrr(void)
     this->text_info.args[2] = this->parseRegister();
 }
 
+/*
+ * add_noop()
+ */
 void Lexer::add_noop(void)
 {
     this->text_info.opcode = Opcode(LEX_NULL, 0x0);
@@ -1204,11 +1247,11 @@ void Lexer::resolveLabels(void)
                 {
                     case LEX_LUI:
                     {
-                        line.args[1] = Argument();  
+                        //line.args[1] = Argument();  
                         if(line.upper)
-                            line.args[2] = Argument(SYM_LITERAL, (label_addr & 0xFFFF0000) >> 16);
+                            line.args[1] = Argument(SYM_LITERAL, (label_addr & 0xFFFF0000) >> 16);
                         else
-                            line.args[2] = Argument(SYM_LITERAL, label_addr & 0x0000FFFF);
+                            line.args[1] = Argument(SYM_LITERAL, label_addr & 0x0000FFFF);
                     }
                     break;
 
@@ -1390,7 +1433,7 @@ void Lexer::expandPsuedo(void)
                 ti.line_num  = this->text_info.line_num;
                 ti.args[0]   = this->text_info.args[0];
                 ti.args[1]   = Argument(SYM_REGISTER, REG_ZERO);
-                ti.args[2]   = this->text_info.args[2];
+                ti.args[2]   = this->text_info.args[1];
                 ti.label     = this->text_info.label;
                 ti.is_label  = this->text_info.is_label;
                 ti.symbol    = this->text_info.symbol;
@@ -1456,16 +1499,16 @@ void Lexer::expandPsuedo(void)
         case LEX_LI:
             ti.init();
             // 32-bit immediate (2 instrs)
-            if(this->text_info.args[2].val > ((1 << 16)-1))
+            if(this->text_info.args[1].val > ((1 << 16)-1))
             {
                 ti.opcode   = Opcode(LEX_LUI, "lui");
                 ti.addr     = this->text_info.addr;
                 ti.line_num = this->text_info.line_num;
                 ti.args[0]  = this->text_info.args[0];
-                ti.args[1]  = Argument(SYM_NONE, 0);
-                ti.args[2]  = Argument(
-                        this->text_info.args[2].type, 
-                        (this->text_info.args[2].val & 0xFFFF0000) >> 16
+                //ti.args[1]  = Argument(SYM_NONE, 0);
+                ti.args[1]  = Argument(
+                        this->text_info.args[1].type, 
+                        (this->text_info.args[1].val & 0xFFFF0000) >> 16
                         );
                 ti.is_imm   = true;
                 ti.upper    = true;
@@ -1480,8 +1523,8 @@ void Lexer::expandPsuedo(void)
                 ti.args[0]  = this->text_info.args[0];
                 ti.args[1]  = this->text_info.args[0];
                 ti.args[2]  = Argument(
-                        this->text_info.args[2].type,
-                        this->text_info.args[2].val & 0x0000FFFF
+                        this->text_info.args[1].type,
+                        this->text_info.args[1].val & 0x0000FFFF
                         );
                 ti.is_imm   = true;
                 ti.lower    = true;
@@ -1497,7 +1540,7 @@ void Lexer::expandPsuedo(void)
                 ti.line_num = this->text_info.line_num;
                 ti.args[0]  = this->text_info.args[0];
                 ti.args[1]  = Argument(SYM_REGISTER, REG_ZERO);
-                ti.args[2]  = Argument(SYM_LITERAL, (this->text_info.args[2].val & 0x0000FFFF));
+                ti.args[2]  = Argument(SYM_LITERAL, (this->text_info.args[1].val & 0x0000FFFF));
                 ti.is_imm   = true;
 
                 this->source_info.addText(ti);

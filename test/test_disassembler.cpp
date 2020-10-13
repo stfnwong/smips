@@ -407,8 +407,7 @@ SourceInfo get_dis_instr_expected_out(void)
     line.addr = TEXT_START_ADDR;
     line.opcode = Opcode(LEX_LUI, "lui");
     line.args[0] = Argument(SYM_REGISTER, REG_AT);
-    line.args[1] = Argument(SYM_REGISTER, REG_ZERO);
-    line.args[2] = Argument(SYM_LITERAL, 4096);
+    line.args[1] = Argument(SYM_LITERAL, 4096);
     line.is_imm = true;
     info.addText(line);
     //mfhi $s0
@@ -458,6 +457,15 @@ SourceInfo get_dis_instr_expected_out(void)
     line.args[2] = Argument(SYM_REGISTER, REG_TEMP_1);
     info.addText(line);
 
+    // srl $t4, $s2, 1
+    line.init();
+    line.addr    = TEXT_START_ADDR;
+    line.opcode  = Opcode(LEX_SRL, "srl");
+    line.args[0] = Argument(SYM_REGISTER, REG_TEMP_4);
+    line.args[1] = Argument(SYM_REGISTER, REG_SAVED_2);
+    line.args[2] = Argument(SYM_LITERAL, 1);
+    info.addText(line);
+
     return info;
 }
 
@@ -489,6 +497,7 @@ TEST_CASE("test_dis_instr", "[classic]")
         Instr(TEXT_START_ADDR, 0x012A4025),     // or $t0, $t1, $t2
         Instr(TEXT_START_ADDR, 0x00094200),     // sll $t0, $t1, 8
         Instr(TEXT_START_ADDR, 0x0109802A),     // slt $s0, $t0, $t1
+        Instr(TEXT_START_ADDR, 0x00126042),     //srl $t4, $s2, 1
     };
 
     SourceInfo expected_out = get_dis_instr_expected_out();
@@ -498,13 +507,6 @@ TEST_CASE("test_dis_instr", "[classic]")
     {
         TextInfo dis_out = dis_instr(inp_instr[idx].ins, inp_instr[idx].adr);
         TextInfo exp_out = expected_out.getText(idx);
-        std::cout << "Checking [" << exp_out.toInstrString() << "]" << std::endl;
-
-        //std::cout << "Line " << std::dec << idx << " expected: " << std::endl;
-        //std::cout << exp_out.toString() << std::endl;
-
-        //std::cout << "Got :" << std::endl;
-        //std::cout << dis_out.toString() << std::endl;
 
         if(exp_out != dis_out)
         {
@@ -519,6 +521,5 @@ TEST_CASE("test_dis_instr", "[classic]")
             std::cout << dis_out.toString() << std::endl;
         }
         REQUIRE(exp_out == dis_out);
-        //std::cout << "    [OK]" << std::endl;
     }
 }
