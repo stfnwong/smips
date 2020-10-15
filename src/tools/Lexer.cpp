@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -194,10 +195,120 @@ bool Lexer::isComment(void) const
 }
 
 
+// TODO : what we really want here is to have typed functions. For instance, a 
+// fuction that scans literals (and stops when it reaches a non-numeric character)
+// What we do now is scan a token in and then go back to work out what it was. If 
+// each instruction is typed (which is sort of is - we know which combinations of 
+// operands are valid for any given instruction) then we can write parsing routines 
+// that scan for a typed sequence of tokens. 
+
+/*
+ * scanLiteral()
+ * Try to extract a literal from the source 
+ */
+void Lexer::scanLiteral(void)
+{
+    int idx = 0;
+
+    this->skipWhitespace();     // eat any leading whitespace 
+    this->skipSeperators();     // eat any seperators that might be left
+
+    while(idx < (this->token_buf_size-1))
+    {
+        if(!std::isdigit(this->cur_char))
+            break;
+        this->token_buf[idx] = this->cur_char;
+        this->advance();
+        idx++;
+    }
+    this->token_buf[idx] = '\0';
+
+    std::cout << "[" << __func__ << "] token_buf " << std::string(this->token_buf) << std::endl;
+}
+
+/*
+ * scanRegister()
+ * Try to extract a register from the source
+ */
+void Lexer::scanRegister(void)
+{
+    int idx = 0;
+    int start_offset = 0;
+    int end_offset = 0;
+    std::stack<int> paren_stack;
+
+    this->skipWhitespace();     // eat any leading whitespace 
+    this->skipSeperators();     // eat any seperators that might be left
+
+    while(idx < (this->token_buf_size-1))
+    {
+        if(this->cur_char == '(')
+            paren_stack.push(idx);
+        if(this->cur_char == ')')
+            paren_stack.pop();
+        if(this->cur_char == '$')
+            break;
+        idx++;
+        this->advance();
+    }
+
+    std::cout << "[" << __func__ << "] idx : " << idx << std::endl;
+
+    // we should now be on the '$' character
+    idx = 0;
+    while(idx < this->token_buf_size-1)
+    {
+        if(this->cur_char == ' ')       // space 
+            break;
+        if(this->cur_char == '\n')      // newline
+            break;
+        if(this->cur_char == ';')       // comment
+            break;
+        if(this->cur_char == '#')       // also comment
+        {
+            this->skipComment();
+            break;
+        }
+        if(this->cur_char == ',')       // seperator
+            break;
+
+        if(this->cur_char == ')')
+        {
+            if(paren_stack.empty())
+            {
+                // TODO: where to report the error?
+                std::cout << "[" << __func__ << "] unmatched parenthesis at line " << this->cur_line 
+                    << ":" << std::dec << this->cur_pos << std::endl;
+                return;
+            }
+            else
+            {
+                paren_stack.pop();
+                this->advance();
+                continue;
+            }
+        }
+
+        this->token_buf[idx] = this->cur_char;
+        idx++;
+        this->advance();
+    }
+
+    // advance over any closing parenthesis 
+    while(!paren_stack.empty())
+        this->advance();
+
+    this->token_buf[idx] = '\0';
+    if(this->cur_char == ',')   // || this->cur_char == '(' || this->cur_char == ')')
+        this->advance();
+
+    // TODO: debug, remove
+    std::cout << "[" << __func__ << "] token_buf = " << std::string(this->token_buf) << std::endl;
+}
 
 /*
  * scanToken()
- * Scan a complete token into the token buffer
+ * Scan any complete token into the token buffer
  */
 void Lexer::scanToken(void)
 {
@@ -222,6 +333,16 @@ void Lexer::scanToken(void)
             break;
         if(this->cur_char == ':')       // end of label
             break;
+        //if(this->cur_char == '(')       // register operand for register offset
+        //{
+        //    this->advance();        // TODO: try eating these...
+        //    continue;
+        //}
+        //if(this->cur_char == ')')       // register operand for register offset
+        //{
+        //    this->advance();
+        //    continue;
+        //}
 
         this->token_buf[idx] = this->cur_char;
         this->advance();
@@ -229,7 +350,7 @@ void Lexer::scanToken(void)
     }
     this->token_buf[idx] = '\0';
     // If we are on a seperator now, advance the source pointer 
-    if(this->cur_char == ',')
+    if(this->cur_char == ',')   // || this->cur_char == '(' || this->cur_char == ')')
         this->advance();
 }
 
@@ -237,39 +358,62 @@ void Lexer::scanToken(void)
 
 /*
  * extractLiteral()
+ * Turns a string into a Token
  */
-Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
+Token Lexer::extractLiteral(void)
 {
-    Token out_token;
-    unsigned int tok_ptr;
-    std::string mem_offset;
+    Token literal;
 
-    // TODO : update to handle hex using c-style (0x) prefix
-    tok_ptr = start_offset;
-    while(std::isdigit(token[tok_ptr]))
-        tok_ptr++;
-    
-    if(tok_ptr == start_offset)     // we didn't move
-    {
-        end_offset = start_offset;
-        goto LITERAL_REG_END;
-    }
+    this->scanLiteral();
+    // handle the case where it turned out there were no literals 
+    if(std::strlen(this->token_buf) == 0)
+        return literal;
 
-    if(tok_ptr >= (token.size()))   // no more chars, this is just a literal
-        out_token.val = token.substr(start_offset);     
-    else
-        out_token.val = token.substr(start_offset, tok_ptr - start_offset);
+    literal.type = SYM_LITERAL;
+    literal.val = std::string(this->token_buf);
 
-LITERAL_REG_END:
-    end_offset = tok_ptr;
-    out_token.type = SYM_LITERAL;
-    return out_token;
+    return literal;
 }
+
+//Token Lexer::extractLabel(void)
+//{
+//
+//}
+
+
+
+//Token Lexer::extractLiteral(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
+//{
+//    Token out_token;
+//    unsigned int tok_ptr;
+//    std::string mem_offset;
+//
+//    // TODO : update to handle hex using c-style (0x) prefix
+//    tok_ptr = start_offset;
+//    while(std::isdigit(token[tok_ptr]))
+//        tok_ptr++;
+//    
+//    if(tok_ptr == start_offset)     // we didn't move
+//    {
+//        end_offset = start_offset;
+//        goto LITERAL_REG_END;
+//    }
+//
+//    if(tok_ptr >= (token.size()))   // no more chars, this is just a literal
+//        out_token.val = token.substr(start_offset);     
+//    else
+//        out_token.val = token.substr(start_offset, tok_ptr - start_offset);
+//
+//LITERAL_REG_END:
+//    end_offset = tok_ptr;
+//    out_token.type = SYM_LITERAL;
+//    return out_token;
+//}
 
 
 /*
  * extractReg()
- * Extract a register
+ * Turn a string into a register Token
  */
 Token Lexer::extractReg(const std::string& token, unsigned int start_offset, unsigned int& end_offset)
 {
@@ -292,15 +436,20 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
         if(token[tok_ptr] == '$')
             break;
 
+        // TODO : don't handle offsets here, rather we try to handle them in 
+        // parseRegister() before we get to here. This method should only try
+        // to parse a register, and deal with any number of parens that could 
+        // be surrounding that register (for instance (((($s0)))) should be valid)
+        //
         // We handle offsets here so that any number of parens 
         // can appear before the register name. Offsets only occur
         // before a '$' character
-        if(std::isdigit(token[tok_ptr]))
-        {
-            out_token = this->extractLiteral(token, tok_ptr, end_offset);
-            out_token.reg_offset = out_token.val;        // we will overwrite the other fields
-            tok_ptr = end_offset-1;      // we must have advaneced by this amount
-        }
+        //if(std::isdigit(token[tok_ptr]))
+        //{
+        //    out_token = this->extractLiteral(token, tok_ptr, end_offset);
+        //    out_token.reg_offset = out_token.val;        // we will overwrite the other fields
+        //    tok_ptr = end_offset-1;      // we must have advaneced by this amount
+        //}
         tok_ptr++;
     }
 
@@ -349,7 +498,14 @@ Token Lexer::extractReg(const std::string& token, unsigned int start_offset, uns
 /*
  * nextToken()
  * Get the next token in the stream, and set the parameters of 
- * this->cur_token to be that token.
+ * this->cur_token to be that token. This method calls scanToken()
+ * to find the next complete token in the source and then determines 
+ * the type of that token.
+ *
+ * TODO : maybe just make this a routine that parses any instruction or
+ * directive or label (and maybe literals...), and then we statefully decide what 
+ * to extract from the stream next based on whic segment we are in. For instance, 
+ * we call parse_rri() for instructions that take two registers and an immediate, etc
  *
  */
 void Lexer::nextToken(void)
@@ -415,11 +571,11 @@ void Lexer::nextToken(void)
     // Check digits, which may be either literals or register offsets 
     if(std::isdigit(token_str[0]) && token_str[1] != '(')
     {
-        out_token = this->extractLiteral(token_str, start_offset, end_offset);
+        out_token = this->extractLiteral(); 
         if(out_token.type == SYM_NONE)
         {
             this->text_info.error  = true;
-            this->text_info.errstr = "Got blank symbol " + out_token.toString();
+            this->text_info.errstr = "Got blank symbol " + out_token.toString() + " when extracting literal";
         }
         else
             this->cur_token = out_token;
@@ -427,21 +583,21 @@ void Lexer::nextToken(void)
     }
 
     // Check registers or expand parenthesis
-    if((token_str[0] == '$') || 
-       (token_str[0] == '(') || 
-       (std::isdigit(token_str[0]) && token_str[1] == '('))
-    {
-        out_token = this->extractReg(token_str, start_offset, end_offset);
-        if(out_token.type == SYM_NONE)
-        {
-            this->text_info.error  = true;
-            this->text_info.errstr = "Got blank symbol " + out_token.toString();
-        }
-        else
-            this->cur_token = out_token;
+    //if((token_str[0] == '$') || 
+    //   (token_str[0] == '(') || 
+    //   (std::isdigit(token_str[0]) && token_str[1] == '('))
+    //{
+    //    out_token = this->extractReg(token_str, start_offset, end_offset);
+    //    if(out_token.type == SYM_NONE)
+    //    {
+    //        this->text_info.error  = true;
+    //        this->text_info.errstr = "Got blank symbol " + out_token.toString();
+    //    }
+    //    else
+    //        this->cur_token = out_token;
 
-        goto TOKEN_END;
-    }
+    //    goto TOKEN_END;
+    //}
 
     // TODO : we actually do this twice - why not set the instruction type here as well?
     // Check if this matches any instructions 
@@ -613,10 +769,11 @@ void Lexer::parseWord(void)
 
     if(this->verbose)
         std::cout << "[" << __func__ << "] start address = " << std::hex << this->data_info.addr << std::endl;
+
     while(this->cur_line <= this->data_info.line_num)        // put upper bound on number of loops
     {
-        this->nextToken();
-        if(this->cur_token.type != SYM_LITERAL)
+        Token literal = this->extractLiteral();
+        if(literal.type != SYM_LITERAL)
         {
             this->data_info.error = true;
             this->data_info.errstr = ".word directive token " + std::to_string(word_idx) + 
@@ -626,7 +783,7 @@ void Lexer::parseWord(void)
             break;
         }
 
-        word = std::stoi(this->cur_token.val);
+        word = std::stoi(literal.val);
         this->data_info.addByte(word);
         word_idx++;
         this->incrDataAddr();
@@ -847,6 +1004,9 @@ void Lexer::parseInstr(int line_num)
         case LEX_SH:
         case LEX_SB:
             this->parse_rro();
+            // TODO: debug, remove 
+            std::cout << "[" << __func__ << "] ti after parse_rro() : " << std::endl;
+            std::cout << this->text_info.toString() << std::endl;
             break;
         
         case LEX_LUI:
@@ -986,10 +1146,16 @@ void Lexer::parse_rr(void)
 {
     this->text_info.args[0] = this->parseRegister();
     this->text_info.args[1] = this->parseRegister();
+
+    // TODO : debug, remove 
+    std::cout << "[" << __func__ << "] textinfo: " << std::endl;
+    std::cout << this->text_info.toString() << std::endl;
+
     // if the second register has an offset then add 
     // an immediate in index 2 to reflect that
-    if(this->text_info.args[1].offset > 0)
-        this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+    // TODO : remove inline (side-effect) offset parsing
+    //if(this->text_info.args[1].offset > 0)
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
 }
 
 /*
@@ -1014,6 +1180,10 @@ void Lexer::parse_ri(void)
             "]";
         this->text_info.error = true;
     }
+
+    // TODO : debug, remove 
+    std::cout << "[" << __func__ << "] textinfo: " << std::endl;
+    std::cout << this->text_info.toString() << std::endl;
 }
 
 /*
@@ -1021,14 +1191,48 @@ void Lexer::parse_ri(void)
  */
 void Lexer::parse_rro(void)
 {
+    Argument temp_arg;
+    Token tok;
     // TODO : this only works when offset is a single character
     this->text_info.args[0] = this->parseRegister();
-    this->text_info.args[1] = this->parseRegister();
 
-    if(this->text_info.args[1].offset > -1)
-        this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
-    else
+    // try to get a literal. If we get one then we have an offset.
+    tok = this->extractLiteral();
+    if(tok.type == SYM_LITERAL)
+    {
+        this->text_info.args[2] = Argument(SYM_LITERAL, std::stoi(tok.val, nullptr, 10));
+        this->text_info.args[1] = this->parseRegister();
+    }
+    else 
+    {
+        // no offset, just get a register 
+        this->text_info.args[1] = this->parseRegister();
         this->text_info.args[2] = Argument(SYM_LITERAL, 0);
+    }
+
+    // TODO : debug, remove 
+    std::cout << "[" << __func__ << "] textinfo: " << std::endl;
+    std::cout << this->text_info.toString() << std::endl;
+
+    //temp_arg = this->parseImmediateOrRegister();
+    //std::cout << "[" << __func__ << "] temp_arg : " << temp_arg.toString() << std::endl;
+    //if(temp_arg.type == SYM_REGISTER)
+    //{
+    //    this->text_info.args[1] = temp_arg;
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, 0);
+    //}
+    //else if(temp_arg.type == SYM_LITERAL)
+    //{
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].val);
+    //    this->text_info.args[1] = this->parseRegister();
+    //}
+
+    //this->text_info.args[1] = this->parseImmediateOrRegister();
+
+    //if(this->text_info.args[1].offset > -1)
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+    //else
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, 0);
 
 
     //// TODO : this only works when offset is a single character
@@ -1062,28 +1266,34 @@ void Lexer::parse_rri(void)
 {
     this->text_info.args[0] = this->parseRegister();
     this->text_info.args[1] = this->parseRegister();
-    if(this->text_info.args[1].offset > -1)
-    {
-        std::cout << "[" << __func__ << "] got offset in args[1] " << std::dec 
-            << this->text_info.args[1].offset << std::endl;
-        this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
-    }
-    else
-        this->text_info.args[2] = this->parseImmediate();
+    this->text_info.args[2] = this->parseImmediate();
 
-    // immediate must be either a symbol (label) or literal
-    if(this->text_info.args[2].type == SYM_LABEL)
-    {
-        this->text_info.is_symbol = true;
-        this->text_info.symbol = this->cur_token.val;
-    }
-    else if(this->text_info.args[2].type != SYM_LITERAL)
-    {
-        this->text_info.errstr = "Argument (2) expected literal or symbol, got [" + 
-            TokenToString(this->text_info.args[2].type) + 
-            "]";
-        this->text_info.error = true;
-    }
+    // TODO : debug, remove 
+    std::cout << "[" << __func__ << "] textinfo: " << std::endl;
+    std::cout << this->text_info.toString() << std::endl;
+
+    //if(this->text_info.args[1].offset > -1)
+    //{
+    //    std::cout << "[" << __func__ << "] got offset in args[1] " << std::dec 
+    //        << this->text_info.args[1].offset << std::endl;
+    //    this->text_info.args[2] = Argument(SYM_LITERAL, this->text_info.args[1].offset);
+    //}
+    //else
+    //    this->text_info.args[2] = this->parseImmediate();
+
+    //// immediate must be either a symbol (label) or literal
+    //if(this->text_info.args[2].type == SYM_LABEL)
+    //{
+    //    this->text_info.is_symbol = true;
+    //    this->text_info.symbol = this->cur_token.val;
+    //}
+    //else if(this->text_info.args[2].type != SYM_LITERAL)
+    //{
+    //    this->text_info.errstr = "Argument (2) expected literal or symbol, got [" + 
+    //        TokenToString(this->text_info.args[2].type) + 
+    //        "]";
+    //    this->text_info.error = true;
+    //}
 }
 
 // parse register, register, register
@@ -1095,6 +1305,9 @@ void Lexer::parse_rrr(void)
     this->text_info.args[0] = this->parseRegister();
     this->text_info.args[1] = this->parseRegister();
     this->text_info.args[2] = this->parseRegister();
+    // TODO : debug, remove 
+    std::cout << "[" << __func__ << "] textinfo: " << std::endl;
+    std::cout << this->text_info.toString() << std::endl;
 }
 
 /*
@@ -1112,15 +1325,32 @@ void Lexer::add_noop(void)
 Argument Lexer::parseRegister(void)
 {
     Argument arg;
+    std::string token_str;
 
-    this->nextToken();
-    if(!this->cur_token.isReg())
-        return arg;     
+    //this->nextToken();
+    this->scanRegister();
+    token_str = std::string(this->token_buf);
+    if(token_str[0] != '$')
+    {
+
+        std::cout << "[" << __func__ << "] register token <" << token_str 
+            << "> does not begin with $" << std::endl;
+        return Argument();
+    }
+    Token reg_token;
+
+    //std::string tok_substr = token_str.substr(1, token_str.size()-1);
+    //std::cout << "[" << __func__ << "] tok_substr : " << tok_substr << std::endl;
+    int reg_idx = this->reg_map.getIdx(token_str);
+
+    reg_token.type = SYM_REGISTER;
+    reg_token.val = std::to_string(reg_idx);
+    std::cout << "[" << __func__ << "] reg_token : " << reg_token.toString() << std::endl;
 
     arg.type = this->cur_token.type;
-    arg.val  = std::stoi(this->cur_token.val);
-    if(this->cur_token.isOffset())
-        arg.offset = std::stoi(this->cur_token.reg_offset, nullptr, 10);
+    arg.val  = reg_idx;
+    //if(this->cur_token.isOffset())
+    //    arg.offset = std::stoi(this->cur_token.reg_offset, nullptr, 10);
 
     return arg; 
 }
@@ -1131,13 +1361,35 @@ Argument Lexer::parseRegister(void)
  */
 Argument Lexer::parseImmediate(void)
 {
+    Token token;
+
+    // try and get a literal
+    token = this->extractLiteral();
+    if(token.type == SYM_LITERAL)
+        return Argument(SYM_LITERAL, std::stoi(token.val, nullptr, 10));
+
+    // try and get a label instead
     this->nextToken();
-    if(this->cur_token.type == SYM_LITERAL)
-    {
-        return Argument(SYM_LITERAL, std::stoi(this->cur_token.val, nullptr, 10));
-    }
     if(this->cur_token.type == SYM_LABEL)
         return Argument(SYM_LABEL, 0);
+
+    return Argument();
+}
+
+/*
+ * parseImmediateOrRegister()
+ * This is for instructions like lw, where we may pre-pend register offsets 
+ * to the register operand, eg lw $t0 32($gp)
+ */
+Argument Lexer::parseImmediateOrRegister(void)
+{
+    // TODO : if we have typed 
+    this->nextToken();
+    if(this->cur_token.type == SYM_LITERAL)
+        return Argument(SYM_LITERAL, std::stoi(this->cur_token.val, nullptr, 10));
+
+    if(this->cur_token.type == SYM_REGISTER)
+        return Argument(SYM_REGISTER, std::stoi(this->cur_token.val, nullptr, 10));
 
     return Argument();
 }
@@ -1206,6 +1458,9 @@ void Lexer::parseLine(void)
     else
     {
         // add a standalone label (which is a valid construction)
+        // NOTE that we don't check here to make sure that the label is 
+        // 'valid'. For instance, a literal like 004: would be a valid 
+        // label in this implementation.
         this->text_info.line_num = line_num;
         this->text_info.addr     = this->text_addr;
         this->source_info.addText(this->text_info);

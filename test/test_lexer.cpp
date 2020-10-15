@@ -26,7 +26,22 @@ const std::string test_psuedo_file   = "asm/psuedo.asm";
 const std::string test_instr_file    = "asm/instr_test.asm";
 
 const bool SHOW_ALL_OUTPUT = false;
-const bool GLOBAL_VERBOSE = false;
+const bool GLOBAL_VERBOSE = true;
+
+
+//TEST_CASE("test_scan_methods", "[classic]")
+//{
+//    Lexer test_lexer;
+//    SourceInfo src_out;
+//    SourceInfo expected_src_out;
+//
+//    test_lexer.setVerbose(true);
+//    const std::string test_src = "sll $t0, $t0, 2\n.data 1 2 3";
+//
+//    test_lexer.loadSource(test_src);
+//    test_lexer.lex();
+//
+//}
 
 
 /*
@@ -694,14 +709,14 @@ SourceInfo get_paren_expected_source_info(void)
     info.addText(line);
 
     // line 5
-    // lw $t2, 4($gp)
+    // lw $t2, 44($gp)
     line.init();
     line.line_num = 5;
     line.addr     = 0x00400004;
     line.opcode   = Opcode(LEX_LW, "lw");
     line.args[0]  = Argument(SYM_REGISTER, REG_TEMP_2);
     line.args[1]  = Argument(SYM_REGISTER, REG_GLOBAL);
-    line.args[2]  = Argument(SYM_LITERAL, 4);
+    line.args[2]  = Argument(SYM_LITERAL, 44);
     info.addText(line);
 
     // line 6

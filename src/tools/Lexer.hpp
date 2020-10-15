@@ -13,6 +13,7 @@
 #include "Source.hpp"
 #include "Register.hpp"
 
+
 // Give some kind of named identifier to the Lexer mode
 enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};
 
@@ -96,11 +97,14 @@ class Lexer
     private:
         Token cur_token;
         void scanToken(void);
+        void scanLiteral(void);
+        void scanRegister(void);
 		// extra token handling functions
-		Token extractLiteral(
-				const std::string& token, 
-				unsigned int start_offset, 
-				unsigned int& end_offset);
+        Token extractLiteral(void);
+		//Token extractLiteral(
+		//		const std::string& token, 
+		//		unsigned int start_offset, 
+		//		unsigned int& end_offset);
         Token extractReg(
 				const std::string& token, 
 				unsigned int start_offset, 
@@ -122,6 +126,7 @@ class Lexer
 
         Argument parseRegister(void);
         Argument parseImmediate(void);  // could be literal or symbol
+        Argument parseImmediateOrRegister(void);  // could be literal or register (for things like lw $t0 4($gp))
 
         // TODO : no support for floats in the first version
         void parseASCIIZ(void);
