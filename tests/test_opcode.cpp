@@ -7,10 +7,6 @@
 #define CATCH_CONFIG_MAIN
 #include "catch/catch.hpp"
 
-#include <iostream> 
-#include <iomanip>
-#include <vector>
-#include <string>
 // unit under test
 #include "Opcode.hpp"
 

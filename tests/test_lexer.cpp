@@ -8,8 +8,6 @@
 #include "catch/catch.hpp"
 
 #include <iostream> 
-#include <iomanip>
-#include <vector>
 #include <string>
 
 #include "Address.hpp"  // TODO : also do text offset relative to base...
