@@ -11,9 +11,9 @@ TOOL_DIR=tools
 # Tool options
 CXX=g++
 OPT=-O0
-CXXFLAGS=-Wall -g2 -std=c++17 -D_REENTRANT $(OPT)
+CXXFLAGS=-Wall -g2 -std=c++17 -D_REENTRANT $(OPT) -fPIC -fPIE
 TESTFLAGS=
-LDFLAGS=-pthread
+LDFLAGS=
 LIBS =
 TEST_LIBS=
 
@@ -46,6 +46,7 @@ $(TEST_OBJECTS): obj/%.o: test/%.cpp
 ### ==== TEST TARGETS ==== #
 TESTS=test_elf test_assembler test_opcode test_lexer test_register \
 	  test_source test_disassembler test_program test_state test_datacache
+
 $(TESTS): $(OBJECTS) $(TEST_OBJECTS) 
 	$(CXX) $(LDFLAGS) $(INCS) $(OBJECTS)  obj/$@.o\
 		-o $(TEST_BIN_DIR)/$@ $(LIBS) $(TEST_LIBS)

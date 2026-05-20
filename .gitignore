@@ -4,3 +4,12 @@
 # Ignore binaries 
 assem
 disassem
+
+# Ignore lsp folder
+.ccls-cache/
+
+# Ignore binaries
+*.bin
+
+# Ignore log files
+*.log
