@@ -5,9 +5,9 @@ add_library(mips_emulator
 
 
 # Canonical target names: project::library
-add_library(MipsEmulator::mips_emulator ALIAS smips)
+add_library(MipsEmulator::mips_emulator ALIAS mips_emulator)
 
-target_include_directories(smips
+target_include_directories(mips_emulator
     PUBLIC
         # When building: use include/ from source tree 
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -16,17 +16,17 @@ target_include_directories(smips
     PRIVATE
         # Private headers for the library internally 
         ${CMAKE_CURRENT_SOURCE_DIR}/detail
+)
 
-
-target_link_libraries(smips
+target_link_libraries(mips_emulator
     PRIVATE
         mips_warnings
         mips_sanitizers
 )
 
 # Per-target compile definitions 
-target_compile_definitions(smips
+target_compile_definitions(mips_emulator
     PRIVATE
-        SMIPS_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
-        SMIPS_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+        mips_emulator_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+        mips_emulator_VERSION_MINOR=${PROJECT_VERSION_MINOR}
 )

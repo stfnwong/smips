@@ -26,13 +26,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ==== Build type 
 # If no build type is specified then default to Release 
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Build type not set, defauling to Release")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
     set_property(CACHE, CMAKE_BUILD_TYPE PROPERTY STRINGS
         "Debug" "Release" "RelWithDebInfo" "MinSizeRel"
     )
-
+endif()
 # ==== Compiler warnings 
 # Define a reusable interface target for warning flags 
 # Targets opt-in by linking against this
@@ -54,8 +54,23 @@ target_compile_options(mips_warnings INTERFACE
         /W4
         /WX
     >
-    
+)    
 # ==== Sanitizers
+add_library(mips_sanitizers INTERFACE)
+
+target_compile_options(mips_sanitizers INTERFACE
+    $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:GNU,Clang,AppleClang>>:
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+    >
+)
+
+target_link_options(mips_sanitizers INTERFACE
+    $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:GNU,Clang,AppleClang>>:
+        -fsanitize=address,undefined
+    >
+)
+
 
 # ==== Dependencies
 
@@ -69,4 +84,3 @@ if(PROJECT_IS_TOP_LEVEL)
     enable_testing()
     add_subdirectory(tests)
 endif()
-

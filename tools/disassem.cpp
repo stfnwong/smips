@@ -8,11 +8,11 @@
 
 #include <iostream>
 #include <iomanip>
-#include <fstream>
 #include <string>
-#include <getopt.h>
+#include <CLI/CLI.hpp>
 
-#include "Disassembler.hpp"
+#include "mips/Disassembler.hpp"
+
 
 // TODO : this could possibly become common with AsmOpts
 struct DisOpts
@@ -35,75 +35,42 @@ struct DisOpts
 
 int main(int argc, char *argv[])
 {
+    CLI::App app{"SMIPS disassembler"};
+
+    std::string inp_file;
+    std::string out_file;
+
+    bool verbose = false;
+
     DisOpts dis_opts;
-    const char* const short_opts = "avhi:o:l:";
-    const option long_opts[] = {};
-    int argn = 0;
     int status;
 
-    // get args
-    while(1) 
-    {
-        const auto opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
-        if(opt == -1)
-            break;
+    app.add_option("-o,--output", out_file, "Output file");
+    app.add_option("-v,--verbose", verbose, "verbose");
+    app.add_option("input", inp_file, "Input binary")->required();
 
-        switch(opt)
-        {
-            case 'v':   // verbose mode
-                dis_opts.verbose = true;
-                break;
+    CLI11_PARSE(app, argc, argv);
 
-            case 'a':   // print addresses
-                dis_opts.print_adr = true;
-                break;
-                
-            case 'i':   // input file 
-                dis_opts.infile = std::string(optarg);
-                break;
-
-            case 'o':   // output file
-                dis_opts.outfile = std::string(optarg);
-                break;
-
-            case 'l':
-                dis_opts.literal = std::string(optarg);
-                break;
-
-            default:
-                std::cerr << "Uknown option " << std::string(optarg) << 
-                    "(arg " << argn << ")" << std::endl;
-                exit(-1);
-                break;
-        }
-        argn++;
-    }
 
     // we can disassemble a uint32_t literal from the command line 
-    if(dis_opts.literal != "\0")
-    {
-        uint32_t instr_literal = std::strtoul(dis_opts.literal.c_str(), nullptr, 16);
-        TextInfo dis_out = dis_instr(instr_literal, 0);
+    //if(dis_opts.literal != "\0")
+    //{
+    //    uint32_t instr_literal = std::strtoul(dis_opts.literal.c_str(), nullptr, 16);
+    //    TextInfo dis_out = dis_instr(instr_literal, 0);
 
-        if(dis_opts.print_adr)
-        {
-            std::cout << "[0x" << std::hex << std::setw(8) << std::setfill('0')
-                << dis_out.addr << "] ";
-        }
-        std::cout << dis_out.toInstrString() << std::endl;
+    //    if(dis_opts.print_adr)
+    //    {
+    //        std::cout << "[0x" << std::hex << std::setw(8) << std::setfill('0')
+    //            << dis_out.addr << "] ";
+    //    }
+    //    std::cout << dis_out.toInstrString() << std::endl;
 
-        return 0;
-    }
+    //    return 0;
+    //}
     // otherwise, check that we have a valid infile 
-    else if(dis_opts.infile == "\0")
-    {
-        std::cerr << "Invalid input filename" << std::endl;
-        std::cerr << "Use -i <filename> to specify" << std::endl;
-        exit(-1);
-    }
 
     Program prog;
-    status = prog.load(dis_opts.infile);
+    status = prog.load(inp_file);
     if(status < 0)
     {
         std::cerr << "Failed to load input file [" << 
@@ -114,9 +81,9 @@ int main(int argc, char *argv[])
     if(dis_opts.verbose)
     {
         std::cout << "Found " << prog.numDataSeg() << " data segments in program [" 
-            << dis_opts.infile << "]" << std::endl;
+            << inp_file << "]" << std::endl;
         std::cout << "Found " << prog.numInstrs() << " instructions in program [" 
-            << dis_opts.infile << "]" << std::endl;
+            << inp_file << "]" << std::endl;
         std::cout << std::endl;
     }
 

@@ -13,7 +13,7 @@
 
 #include "Lexer.hpp"
 #include "Source.hpp"
-#include "Assembler.hpp"
+#include "mips/Assembler.hpp"
 
 struct AsmOpts
 {

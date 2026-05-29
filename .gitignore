@@ -13,3 +13,7 @@ disassem
 
 # Ignore log files
 *.log
+
+
+# Ignore build files 
+build/
