@@ -8,9 +8,9 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
-#include "Assembler.hpp"
-#include "Lexer.hpp"
-#include "Codes.hpp"
+#include "mips/Assembler.hpp"
+#include "mips/Lexer.hpp"
+#include "mips/Codes.hpp"
 
 
 // ======== Assembler ======= //

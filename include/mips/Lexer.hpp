@@ -9,9 +9,9 @@
 #define __SMIPS_LEXER_HPP
 
 #include <string>
-#include "Opcode.hpp"
-#include "Source.hpp"
-#include "Register.hpp"
+#include "mips/Opcode.hpp"
+#include "mips/Source.hpp"
+#include "mips/Register.hpp"
 
 // Give some kind of named identifier to the Lexer mode
 enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};

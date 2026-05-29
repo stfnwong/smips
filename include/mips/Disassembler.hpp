@@ -8,11 +8,9 @@
 #ifndef __DISASSEMBLER_HPP
 #define __DISASSEMBLER_HPP
 
-#include <string>
 
-#include "Program.hpp"
-#include "Source.hpp"
-#include "Register.hpp"
+#include "mips/Program.hpp"
+#include "mips/Source.hpp"
 
 
 TextInfo dis_i_instr(uint32_t instr, uint32_t addr);

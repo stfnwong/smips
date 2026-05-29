@@ -9,9 +9,9 @@
 #include <iomanip>
 #include <sstream>
 
-#include "Common.hpp"
-#include "Register.hpp"
-#include "State.hpp"
+#include "mips/Common.hpp"
+#include "mips/Register.hpp"
+#include "mips/State.hpp"
 
 
 

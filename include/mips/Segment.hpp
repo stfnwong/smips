@@ -22,7 +22,6 @@ typedef enum segment_t
 } segment_t;
 
 
-
 /*
  * Segment
  * Represents a segment in the program binary

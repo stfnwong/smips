@@ -4,7 +4,7 @@
 
 #include <cstdint>
 #include <cstring>
-#include "DataCache.hpp"
+#include "mips/DataCache.hpp"
 
 
 // ======== DATA CACHE ======== //

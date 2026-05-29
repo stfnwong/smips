@@ -11,8 +11,8 @@
 #include <string>
 #include <getopt.h>
 
-#include "Lexer.hpp"
-#include "Source.hpp"
+#include "mips/Lexer.hpp"
+#include "mips/Source.hpp"
 #include "mips/Assembler.hpp"
 
 struct AsmOpts

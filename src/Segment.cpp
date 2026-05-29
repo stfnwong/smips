@@ -7,7 +7,7 @@
  */
 
 
-#include "Segment.hpp"
+#include "mips/Segment.hpp"
 
 
 Segment::Segment() : base_addr(0), type(SEG_NONE) {} 

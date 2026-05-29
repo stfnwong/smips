@@ -10,9 +10,9 @@
 
 #include <string>
 #include <unordered_map>
-#include "Program.hpp"
-#include "Source.hpp"
-#include "Object.hpp"
+#include "mips/Program.hpp"
+#include "mips/Source.hpp"
+#include "mips/Object.hpp"
 
 
 /*

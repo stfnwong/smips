@@ -7,7 +7,8 @@
 
 #include <iomanip>
 #include <sstream>
-#include "Opcode.hpp"
+
+#include "mips/Opcode.hpp"
 
 Opcode::Opcode()
 {

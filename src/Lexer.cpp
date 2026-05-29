@@ -14,10 +14,10 @@
 #include <string>
 #include <stack>
 
-#include "Address.hpp"
-#include "Lexer.hpp"
-#include "Codes.hpp"
-#include "Data.hpp"     // MemLine is here at the moment...
+#include "mips/Address.hpp"
+#include "mips/Lexer.hpp"
+#include "mips/Codes.hpp"
+#include "mips/Data.hpp"     // MemLine is here at the moment...
 
 
 

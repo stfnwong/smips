@@ -7,9 +7,9 @@
 
 #include <iostream>
 #include <iomanip>
-#include "Codes.hpp"
-#include "Disassembler.hpp"
-#include "Common.hpp"
+#include "mips/Codes.hpp"
+#include "mips/Disassembler.hpp"
+#include "mips/Common.hpp"
 
 
 /*

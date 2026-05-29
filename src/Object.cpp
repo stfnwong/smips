@@ -6,7 +6,7 @@
  */
 
 
-#include "Object.hpp"
+#include "mips/Object.hpp"
 
 
 // Object

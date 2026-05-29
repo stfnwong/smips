@@ -7,6 +7,7 @@
 
 #define SMIPS_MEM_SIZE 0x100000       // TODO: boost this up later
 
+#include <cstdint>
 
 class DataCache
 {

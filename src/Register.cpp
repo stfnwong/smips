@@ -5,11 +5,12 @@
  * Stefan Wong 2020
  */
 
-#include "Register.hpp"
 
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+
+#include "mips/Register.hpp"
 
 /* 
  * REGISTER

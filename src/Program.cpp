@@ -5,12 +5,12 @@
  * Stefan Wong 2019
  */
 
-#include "Program.hpp"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
+#include "mips/Program.hpp"
 
 // Instr
 

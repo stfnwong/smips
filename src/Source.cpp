@@ -7,8 +7,9 @@
 
 #include <iomanip>
 #include <sstream>
-#include "Source.hpp"
-#include "Register.hpp"
+
+#include "mips/Source.hpp"
+#include "mips/Register.hpp"
 
 /*
  * TODO: 

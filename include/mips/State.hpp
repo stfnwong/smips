@@ -8,11 +8,10 @@
 #define __STATE_HPP
 
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <vector>
 
-#include "DataCache.hpp"
+#include "mips/DataCache.hpp"
 
 
 struct State

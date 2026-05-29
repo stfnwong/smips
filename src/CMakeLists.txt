@@ -1,6 +1,17 @@
 # ==== Core emulator library 
 add_library(mips_emulator
     instruction.cpp
+    Program.cpp
+    Object.cpp
+    Data.cpp
+    Lexer.cpp
+    Segment.cpp
+    Source.cpp
+    Opcode.cpp
+    Register.cpp
+    State.cpp
+    Assembler.cpp
+    Disassembler.cpp
 )
 
 

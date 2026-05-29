@@ -5,7 +5,7 @@
  * Stefan Wong 2019
  */
 
-#include "Data.hpp"
+#include "mips/Data.hpp"
 
 
 MemData::MemData()

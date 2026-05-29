@@ -10,7 +10,7 @@
 #define __SMIPS_SOURCE_HPP
 
 #include <string>
-#include "Opcode.hpp"
+#include "mips/Opcode.hpp"
 
 
 typedef enum DirectiveType
