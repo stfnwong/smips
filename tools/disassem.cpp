@@ -51,24 +51,6 @@ int main(int argc, char *argv[])
 
     CLI11_PARSE(app, argc, argv);
 
-
-    // we can disassemble a uint32_t literal from the command line 
-    //if(dis_opts.literal != "\0")
-    //{
-    //    uint32_t instr_literal = std::strtoul(dis_opts.literal.c_str(), nullptr, 16);
-    //    TextInfo dis_out = dis_instr(instr_literal, 0);
-
-    //    if(dis_opts.print_adr)
-    //    {
-    //        std::cout << "[0x" << std::hex << std::setw(8) << std::setfill('0')
-    //            << dis_out.addr << "] ";
-    //    }
-    //    std::cout << dis_out.toInstrString() << std::endl;
-
-    //    return 0;
-    //}
-    // otherwise, check that we have a valid infile 
-
     Program prog;
     status = prog.load(inp_file);
     if(status < 0)

@@ -6,10 +6,9 @@
  */
 
 #include <iostream>
-#include <iomanip>
-#include <fstream>
 #include <string>
 #include <getopt.h>
+#include <CLI/CLI.hpp>
 
 #include "mips/Lexer.hpp"
 #include "mips/Source.hpp"
@@ -32,44 +31,23 @@ struct AsmOpts
 int main(int argc, char *argv[])
 {
     AsmOpts asm_opts;
-    const char* const short_opts = "vhi:o:l:";
-    const option long_opts[] = {};
-    int argn = 0;
+
+    CLI::App app{"SMIPS disassembler"};
+
+    std::string inp_file;
+    std::string out_file;
+
+    bool verbose = false;
+
     int status;
 
+    app.add_option("-o,--output", out_file, "Output file");
+    app.add_option("-v,--verbose", verbose, "verbose");
+    app.add_option("input", inp_file, "Input binary")->required();
+
+    CLI11_PARSE(app, argc, argv);
+
     // get args
-    while(1) 
-    {
-        const auto opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
-        if(opt == -1)
-            break;
-
-        switch(opt)
-        {
-            case 'v':   // verbose
-                asm_opts.verbose = true;
-                break;
-                
-            case 'i':   // input file
-                asm_opts.infile = std::string(optarg);
-                break;
-
-            case 'o':   // output file
-                asm_opts.outfile = std::string(optarg);
-                break;
-
-            case 'l':   // literal
-                asm_opts.literal = std::string(optarg);
-                break;
-
-            default:
-                std::cerr << "Unknown option " << std::string(optarg) << 
-                    "(arg " << argn << ")" << std::endl;
-                exit(-1);
-                break;
-        }
-        argn++;
-    }
     // Get a Lexer and assembler
     Lexer lexer;
     SourceInfo lexed_source;

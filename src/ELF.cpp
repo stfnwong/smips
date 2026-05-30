@@ -4,7 +4,7 @@
  * Stefan Wong 2019
  */
 
-#include "ELF.hpp"
+#include "mips/ELF.hpp"
 
 
 // ELF file header stuff

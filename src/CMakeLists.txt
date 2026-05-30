@@ -12,6 +12,7 @@ add_library(mips_emulator
     State.cpp
     Assembler.cpp
     Disassembler.cpp
+    ELF.cpp
 )
 
 
