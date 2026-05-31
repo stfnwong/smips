@@ -1,6 +1,8 @@
 # ==== Core emulator library 
 add_library(mips_emulator
     instruction.cpp
+    instruction_db.cpp
+    # Old stuff - to be removed 
     Program.cpp
     Object.cpp
     Data.cpp
