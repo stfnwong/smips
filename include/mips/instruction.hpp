@@ -35,14 +35,14 @@ struct InstrMetadata {
 class Instruction {
     private:
         uint32_t bits_;
-        std::optional<InstrMetadata> meta;
+        std::optional<InstrMetadata> meta_;
         std::optional<uint32_t> pc_;
 
     public:
         explicit Instruction(uint32_t b = 0) : bits_(b) {} 
 
         Instruction(uint32_t b, const InstrMetadata& meta) :
-            bits_(b), meta(meta) {}
+            bits_(b), meta_(meta) {}
 
         // Raw access 
         uint32_t  bits(void) const;
@@ -63,7 +63,6 @@ class Instruction {
         uint8_t rd(void) const;
         uint8_t shamt(void) const;
         uint8_t funct(void) const;
-
 
         // Sign-extended immediate 
         int32_t imm_signed(void) const;

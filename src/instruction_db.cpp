@@ -67,6 +67,8 @@ void InstructionDB::add_instr(
 
 void InstructionDB::init_mips_instrs(void) {
     // R-type instructions (opcode = 0x00, differentiated by funct)
+    // (mnemonic, opcode, funct)
+
     this->add_instr("add",  0x00, 0x20, InstrFormat::RType, "Add");
     this->add_instr("addu", 0x00, 0x21, InstrFormat::RType, "Add unsigned");
     this->add_instr("sub",  0x00, 0x22, InstrFormat::RType, "Substract");

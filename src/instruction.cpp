@@ -13,11 +13,11 @@ void Instruction::set_pc(uint32_t pc) { this->pc_ = pc; }
 std::optional<uint32_t> Instruction::pc(void) const { return this->pc_; }
 
 const InstrMetadata* Instruction::metadata(void) const { 
-    return this->meta.has_value() ? &meta.value() : nullptr;
+    return this->meta_.has_value() ? &meta_.value() : nullptr;
 }
 
 void Instruction::set_metadata(const InstrMetadata& m) { 
-    this->meta = m;
+    this->meta_ = m;
 }
 
 
