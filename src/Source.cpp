@@ -9,7 +9,7 @@
 #include <sstream>
 
 #include "mips/Source.hpp"
-#include "mips/Register.hpp"
+#include "mips/register.hpp"
 
 /*
  * TODO: 

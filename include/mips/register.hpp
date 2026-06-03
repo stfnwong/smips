@@ -9,7 +9,46 @@
 #define __SMIPS_REGISTER_HPP
 
 #include <string>
+#include <cstdint>
+#include <stdexcept>
 #include <unordered_map>
+
+
+class RegisterNames {
+	private:
+		static constexpr const char* names[32] = {
+			"$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3", 
+			"$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7",
+			"$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7",
+			"$t8", "$t9", "$k0", "$k1", "$gp", "$sp", "$fp", "$ra"
+		};
+
+	public:
+		static std::string get(uint8_t reg) {
+			return reg < 32 ? names[reg] : "$?";
+		}
+
+		static uint8_t parse(const std::string& name) {
+			for( uint8_t i = 0; i < 32; ++i) { 
+				if( name == names[i] ) 
+					return i;
+			}
+
+			// Try numeric format, $0, $1, etc 
+			if( name.size() > 1 && name[0] == '$') { 
+				try { 
+					int reg = std::stoi(name.substr(1));
+					if( reg >= 0 && reg < 32)
+						return reg;
+				} catch (...) {} 
+			}
+
+			throw std::runtime_error("Invalid register name: " + name);
+		}
+};
+
+
+constexpr const char* RegisterNames::names[32];
 
 
 typedef enum MIPS_REG

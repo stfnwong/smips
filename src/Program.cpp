@@ -14,12 +14,12 @@
 
 // Instr
 
-Instr::Instr()
+OldInstr::OldInstr()
 {
     this->init();
 }
 
-Instr::Instr(const uint32_t adr, const uint32_t ins)
+OldInstr::OldInstr(const uint32_t adr, const uint32_t ins)
 {
     this->adr = adr;
     this->ins = ins;
@@ -29,7 +29,7 @@ Instr::Instr(const uint32_t adr, const uint32_t ins)
 /*
  * copy ctor
  */
-Instr::Instr(const Instr& that)
+OldInstr::OldInstr(const OldInstr& that)
 {
     this->adr = that.adr;
     this->ins = that.ins;
@@ -38,7 +38,7 @@ Instr::Instr(const Instr& that)
 /*
  * move ctor
  */
-Instr::Instr(const Instr&& that)
+OldInstr::OldInstr(const OldInstr&& that)
 {
     this->adr = std::move(that.adr);
     this->ins = std::move(that.ins);
@@ -48,7 +48,7 @@ Instr::Instr(const Instr&& that)
 /*
  * ==
  */
-bool Instr::operator==(const Instr& that) const
+bool OldInstr::operator==(const OldInstr& that) const
 {
     if(this->adr != that.adr)
         return false;
@@ -61,12 +61,12 @@ bool Instr::operator==(const Instr& that) const
 /*
  * !=
  */
-bool Instr::operator!=(const Instr& that) const
+bool OldInstr::operator!=(const OldInstr& that) const
 {
     return !(*this == that);
 }
 
-Instr& Instr::operator=(const Instr& that)
+OldInstr& OldInstr::operator=(const OldInstr& that)
 {
     this->adr = that.adr;
     this->ins = that.ins;
@@ -74,14 +74,14 @@ Instr& Instr::operator=(const Instr& that)
     return *this;
 }
 
-void Instr::init(void)
+void OldInstr::init(void)
 {
     this->adr = 0;
     this->ins = 0;
 }
 
 
-std::string Instr::toString(void) const
+std::string OldInstr::toString(void) const
 {
     std::ostringstream oss;
 
@@ -230,7 +230,7 @@ void Program::init(void)
  * add()
  * Add an Instr
  */
-void Program::add(const Instr& i)
+void Program::add(const OldInstr& i)
 {
     this->instructions.push_back(i);
 }
@@ -248,7 +248,7 @@ void Program::add(const DataSeg& d)
  * getInstr()
  * Return the instruction at index idx
  */
-Instr& Program::getInstr(const unsigned int idx) 
+OldInstr& Program::getInstr(const unsigned int idx) 
 {
     if(idx < this->instructions.size())
         return this->instructions[idx];
@@ -266,7 +266,7 @@ DataSeg& Program::getData(const unsigned int idx)
 
 void Program::writeMem(const uint32_t addr, const uint32_t val)
 {
-    Instr ins;
+    OldInstr ins;
     ins.adr = addr;
     ins.ins = val;
     this->instructions.push_back(ins);
@@ -319,11 +319,11 @@ unsigned int Program::numInstrs(void) const
 /*
  * getInstr()
  */
-Instr Program::getInstr(unsigned int idx) const
+OldInstr Program::getInstr(unsigned int idx) const
 {
     if(idx < this->instructions.size())
-        return Instr(this->instructions[idx]);
-    return Instr();
+        return OldInstr(this->instructions[idx]);
+    return OldInstr();
 }
 
 /*
@@ -335,7 +335,7 @@ std::vector<uint8_t> Program::toVec(void)
 
     for(unsigned int i = 0; i < this->instructions.size(); ++i)
     {
-        Instr cur_instr = this->instructions[i];
+        OldInstr cur_instr = this->instructions[i];
         prog.push_back((cur_instr.ins & 0xFF000000) >> 24);
         prog.push_back((cur_instr.ins & 0x00FF0000) >> 16);
         prog.push_back((cur_instr.ins & 0x0000FF00) >> 8);
@@ -418,7 +418,7 @@ int Program::load(const std::string& filename)
     // load the first address pointer 
     infile.read(reinterpret_cast<char*>(&addr), sizeof(uint32_t));
 
-    Instr instr;
+    OldInstr instr;
     for(unsigned int idx = 0; idx < num_records; ++idx)
     {
         infile.read(

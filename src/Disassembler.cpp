@@ -10,6 +10,7 @@
 #include "mips/Codes.hpp"
 #include "mips/Disassembler.hpp"
 #include "mips/Common.hpp"
+#include "mips/Program.hpp"
 
 
 /*
@@ -279,7 +280,7 @@ SourceInfo dis_program(const Program& program)
     // of the program as well
     for(unsigned int idx = 0; idx < program.numInstrs(); ++idx)
     {
-        Instr cur_instr = program.getInstr(idx);
+        OldInstr cur_instr = program.getInstr(idx);
         TextInfo cur_line = dis_instr(cur_instr.ins, cur_instr.adr);
         source.addText(cur_line);
     }

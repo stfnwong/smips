@@ -11,7 +11,7 @@
 #include <string>
 #include "mips/Opcode.hpp"
 #include "mips/Source.hpp"
-#include "mips/Register.hpp"
+#include "mips/register.hpp"
 
 // Give some kind of named identifier to the Lexer mode
 enum LexMode {LEX_DATA_SEG, LEX_TEXT_SEG};

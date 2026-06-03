@@ -12,7 +12,8 @@
 
 #include "mips/Lexer.hpp"
 #include "mips/Source.hpp"
-#include "mips/Assembler.hpp"
+#include "mips/Program.hpp"
+#include "mips/assembler.hpp"
 
 struct AsmOpts
 {
@@ -102,26 +103,26 @@ int main(int argc, char *argv[])
         std::cout << lexed_source.toString() << std::endl;
 
     // Now assemble the source files 
-    assembler.loadSource(lexed_source);
-    assembler.assemble();
+    //assembler.loadSource(lexed_source);
+    //assembler.assemble();
     
     // Save the program to disk
-    program = assembler.getProgram();
+    //program = assembler.getProgram();
 
-    if(asm_opts.outfile != "\0")
-    {
-        status = program.save(asm_opts.outfile);
-        if(status < 0)
-        {
-            std::cerr << "[ERROR] writing program to file [" <<
-                asm_opts.outfile << "]" << std::endl;
-            exit(-1);
-        }
-    }
-    else
-    {
-        std::cout << program.toString() << std::endl;
-    }
+    //if(asm_opts.outfile != "\0")
+    //{
+    //    status = program.save(asm_opts.outfile);
+    //    if(status < 0)
+    //    {
+    //        std::cerr << "[ERROR] writing program to file [" <<
+    //            asm_opts.outfile << "]" << std::endl;
+    //        exit(-1);
+    //    }
+    //}
+    //else
+    //{
+    //    std::cout << program.toString() << std::endl;
+    //}
 
     return 0;
 }

@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     // TODO: data segment
     for(unsigned int idx = 0; idx < prog.numInstrs(); ++idx)
     {
-        Instr cur_instr = prog.getInstr(idx);
+        OldInstr cur_instr = prog.getInstr(idx);
         TextInfo dis_out = dis_instr(cur_instr.ins, cur_instr.adr);
 
         if(dis_opts.print_adr)

@@ -4,14 +4,13 @@
  *
  */
 
-#include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 
 #include "mips/Common.hpp"
-#include "mips/Register.hpp"
 #include "mips/State.hpp"
+#include "mips/register.hpp"
 
 
 

@@ -18,21 +18,21 @@
  * Represents a single assembly instruction.
  * (machine word + address)
  */
-struct Instr
+struct OldInstr
 {
     uint32_t adr;
     uint32_t ins;
 
     public:
-        Instr();
-        Instr(const uint32_t adr, const uint32_t ins);
-        Instr(const Instr& that);       
-        Instr(const Instr&& that);
+        OldInstr();
+        OldInstr(const uint32_t adr, const uint32_t ins);
+        OldInstr(const OldInstr& that);       
+        OldInstr(const OldInstr&& that);
 
         // TODO: will the default move constructor be sufficient here?
-        bool operator==(const Instr& that) const;
-        bool operator!=(const Instr& that) const;
-        Instr& operator=(const Instr& that);
+        bool operator==(const OldInstr& that) const;
+        bool operator!=(const OldInstr& that) const;
+        OldInstr& operator=(const OldInstr& that);
         void init(void);
         std::string toString(void) const;
 };
@@ -71,8 +71,8 @@ class Program
 {
     private:
         std::vector <DataSeg> data_segments;
-        std::vector <Instr> instructions;
-        Instr null_instr;
+        std::vector <OldInstr> instructions;
+        OldInstr null_instr;
         DataSeg null_data;
         bool verbose;
 
@@ -92,7 +92,7 @@ class Program
          * add()
          * Adds a new instruction object to the end of the instruction list
          */
-        void add(const Instr& i);
+        void add(const OldInstr& i);
         /*
          * add()
          * Adds a new DataSeg object to the end of the data_segments list
@@ -102,7 +102,7 @@ class Program
          * getInstr()
          * Returns the Nth instruction object from the instruction list
          */
-        Instr& getInstr(const unsigned int idx);
+        OldInstr& getInstr(const unsigned int idx);
         /*
          * getData()
          * Returns the Nth DataSeg object from the instruction list
@@ -120,7 +120,7 @@ class Program
         
         // get a specific instr 
         unsigned int numInstrs(void) const;
-        Instr getInstr(unsigned int idx) const;
+        OldInstr getInstr(unsigned int idx) const;
         // TODO: some iterator over instrs
 
         std::vector<uint8_t> toVec(void);

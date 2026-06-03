@@ -3,6 +3,8 @@ add_library(mips_emulator
     instruction.cpp
     instruction_db.cpp
     instr_factory.cpp
+	assembler.cpp
+    register.cpp
     # Old stuff - to be removed 
     Program.cpp
     Object.cpp
@@ -11,9 +13,7 @@ add_library(mips_emulator
     Segment.cpp
     Source.cpp
     Opcode.cpp
-    Register.cpp
     State.cpp
-    Assembler.cpp
     Disassembler.cpp
     ELF.cpp
 )

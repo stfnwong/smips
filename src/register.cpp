@@ -7,10 +7,9 @@
 
 
 #include <iostream>
-#include <iomanip>
 #include <sstream>
 
-#include "mips/Register.hpp"
+#include "mips/register.hpp"
 
 /* 
  * REGISTER
