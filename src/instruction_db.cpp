@@ -50,6 +50,8 @@ void InstructionDB::add_instr(
     InstrMetadata meta{
         mnemonic,
         format,
+		opcode,
+		funct,
         is_branch,
         is_jump,
         is_load,
@@ -57,7 +59,8 @@ void InstructionDB::add_instr(
         uses_immediate,
         is_branch || is_jump,  // has delay slot 
         latency,
-        description
+        description,
+		std::nullopt,   // operand_pattern
     };
 
     this->db_[id] = meta;

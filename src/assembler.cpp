@@ -6,6 +6,7 @@
 #include "mips/register.hpp"
 
 #include "instruction_db.hpp"
+#include "instruction_builder.hpp"
 
 
 
@@ -129,10 +130,61 @@ Instruction Assembler::assemble_r_type(
 		if( tokens.size() != 2) 
 			throw std::runtime_error("jr expects 1 register");
 		uint8_t rs = RegisterNames::parse(tokens[1]);
-		// TODO: need InstructionBuilder here...
+		return InstructionBuilder::r_type(mnemonic, 0, rs, 0).build();
 	}
+
+	// Standard: op, rd, rs, rt
+	if( tokens.size() != 4) {
+		throw std::runtime_error(mnemonic + " expects 3 registers, got " + std::to_string(tokens.size()));
+	}
+
+	uint8_t rd = RegisterNames::parse(tokens[1]);
+	uint8_t rs = RegisterNames::parse(tokens[2]);
+	uint8_t rt = RegisterNames::parse(tokens[3]);
+
+	return InstructionBuilder::r_type(mnemonic, rd, rs, rt).build();
 }
 
+
+Instruction Assembler::assemble_i_type(
+	const std::string& mnemonic,
+	const std::vector<std::string>& tokens
+) {
+	const auto* meta = instruction_db().lookup(mnemonic);
+
+	if( meta->is_load || meta->is_store ) {
+		// lw/sw rt, offset(rs)
+		if( tokens.size() != 4 ) {
+			throw std::runtime_error(mnemonic + " expects rt, offset(rs)");
+		}
+	}
+
+	uint8_t rt = RegisterNames::parse(tokens[1]);
+	int16_t offset = static_cast<int16_t>(this->parse_immediate(tokens[2]));
+	uint8_t rs = RegisterNames::parse(tokens[3]);  
+
+	return InstructionBuilder::i_type(mnemonic, rt, rs, offset).build();
+}
+
+
+Instruction Assembler::assemble_j_type(
+	const std::string& mnemonic,
+	const std::vector<std::string>& tokens
+) {
+	if( tokens.size() != 2 ) {
+		throw std::runtime_error(mnemonic + " expects target");
+	}
+
+	uint32_t target;
+	if( this->labels.count(tokens[1])) { 
+		target = this->labels[tokens[1]];
+	}
+	else {
+		target = this->parse_immediate(tokens[1]);
+	}
+
+	return InstructionBuilder::j_type(mnemonic, target).build();
+}
 
 
 Instruction Assembler::assemble_line(const std::string& line) {

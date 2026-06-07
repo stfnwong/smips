@@ -17,6 +17,8 @@ enum class InstrFormat {
 struct InstrMetadata { 
     std::string mnemonic;    // eg: "add", "lw", "beq", etc
     InstrFormat format;
+	uint8_t opcode;
+	uint8_t funct;
     bool is_branch = false;
     bool is_jump = false;
     bool is_load = false;

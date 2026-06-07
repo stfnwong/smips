@@ -31,5 +31,7 @@ class Assembler {
 		std::vector<std::string> tokenize(const std::string& s);
 		int32_t parse_immediate(const std::string& s);
 		Instruction assemble_r_type(const std::string& mnemonic, const std::vector<std::string>& tokens);
+		Instruction assemble_i_type(const std::string& mnemonic, const std::vector<std::string>& tokens);
+		Instruction assemble_j_type(const std::string& mnemonic, const std::vector<std::string>& tokens);
 		Instruction assemble_line(const std::string& line);
 };
