@@ -5,6 +5,19 @@
 
 // TODO: once the build setup works this can probably become header only
 
+std::string instr_format_str(const InstrFormat& fmt) {
+	switch(fmt) {
+		case InstrFormat::RType:
+			return "RTYpe";
+		case InstrFormat::IType:
+			return "IType";
+		case InstrFormat::JType:
+			return "JType";
+	}
+
+	return "UnknownType";
+}
+
 // Instruction methods 
 uint32_t  Instruction::bits(void) const { return this->bits_; }
 

@@ -18,7 +18,7 @@ class RegisterFile {
         }
 
         uint32_t read(uint8_t addr) const { 
-            if (addr => NUM_REGS)
+            if (addr >= NUM_REGS)
                 return 0;
 
             return (addr == 0) ? 0 : regs[addr];

@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <optional>
-#include <variant>
 
 
 // Architectural constants 
@@ -12,7 +11,7 @@ constexpr size_t CACHE_LINE_SIZE = 64;
 
 // ALU operations
 enum class ALUOp {
-    Add, Sub, And, Or, Xor, Slt, Sll, Srl, Sra, Nor
+    Add, Sub, And, Or, Xor, Slt, Sltu, Sll, Srl, Sra, Nor
 };
 
 
@@ -38,7 +37,7 @@ struct BranchInfo {
     uint32_t pc;
     uint32_t target;
     BranchCond cond;
-    bool predicted_token;
+    bool predicted_taken;
 };
 
 
@@ -66,9 +65,9 @@ struct IdExLatch {
     // Register operands (values and addresses)
     uint32_t rs_val = 0;
     uint32_t rt_val = 0;
-    uint32_t rs_addr = 0;
-    uint32_t rt_addr = 0;
-    uint32_t rd_addr = 0;
+    uint8_t rs_addr = 0;
+    uint8_t rt_addr = 0;
+    uint8_t rd_addr = 0;
 
     // Immediate / offset
     uint32_t immediate = 0;
@@ -170,4 +169,49 @@ struct HazardSignals {
         flush_ex = false;
         branch_target.reset();
     }
+};
+
+
+
+
+struct ForwardingPaths { 
+	static constexpr uint8_t INVALID = 0xFF;    // $zero forward is never needed
+
+	uint32_t ex_value[NUM_REGS]  = {};
+	uint32_t mem_value[NUM_REGS] = {};
+	uint8_t  ex_valid            = 0;    // bitmask: bit i set = reg i has forward
+	uint32_t mem_valid           = 0;    // 32 registers fits in uint32_t 
+
+	void clear(void) {
+		this->ex_valid = 0;
+		this->mem_valid = 0;
+	}
+
+	void set_ex(uint8_t reg, uint32_t value) { 
+		this->ex_value[reg] = value;
+		this->ex_valid |= (1u << reg);
+	}
+
+	void set_mem(uint8_t reg, uint32_t value) { 
+		this->mem_value[reg] = value;
+		this->ex_valid |= (1u << reg);
+	}
+
+	uint32_t get_forward(uint32_t reg_val, uint8_t reg_addr) { 
+		if( this->has_ex(reg_addr) ) {
+			return this->get_ex(reg_addr);
+		}
+
+		if( this->has_mem(reg_addr) ) { 
+			return this->get_mem(reg_addr);
+		}
+
+		return reg_val;
+	}
+
+	bool has_ex(uint8_t reg) const  { return (this->ex_valid >> reg) & 1; }
+	bool has_mem(uint8_t reg) const { return (this->mem_valid >> reg) & 1; }
+
+	uint32_t get_ex(uint8_t reg) const { return this->ex_value[reg]; }
+	uint32_t get_mem(uint8_t reg) const { return this->mem_value[reg]; }
 };

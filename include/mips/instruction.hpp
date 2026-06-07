@@ -12,6 +12,8 @@ enum class InstrFormat {
     JType     // op:6
 };
 
+std::string instr_format_str(const InstrFormat& fmt);
+
 
 // Metadata about instruction properties 
 struct InstrMetadata { 

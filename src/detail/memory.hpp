@@ -59,6 +59,6 @@ class Memory {
         void load_program(const std::vector<uint32_t>& program, uint32_t start_addr = 0) {
             for (size_t i = 0; i < program.size(); ++i) {
                 write_word(start_addr + i * 4, program[i]);
-        }
-
+			}
+		}
 };

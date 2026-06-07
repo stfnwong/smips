@@ -63,9 +63,14 @@ AssemblyResult Assembler::assemble(
 			result.success = false;
 			result.err_msg = "Line " + std::to_string(line_num + 1)
 				+ ": " + e.what();
+
 			return result;
 		}
 	}
+
+	result.labels = this->labels;
+
+	return result;
 }
 
 
@@ -180,7 +185,7 @@ Instruction Assembler::assemble_j_type(
 		target = this->labels[tokens[1]];
 	}
 	else {
-		target = this->parse_immediate(tokens[1]);
+		target = static_cast<uint32_t>(this->parse_immediate(tokens[1]));
 	}
 
 	return InstructionBuilder::j_type(mnemonic, target).build();
@@ -210,5 +215,13 @@ Instruction Assembler::assemble_line(const std::string& line) {
 	switch( meta->format ) {
 		case InstrFormat::RType:
 			return this->assemble_r_type(mnemonic, tokens);
+		case InstrFormat::IType:
+			return this->assemble_i_type(mnemonic, tokens);
+		case InstrFormat::JType:
+			return this->assemble_j_type(mnemonic, tokens);
+		// TODO: do I actually need a handler for this case? 
+		// Read up some more on exceptions and exception handling for this
 	}
+
+	throw std::runtime_error("Unknown InstrFormat [" + instr_format_str(meta->format) + "]");
 }

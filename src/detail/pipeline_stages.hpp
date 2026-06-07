@@ -1,83 +1,112 @@
 #pragma once 
 
-#include "memory.hpp"
+#include "mips/register_file.hpp"
 #include "pipeline_types.hpp"
-#include "register_file.hpp"
-#include "decoder.hpp"
+#include "memory.hpp"
 
 
 
+// ==== FetchStage
 class FetchStage {
     private:
         const Memory&  i_mem;
-        HazardSignals* hazard;
-        IfIdLatch*     output;
+        HazardSignals& hazard;
+        IfIdLatch&     output;
         uint32_t       pc;
 
     public:
-        FetchStage(const Memory& mem, HazardSignals* hazard, IfIdLatch* output)
+        FetchStage(const Memory& mem, HazardSignals& hazard, IfIdLatch& output)
             : i_mem(mem), hazard(hazard), output(output), pc(0) {}
 
-        void tick(void) {
-            if (this->hazard->flush_if) { 
-                output->invalidate();
-                return;
-            }
-
-            if (this->hazard->stall_if)
-                return;
-
-            this->output->valid = true;
-            this->output->pc    = this->pc;
-            this->output->instruction = this->i_mem.read_word(this->pc);
-            this->pc += 4;
-        }
+        void tick(void);
 };
 
 
 
+// ==== DecodeStage
 class DecodeStage {
     private:
         const RegisterFile& reg_file;
-        const IfIfLatch&    input;
-        IdExLatch*          output;
-        HazardSignals*      hazard;
+        const IfIdLatch&    input;
+        IdExLatch&          output;
+        HazardSignals&      hazard;   // TODO: come back and use a ref here rather than a raw pointer
 
     public:
         DecodeStage(
             const RegisterFile& rf,
-            const IdIfLatch& inp,
-            IdExLatch* out,
-            HazardSignals* haz
+            const IfIdLatch& inp,
+            IdExLatch& out,
+            HazardSignals& haz
         ) : reg_file(rf), input(inp), output(out), hazard(haz) {}
 
-        void tick(void) {
-            if (!this->input.valid || this->hazard->stall_id || this->hazard->flush_id) {
-                this->output.invalidate();
-                return;
-            }
-
-            // Decode the instruction 
-            DecodeInstr decoded = Decoder::decode(this->input->instruction, this->input->pc);
-
-            // Read registers (speculative) 
-            uint32_t rs_val = this->reg_file.read(decoded.rs);
-            uint32_t rt_val = this->reg_file.read(decoded.rt);
-
-            // Populate ID/EX latch
-            this->output.valid       = true;
-            this->output.pc          = this->input.pc;
-            this->output.opcode      = decoded.opcode;
-            this->output.rs_val      = rs_val;
-            this->output.rt_val      = rt_val;
-            this->output.rs_addr     = decoded.rs;
-            this->output.rt_addr     = decoded.rt;
-            this->output.rd_addr     = decoded.rd;
-            this->output.immediate   = decoded.immediate;
-            this->output.alu_op      = decoded.alu_op;
-            this->output.mem_op      = decoded.mem_op;
-            this->output.wb_dest     = decoded.wb_dest;
-            this->output.mem_to_reg  = decoded.mem_to_reg;
-            this->output.branch_info = decoded.branch_info;
-        }
+        void tick(void);
 };
+
+
+
+// ==== ExecuteStage
+class ExecuteStage {
+	private:
+		const IdExLatch& input;
+		ExMemLatch&      output;
+		HazardSignals&   hazard;
+		ForwardingPaths& forward;
+
+	public:
+		ExecuteStage(
+			const IdExLatch& inp,
+			ExMemLatch& out,
+			HazardSignals& haz,
+			ForwardingPaths& fwd
+		) : input(inp), output(out), hazard(haz), forward(fwd) {} 
+
+
+		void tick(void);
+		uint32_t alu(ALUOp op, uint32_t a, uint32_t b) const;
+		bool eval_branch(BranchCond cond, uint32_t a, uint32_t b) const;
+};
+
+
+// ==== MemoryStage
+class MemoryStage {
+	private:
+		Memory&           d_mem;
+		const ExMemLatch& input;
+		MemWbLatch&       output;
+		HazardSignals&    hazard;
+		ForwardingPaths&  forward;
+
+	public:
+		MemoryStage(
+			Memory& dm,
+			const ExMemLatch& inp,
+			MemWbLatch& out,
+			HazardSignals& haz,
+			ForwardingPaths& fwd
+		) : d_mem(dm), input(inp), output(out), hazard(haz), forward(fwd) {}
+
+		void tick(void);
+};
+
+
+
+// ==== WritebackStage
+class WritebackStage {
+	private:
+		RegisterFile& reg_file;     // Mutable as we write here in this stage
+		const MemWbLatch& input;
+		ForwardingPaths& forward;
+
+	public:
+		WritebackStage(
+			RegisterFile& rf,
+			const MemWbLatch& inp,
+			ForwardingPaths& fwd
+		) : reg_file(rf), input(inp), forward(fwd) {} 
+
+		void tick(void);
+};
+
+
+
+

@@ -3,6 +3,7 @@
 #pragma once 
 #include <cstdint>
 #include <optional>
+#include <stdexcept>
 
 #include "pipeline_types.hpp"
 
