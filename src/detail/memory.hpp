@@ -13,8 +13,12 @@ class Memory {
 
     public:
         Memory() {
-            memset(mem, 0, MEM_SIZE);   // TODO: memset?
+            this->reset();
         }
+
+		void reset(void) { 
+			memset(this->mem, 0, MEM_SIZE);
+		}
 
         uint32_t read_word(uint32_t addr) const {
             if (addr + 3 >= MEM_SIZE) {
@@ -22,10 +26,10 @@ class Memory {
             }
 
             // Big endian 
-            return (static_cast<uint32_t>(mem[addr]) << 24) | 
-                (static_cast<uint32_t>(mem[addr + 1]) << 16) |
-                (static_cast<uint32_t>(mem[addr + 2]) << 8) |
-                (static_cast<uint32_t>(mem[addr + 3]));
+            return (static_cast<uint32_t>(this->mem[addr]) << 24) | 
+                   (static_cast<uint32_t>(this->mem[addr + 1]) << 16) |
+                   (static_cast<uint32_t>(this->mem[addr + 2]) << 8) |
+                   (static_cast<uint32_t>(this->mem[addr + 3]));
         }
 
         void write_word(uint32_t addr, uint32_t value) { 
@@ -33,10 +37,10 @@ class Memory {
                 throw std::runtime_error("Memory write out of bounds");
             }
 
-            mem[addr + 0] = (value >> 24) & 0xFF;
-            mem[addr + 1] = (value >> 16) & 0xFF;
-            mem[addr + 2] = (value >> 8) & 0xFF;
-            mem[addr + 3] = value & 0xFF;
+            this->mem[addr + 0] = (value >> 24) & 0xFF;
+            this->mem[addr + 1] = (value >> 16) & 0xFF;
+            this->mem[addr + 2] = (value >> 8) & 0xFF;
+            this->mem[addr + 3] = value & 0xFF;
         }
 
         uint8_t read_byte(uint32_t addr) const {
@@ -44,7 +48,7 @@ class Memory {
                 throw std::runtime_error("Memory read out of bounds");
             }
 
-            return mem[addr];
+            return this->mem[addr];
         }
 
         void write_byte(uint32_t addr, uint8_t value) {
@@ -52,13 +56,13 @@ class Memory {
                 throw std::runtime_error("Memory read out of bounds");
             }
 
-            mem[addr] = value;
+            this->mem[addr] = value;
         }
 
         // Load a program into memory
         void load_program(const std::vector<uint32_t>& program, uint32_t start_addr = 0) {
             for (size_t i = 0; i < program.size(); ++i) {
-                write_word(start_addr + i * 4, program[i]);
+                this->write_word(start_addr + i * 4, program[i]);
 			}
 		}
 };

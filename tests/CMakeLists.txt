@@ -1,3 +1,11 @@
+FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG        v3.5.3
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(Catch2)
+
 # ==== Test executables 
 function(add_mips_test name source)
     add_executable(${name} ${source})
@@ -15,3 +23,4 @@ function(add_mips_test name source)
 endfunction()
 
 # TODO: add the tests
+add_mips_test(test_pipeline  test_pipeline.cpp)

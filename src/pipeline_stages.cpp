@@ -194,3 +194,88 @@ void WritebackStage::tick(void) {
 	// Setup forwarding from WB stage 
 	this->forward.set_mem(this->input.wb_dest.value(), this->input.data);
 }
+
+
+
+// ==== Pipeline
+void Pipeline::cycle(void) {
+	// Clear control signals
+	this->hazard.clear();
+	this->forward.clear();
+
+	//  Reverse order 
+	this->stage_wb.tick();
+	this->stage_mem.tick();
+	this->stage_ex.tick();
+	this->stage_id.tick();
+	this->stage_if.tick();
+
+	// TODO: check hazards here
+	this->pc = this->hazard.branch_target.value_or(this->pc + 4);
+
+	this->cycle_count++;
+}
+
+
+bool Pipeline::is_halted(void) const {
+	return !this->if_id.valid && !this->id_ex.valid && !this->ex_mem.valid && !this->mem_wb.valid;
+}
+
+
+void Pipeline::run(uint64_t max_cycles) {
+	while( this->cycle_count < max_cycles && !this->is_halted() ) {
+		this->cycle();
+	}
+}
+
+
+void Pipeline::run_cycles(uint64_t n) {
+	for( uint64_t i = 0; i < n && !this->is_halted(); ++i) {
+		this->cycle();
+	}
+}
+
+
+void Pipeline::load_program(const std::vector<uint32_t>& program, uint32_t start_addr) {
+	this->i_mem.load_program(program, start_addr);
+}
+
+
+void Pipeline::reset(void) {
+	this->d_mem.reset();
+	this->i_mem.reset();
+
+	this->hazard.clear();
+	this->forward.clear();
+
+	this->pc = 0;
+	this->cycle_count = 0;
+	this->instr_count = 0;
+	this->stall_count = 0;
+}
+
+
+void Pipeline::detect_hazards(void) {
+	// Load-use hazard 
+	if( this->ex_mem.valid && 
+		this->ex_mem.mem_op.has_value() && 
+		this->ex_mem.mem_op.value() == MemOp::Load && 
+		this->ex_mem.wb_dest.has_value()
+	  ) {
+		uint8_t load_dest = this->ex_mem.wb_dest.value();
+
+		// Check if ID/EX stage needs this register 
+		if( this->id_ex.valid && 
+		    (this->id_ex.rs_addr == load_dest || this->id_ex.rt_addr == load_dest)
+			) {
+			// Stall the pipline 
+			this->hazard.stall_if = true;
+			this->hazard.stall_id = true;
+			this->hazard.flush_ex = true;   // put a bubble in EX
+			return;
+		}
+	}
+
+	// TODO: control hazards 
+	// TODO: structural hazards
+}
