@@ -2,10 +2,11 @@
 
 #pragma once
 
-#include "pipeline_types.hpp"
 #include <cstdio>
 #include <format>
 #include <string>
+
+#include "pipeline_types.hpp"
 
 
 class RegisterFile { 

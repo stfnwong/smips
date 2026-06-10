@@ -1,6 +1,6 @@
-#include "pipeline_stages.hpp"
 #include "decoder.hpp"
 #include "pipeline_types.hpp"
+#include "pipeline_stages.hpp"
 
 
 // ==== FetchStage

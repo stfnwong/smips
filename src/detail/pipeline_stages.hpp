@@ -1,6 +1,6 @@
 #pragma once 
 
-#include "mips/register_file.hpp"
+#include "register_file.hpp"
 #include "pipeline_types.hpp"
 #include "memory.hpp"
 

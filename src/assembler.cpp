@@ -4,9 +4,8 @@
 #include "mips/instr_factory.hpp"
 #include "mips/assembler.hpp"
 #include "mips/register.hpp"
-
+#include "mips/instruction_builder.hpp"
 #include "instruction_db.hpp"
-#include "instruction_builder.hpp"
 
 
 
@@ -202,7 +201,8 @@ Instruction Assembler::assemble_line(const std::string& line) {
 
 	// NOP case 
 	if( mnemonic == "nop") {
-		return Instr::instr_nop(0, 0, 0);
+		return Instr::instr_nop();
+		//return Instr::instr_nop(0, 0, 0);
 	}
 
 	// Lookup instruction metadata 

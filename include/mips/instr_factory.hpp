@@ -58,5 +58,6 @@ namespace Instr {
 	Instruction instr_jal(uint8_t rd, uint8_t rs, uint8_t rt);
 
 	// No-op
-	Instruction instr_nop(uint8_t rd, uint8_t rs, uint8_t rt);
+	Instruction instr_nop(void);
+	//Instruction instr_nop(uint8_t rd, uint8_t rs, uint8_t rt);
 }

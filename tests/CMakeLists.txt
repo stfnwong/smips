@@ -18,6 +18,11 @@ function(add_mips_test name source)
             Catch2::Catch2WithMain
     )
 
+	target_include_directories(${name}
+		PRIVATE
+			${PROJECT_SOURCE_DIR}/src    # should see src/detail/*.hpp
+	)
+
     include(Catch)
     catch_discover_tests(${name})
 endfunction()

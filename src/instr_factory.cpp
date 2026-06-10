@@ -388,7 +388,7 @@ namespace Instr {
     }
 
 	// No-op
-	Instruction instr_nop(uint8_t rd, uint8_t rs, uint8_t rt) {
+	Instruction instr_nop(void) {
 		return Instruction(0x0)
 			.set_opcode(0x0)
 			.set_rs(000)
@@ -396,5 +396,15 @@ namespace Instr {
 			.set_rd(0x0)
 			.set_funct(0x0);
 	}
+
+	//Instruction instr_nop(uint8_t rd, uint8_t rs, uint8_t rt) {
+	//	return Instruction(0x0)
+	//		.set_opcode(0x0)
+	//		.set_rs(000)
+	//		.set_rt(0x0)
+	//		.set_rd(0x0)
+	//		.set_funct(0x0);
+	//}
+
 
 }
