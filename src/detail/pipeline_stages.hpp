@@ -151,12 +151,15 @@ class Pipeline {
 			instr_count(0),
 			stall_count(0) {}
 
-		void cycle(void);
-		bool is_halted(void) const;
-		void run(uint64_t max_cycles = UINT64_MAX);
-		void run_cycles(uint64_t n);
-		void load_program(const std::vector<uint32_t>& program, uint32_t start_addr = 0);
-		void reset(void);
+		void     cycle(void);
+		bool     is_halted(void) const;
+		uint32_t reg(uint8_t r) const;
+		void     run(uint64_t max_cycles = UINT64_MAX);
+		void     run_cycles(uint64_t n);
+		void     load_program(const std::vector<uint32_t>& program, uint32_t start_addr = 0);
+		void     reset(void);
+
+		std::string dump_reg(void) const;
 
 	private:
 		void detect_hazards(void);

@@ -1059,7 +1059,7 @@ void Lexer::parse_rrr(void)
 
 void Lexer::add_noop(void)
 {
-    this->text_info.opcode = Opcode(LEX_NULL, 0x0);
+    this->text_info.opcode = Opcode(LEX_NULL, "NULL");
 }
 
 /*

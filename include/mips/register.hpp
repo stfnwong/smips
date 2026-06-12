@@ -39,7 +39,7 @@ class RegisterNames {
 				try { 
 					int reg = std::stoi(name.substr(1));
 					if( reg >= 0 && reg < 32)
-						return reg;
+						return static_cast<uint8_t>(reg);
 				} catch (...) {} 
 			}
 

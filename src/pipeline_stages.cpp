@@ -1,3 +1,4 @@
+#include <iostream>    // TODO: remove this, debug only
 #include "decoder.hpp"
 #include "pipeline_types.hpp"
 #include "pipeline_stages.hpp"
@@ -214,11 +215,19 @@ void Pipeline::cycle(void) {
 	this->pc = this->hazard.branch_target.value_or(this->pc + 4);
 
 	this->cycle_count++;
+
+	// Since this is for debugging I don't need a very big cycle count
+	std::string debug = std::format("(cycle {:04}) pc = {:04X}", this->cycle_count, this->pc);
+	std::cout << "[" << __func__ << "] " << debug << std::endl;
 }
 
 
 bool Pipeline::is_halted(void) const {
 	return !this->if_id.valid && !this->id_ex.valid && !this->ex_mem.valid && !this->mem_wb.valid;
+}
+
+uint32_t Pipeline::reg(uint8_t r) const { 
+	return this->reg_file.read(r);
 }
 
 
@@ -230,9 +239,18 @@ void Pipeline::run(uint64_t max_cycles) {
 
 
 void Pipeline::run_cycles(uint64_t n) {
-	for( uint64_t i = 0; i < n && !this->is_halted(); ++i) {
+	for( uint64_t i = 0; i < n; ++i) { 
 		this->cycle();
+		if( this->is_halted() ) {
+			// TODO: debug, remove 
+			std::cout << "[" << __func__ << "] halting" << std::endl;
+			break;
+		}
 	}
+
+	//for( uint64_t i = 0; i < n && !this->is_halted(); ++i) {
+	//	this->cycle();
+	//}
 }
 
 
@@ -252,6 +270,11 @@ void Pipeline::reset(void) {
 	this->cycle_count = 0;
 	this->instr_count = 0;
 	this->stall_count = 0;
+}
+
+
+std::string Pipeline::dump_reg(void) const {
+	return this->reg_file.dump();
 }
 
 

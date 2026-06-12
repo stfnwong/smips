@@ -10,7 +10,7 @@ add_library(mips_emulator
     Program.cpp
     Object.cpp
     Data.cpp
-    Lexer.cpp
+	Lexer.cpp
     Segment.cpp
     Source.cpp
     Opcode.cpp
