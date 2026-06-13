@@ -6,6 +6,7 @@ add_library(mips_emulator
 	assembler.cpp
     register.cpp
 	pipeline_stages.cpp
+	cpu.cpp
     # Old stuff - to be removed 
     Program.cpp
     Object.cpp

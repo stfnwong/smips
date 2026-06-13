@@ -29,4 +29,4 @@ endfunction()
 
 # TODO: add the tests
 add_mips_test(test_instruction  test_instruction.cpp)
-add_mips_test(test_pipeline  test_pipeline.cpp)
+add_mips_test(test_cpu  test_cpu.cpp)

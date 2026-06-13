@@ -2,13 +2,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include "mips/instr_factory.hpp"
 
-#include "detail/pipeline_stages.hpp"   // TODO: is this part of public interface?
-
-
+#include "detail/cpu.hpp"   
 
 
 TEST_CASE("Register zero is always zero", "[pipeline][basic]") {
-	Pipeline cpu;
+	CPU cpu;
 	cpu.load_program({
 		Instr::instr_addi(0, 0, 99).bits(),    // try to write to $zero 
 		Instr::instr_nop().bits(),
@@ -22,7 +20,7 @@ TEST_CASE("Register zero is always zero", "[pipeline][basic]") {
 }
 
 TEST_CASE("Single ADDI executes correctly", "[pipeline][basic]") {
-	Pipeline cpu;
+	CPU cpu;
 	cpu.load_program({
 		// addi $t0, $zero, 42
 		Instr::instr_addi(8, 0, 42).bits(),   
@@ -40,7 +38,7 @@ TEST_CASE("Single ADDI executes correctly", "[pipeline][basic]") {
 
 
 TEST_CASE("ADD produces correct result", "[pipeline][basic]") {
-	Pipeline cpu;
+	CPU cpu;
 	cpu.load_program({
 		Instr::instr_addi(8, 0, 10).bits(),   // $t0 = 10
 		Instr::instr_addi(9, 0, 20).bits(),   // $t1 = 20
@@ -51,7 +49,14 @@ TEST_CASE("ADD produces correct result", "[pipeline][basic]") {
 		Instr::instr_nop().bits()
 	});
 
-	cpu.run_cycles(10);
+	PipelineState cur_state;
+	for( size_t c = 0; c < 10; ++c) {
+		cpu.cycle();
+		cur_state = cpu.dump_state();
+		//std::cout << "cycle " << c << cur_state.to_string() << std::endl;
+	}
+
+	//cpu.run_cycles(10);
 	std::cout << cpu.dump_reg() << std::endl;
 	//std::println("{0}", cpu.dump_reg());
 
@@ -60,7 +65,7 @@ TEST_CASE("ADD produces correct result", "[pipeline][basic]") {
 
 
 TEST_CASE("Empty pipeline drains cleanly", "[pipeline][edge]") {
-	Pipeline cpu;
+	CPU cpu;
 	cpu.load_program({ Instr::instr_nop().bits() });
 
 	REQUIRE_NOTHROW(cpu.run_cycles(20));
